@@ -5,17 +5,28 @@
 # Output: dist/Quill.app, dist/Quill.dmg
 #
 # Notes:
-# - Ad-hoc signed (no Apple Developer account involved). That's enough for
-#   /Applications — unlike /usr/local/bin, it doesn't get killed at launch
-#   by AppleSystemPolicy on this macOS version (confirmed empirically).
-# - Each rebuild changes the ad-hoc signature, so macOS will ask for a
-#   fresh Accessibility grant after every reinstall. That's expected.
+# - Signed with a stable local identity (no Apple Developer account
+#   involved yet — that's still the eventual Phase 2: real Developer ID +
+#   notarization, once enrolled). That's enough for /Applications — unlike
+#   /usr/local/bin, it doesn't get killed at launch by AppleSystemPolicy on
+#   this macOS version (confirmed empirically).
+# - Signing identity defaults to a self-signed local cert ("Quill Local
+#   Dev" — create once via Keychain Access > Certificate Assistant >
+#   Create a Certificate > Self Signed Root > Code Signing) rather than
+#   ad-hoc (`-s -`). Ad-hoc's identity is derived from the binary's own
+#   hash, so it changes on every rebuild and macOS treats each reinstall as
+#   a brand-new, unrecognized app — re-prompting for both Accessibility
+#   *and* Keychain access every time. A stable identity fixes both: after
+#   one re-grant on the first build with the new identity, later rebuilds
+#   keep the same identity and stop re-prompting. Override via
+#   QUILL_SIGN_IDENTITY if your local cert has a different name.
 
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
 APP_NAME="Quill"
 BUNDLE_ID="com.tamiliniyan.quill"
+SIGN_IDENTITY="${QUILL_SIGN_IDENTITY:-Quill Local Dev}"
 DIST="dist"
 APP="${DIST}/${APP_NAME}.app"
 
@@ -23,7 +34,7 @@ echo "→ building release binary..."
 swift build -c release
 
 echo "→ re-signing build output (works around swift build's occasionally-invalid auto signature)..."
-codesign --force -s - .build/release/quill
+codesign --force -s "$SIGN_IDENTITY" .build/release/quill
 
 echo "→ assembling ${APP}..."
 rm -rf "$APP"
@@ -33,7 +44,7 @@ cp Resources/Info.plist "$APP/Contents/Info.plist"
 cp Resources/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
 
 echo "→ signing ${APP}..."
-codesign --force --deep -s - "$APP"
+codesign --force --deep -s "$SIGN_IDENTITY" "$APP"
 
 echo "→ verifying..."
 codesign -dv "$APP" 2>&1 | head -5
