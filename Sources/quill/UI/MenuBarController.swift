@@ -19,6 +19,11 @@ final class MenuBarController {
     /// from here, this class only handles the menu itself.
     var onModelNeedsDownload: ((TranscriptionModel) -> Void)?
 
+    /// "Open Quill" — shows the full Dictation/Insights/Style/Settings
+    /// window. Quill.swift owns the actual window; this class just fires
+    /// the request.
+    var onOpenMain: (() -> Void)?
+
     init(modelID: String) {
         self.modelID = modelID
         self.statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -38,6 +43,16 @@ final class MenuBarController {
         let modelItem = NSMenuItem(title: "Switch Model", action: nil, keyEquivalent: "")
         modelItem.submenu = modelSubmenu
         menu.addItem(modelItem)
+
+        menu.addItem(.separator())
+
+        let openMain = NSMenuItem(
+            title: "Open Quill",
+            action: #selector(openMainClicked),
+            keyEquivalent: ""
+        )
+        openMain.target = self
+        menu.addItem(openMain)
 
         menu.addItem(.separator())
 
@@ -164,6 +179,10 @@ final class MenuBarController {
         // Menu-bar status icons are nominally 18pt tall; size the SVG to match.
         image.size = NSSize(width: 16, height: 16)
         return image
+    }
+
+    @objc private func openMainClicked() {
+        onOpenMain?()
     }
 
     @objc private func quitClicked() {

@@ -108,6 +108,7 @@ struct Run: ParsableCommand {
                     menuBar.updateModel(model.id)
                 }
             }
+            menuBar.onOpenMain = { mainWindow.showMain() }
         }
 
         do {
@@ -138,6 +139,7 @@ struct Run: ParsableCommand {
         }
         let onboarding = MainActor.assumeIsolated { OnboardingWindow(state: state) }
         let mainWindow = MainActor.assumeIsolated { MainWindow() }
+        MainActor.assumeIsolated { menuBar.onOpenMain = { mainWindow.showMain() } }
 
         let monitor = HotkeyMonitor(debug: debugHotkey)
         let capture = AudioCapture()
