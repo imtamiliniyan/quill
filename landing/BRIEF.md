@@ -50,7 +50,9 @@ Nav: floating white pill (`border-radius: 22px`), sticky at top with a small mar
 Reference is Next.js + Tailwind + TypeScript. Two honest options:
 
 - **Recommended: stay plain HTML/CSS/vanilla JS**, matching the current `landing/` approach and the existing plan's reasoning — one page with a form doesn't need a framework's build step or dependency surface, and it stays a zero-build static deploy on Vercel. Structurally recreate the sections below with plain markup + the tokens above.
-- **Alternative:** if Antigravity's own defaults strongly prefer scaffolding Next.js/Tailwind, that's acceptable too — just keep it a static export (`next export` / no server-side data needs), since there's no backend here beyond the Formspree waitlist form.
+- **Alternative:** if Antigravity's own defaults strongly prefer scaffolding Next.js/Tailwind, that's acceptable too.
+
+**Waitlist form + backend are Antigravity's responsibility, not this brief's.** Capture **name + email** (not email-only like the current page's Formspree stub) so there's something to address a launch email to. Storage, validation, and the eventual "we're live" notification send are out of scope here — Antigravity owns that end to end. This brief only covers the form's visual placement/styling within the page (see Hero and Final CTA sections below), not its backend.
 
 Either way: self-contained, no server, deploys as a static site.
 
@@ -74,7 +76,7 @@ No "Log In" — Quill has no account system, ever. Don't add one to match the re
   > *nothing leaves this Mac.*
 - **Subhead:**
   > Quill transcribes on-device and types directly into whatever you're focused on. No subscription, no account, no audio ever leaving your Mac.
-- **Primary CTA** (dark pill button): `Join the Waitlist`
+- **Primary CTA** (dark pill button): `Join the Waitlist` — opens/scrolls to the waitlist form, which takes **name + email** (two fields, not email-only). Field styling/placement is this brief's concern; the actual capture/storage/notify-on-launch backend is Antigravity's, per Section 2 above.
 - **"Works with" row**, small caption + icon row: `Works in every app you already use` — reuse the existing floating-icon glyph set (Messages, Slack, Notes, Terminal, etc.) already built in the current landing page, rendered small and inline rather than as the floating scattered cluster.
 - **Four pill chips** under the CTA (matches reference's "Draft e-mails / Find a file / Organize inbox / Sort by priority" row):
   `Dictate an email` · `Chat on Slack` · `Drop a quick note` · `Write code comments`
@@ -162,6 +164,6 @@ Chip row beneath (replaces reference's "free trial / 30-second setup / money-bac
 ## 5. Verification once built
 
 - Visually compare section-by-section against this brief (not against the reference site directly) to confirm intent was followed, not the letter of Aceai's design.
-- Confirm the waitlist form still posts to the same Formspree endpoint as the current page (still a placeholder `YOUR_FORM_ID` — needs a real form ID either way, independent of this redesign).
+- Confirm the waitlist form submits name + email to whatever Antigravity wired up on the backend — this replaces the current page's Formspree stub (`YOUR_FORM_ID`, email-only) entirely rather than reusing it.
 - Check mobile layout — reference is responsive; new build should collapse the same way the current `landing/styles.css` already does (nav links hide under 768px, form stacks under 640px) unless redesigned intentionally.
 - Run it past a private/incognito browser check once deployed, same as any other landing page change.
