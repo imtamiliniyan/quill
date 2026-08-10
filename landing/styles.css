@@ -1643,19 +1643,36 @@ body {
 }
 
 /* Responsive breakdowns (collapses) */
+/* ─────────────────────────────────────────────────
+   RESPONSIVE — 960px (large tablet / small desktop)
+───────────────────────────────────────────────── */
 @media (max-width: 960px) {
   .hero h1 {
     font-size: 60px;
   }
+  .feature-block {
+    gap: 40px;
+  }
 }
 
+/* ─────────────────────────────────────────────────
+   RESPONSIVE — 768px (tablet)
+───────────────────────────────────────────────── */
 @media (max-width: 768px) {
+  /* Nav */
   .topbar {
     width: calc(100% - 24px);
     border-radius: 18px;
+    padding: 10px 16px;
   }
   .nav-links {
     display: none;
+  }
+
+  /* Hero */
+  .hero {
+    padding-top: 120px;
+    padding-bottom: 40px;
   }
   .hero h1 {
     font-size: 48px;
@@ -1663,21 +1680,53 @@ body {
   .hero-sub {
     font-size: 17px;
   }
+
+  /* Works-with row — stack vertically, wrap icons */
+  .works-with-row {
+    flex-direction: column;
+    gap: 12px;
+    margin: 32px 0;
+  }
+  .works-with-icons {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  /* Steps */
   .steps-grid {
     grid-template-columns: 1fr;
     gap: 16px;
   }
+
+  /* Feature blocks */
   .feature-block {
     flex-direction: column !important;
     gap: 30px;
     padding: 40px 0;
   }
+  .feature-text {
+    max-width: 100%;
+  }
+  .feature-visual {
+    width: 100%;
+  }
+
+  /* Section headings */
+  .section-label {
+    font-size: 11px;
+  }
+
+  /* Trust grid */
   .trust-grid {
     grid-template-columns: 1fr;
     gap: 30px;
   }
+
+  /* Mockup window */
   .mockup-window {
-    height: 480px;
+    height: auto;
+    min-height: 420px;
     flex-direction: column;
   }
   .mockup-sidebar {
@@ -1734,18 +1783,77 @@ body {
   .stats-footer {
     display: none;
   }
+
+  /* Pricing */
+  .pricing-grid {
+    grid-template-columns: 1fr;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* FAQ */
+  .faq-list {
+    max-width: 100%;
+  }
 }
 
+/* ─────────────────────────────────────────────────
+   RESPONSIVE — 640px (mobile)
+───────────────────────────────────────────────── */
 @media (max-width: 640px) {
+  /* Spacing */
   .section-padding {
     padding: 60px 0;
   }
+  .container {
+    padding: 0 16px;
+  }
+
+  /* Hero */
   .hero {
-    padding-top: 120px;
+    padding-top: 110px;
   }
   .hero h1 {
-    font-size: 38px;
+    font-size: 36px;
+    letter-spacing: -0.01em;
   }
+  .hero-sub {
+    font-size: 16px;
+    margin-bottom: 28px;
+  }
+
+  /* Section headings */
+  h2 {
+    font-size: 30px !important;
+  }
+
+  /* Works-with icons — smaller on mobile */
+  .works-with-icon {
+    width: 20px;
+    height: 20px;
+  }
+  .works-with-caption {
+    font-size: 10px;
+  }
+
+  /* Pill chips — scrollable row */
+  .pill-chips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    justify-content: flex-start;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .pill-chips::-webkit-scrollbar {
+    display: none;
+  }
+  .pill-chip {
+    flex-shrink: 0;
+  }
+
+  /* Waitlist form — stacked */
   .waitlist-form {
     flex-direction: column;
     gap: 10px;
@@ -1756,6 +1864,71 @@ body {
   }
   .waitlist-form button {
     width: 100%;
+  }
+  .waitlist-form-container {
+    max-width: 100%;
+  }
+
+  /* Mockup content text */
+  .mockup-row-text {
+    font-size: 13px;
+  }
+  .mockup-row-time {
+    font-size: 10px;
+  }
+
+  /* Feature blocks */
+  .feature-block {
+    padding: 28px 0;
+  }
+
+  /* Final CTA card */
+  .final-cta-card {
+    padding: 40px 20px;
+    border-radius: 20px;
+  }
+  .final-cta-card h2 {
+    font-size: 30px !important;
+  }
+  .final-cta-card p {
+    font-size: 16px;
+  }
+  .final-cta-form-wrapper {
+    max-width: 100%;
+  }
+  .final-cta-chips {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  /* Pricing */
+  .pricing-card {
+    padding: 24px;
+  }
+  .price {
+    font-size: 42px;
+  }
+
+  /* FAQ */
+  .faq-trigger {
+    font-size: 16px;
+    padding: 18px 0;
+  }
+
+  /* Footer */
+  .footer-bar {
+    flex-direction: column;
+    gap: 20px;
+    text-align: center;
+  }
+  .footer-links {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 16px;
+  }
+}
+
   }
   .final-cta-card h2 {
     font-size: 32px;
