@@ -78,4 +78,18 @@ enum DictationHistory {
         try? "".write(to: fileURL, atomically: true, encoding: .utf8)
         NotificationCenter.default.post(name: .quillHistoryUpdated, object: nil)
     }
+
+    /// Removes a single entry (matched by timestamp — effectively unique
+    /// per dictation). Rewrites the whole file; history is small enough
+    /// (plain text, one line per dictation) that this is cheap.
+    static func delete(_ entry: DictationEntry) {
+        let remaining = loadAll().filter { $0.timestamp != entry.timestamp }
+        let lines = remaining.reversed().compactMap { e -> String? in
+            guard let data = try? encoder.encode(e) else { return nil }
+            return String(data: data, encoding: .utf8)
+        }
+        try? (lines.joined(separator: "\n") + (lines.isEmpty ? "" : "\n"))
+            .write(to: fileURL, atomically: true, encoding: .utf8)
+        NotificationCenter.default.post(name: .quillHistoryUpdated, object: nil)
+    }
 }
