@@ -29,18 +29,24 @@ struct InsightsView: View {
                 emptyState
             } else {
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 18) {
-                        HStack(spacing: 12) {
-                            statCard(value: "\(stats.totalWords)", label: "total words")
-                            statCard(value: "\(stats.wordsPerMinute)", label: "words / min")
-                            statCard(value: "\(stats.streak)", label: stats.streak == 1 ? "day streak" : "day streak")
+                    VStack(alignment: .leading, spacing: 16) {
+                        HStack(alignment: .top, spacing: 12) {
+                            wpmCard
+                            fixesLockedCard
+                            totalWordsCard
                         }
 
                         if !appBreakdown.isEmpty {
                             VStack(alignment: .leading, spacing: 12) {
-                                Text("Where you dictate")
-                                    .font(.system(size: 13, weight: .semibold))
-                                    .foregroundColor(.white)
+                                HStack {
+                                    Text("Where you dictate")
+                                        .font(.system(size: 13, weight: .semibold))
+                                        .foregroundColor(.white)
+                                    Spacer()
+                                    Text("\(appBreakdown.count) apps used")
+                                        .font(.system(size: 11))
+                                        .foregroundColor(.white.opacity(0.4))
+                                }
                                 VStack(spacing: 10) {
                                     ForEach(appBreakdown.prefix(6), id: \.name) { item in
                                         appRow(name: item.name, count: item.count)
@@ -50,6 +56,10 @@ struct InsightsView: View {
                             .padding(18)
                             .quillCard()
                         }
+
+                        StreakCalendarView(entries: entries, currentStreak: stats.streak)
+                            .padding(18)
+                            .quillCard()
 
                         Label("Computed entirely from history.jsonl on this Mac — nothing here is sent anywhere.", systemImage: "lock.shield")
                             .font(.system(size: 11))
@@ -66,19 +76,99 @@ struct InsightsView: View {
         }
     }
 
-    private func statCard(value: String, label: String) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(value)
-                .font(.system(size: 28, weight: .bold))
-                .foregroundColor(.white)
-            Text(label)
-                .font(.system(size: 11))
-                .foregroundColor(.white.opacity(0.5))
+    // MARK: - Top cards
+
+    /// A gauge, not a percentile — Wispr's "Top 0.5%" needs comparing
+    /// against every other user, which would mean collecting usage data
+    /// from people who never agreed to that. We only ever know about this
+    /// Mac, so the gauge shows the number against a fixed scale instead of
+    /// a fabricated ranking.
+    private var wpmCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("WORDS PER MINUTE")
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundColor(.white.opacity(0.4))
+
+            ZStack {
+                Circle()
+                    .trim(from: 0, to: 0.75)
+                    .stroke(Color.white.opacity(0.08), style: StrokeStyle(lineWidth: 7, lineCap: .round))
+                    .rotationEffect(.degrees(135))
+                Circle()
+                    .trim(from: 0, to: 0.75 * min(Double(stats.wordsPerMinute) / 220.0, 1.0))
+                    .stroke(Theme.accent, style: StrokeStyle(lineWidth: 7, lineCap: .round))
+                    .rotationEffect(.degrees(135))
+                Text("\(stats.wordsPerMinute)")
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundColor(.white)
+            }
+            .frame(width: 64, height: 64)
+            .frame(maxWidth: .infinity)
         }
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
         .quillCard()
     }
+
+    /// Preview of the Style/BYOK feature (not built yet) — shown locked
+    /// rather than hidden, so it's clear what connecting an API key will
+    /// unlock, per the plan: rewriting is entirely opt-in, off until a key
+    /// is added, and never touches text without one.
+    private var fixesLockedCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 5) {
+                Image(systemName: "lock.fill")
+                    .font(.system(size: 10))
+                    .foregroundColor(.white.opacity(0.35))
+                Text("FIXES MADE BY QUILL")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.4))
+            }
+            Text("—")
+                .font(.system(size: 26, weight: .bold))
+                .foregroundColor(.white.opacity(0.25))
+            Spacer(minLength: 0)
+            Text("Connect an OpenAI or Anthropic key in Style to enable grammar and tone fixes.")
+                .font(.system(size: 11))
+                .foregroundColor(.white.opacity(0.4))
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(minHeight: 130)
+        .quillCard()
+    }
+
+    private var totalWordsCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("\(stats.totalWords)")
+                .font(.system(size: 26, weight: .bold))
+                .foregroundColor(.white)
+            Text("TOTAL WORDS DICTATED")
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundColor(.white.opacity(0.4))
+            Spacer(minLength: 8)
+            Divider().opacity(0.1)
+            HStack(spacing: 6) {
+                Image(systemName: "desktopcomputer")
+                    .font(.system(size: 11))
+                    .foregroundColor(.white.opacity(0.4))
+                Text("Desktop")
+                    .font(.system(size: 11))
+                    .foregroundColor(.white.opacity(0.6))
+                Spacer()
+                Text("\(stats.totalWords)")
+                    .font(.system(size: 11))
+                    .foregroundColor(.white.opacity(0.4))
+            }
+        }
+        .padding(18)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(minHeight: 130)
+        .quillCard()
+    }
+
+    // MARK: - App breakdown
 
     private func appRow(name: String, count: Int) -> some View {
         let fraction = appBreakdown.first.map { Double(count) / Double($0.count) } ?? 0
