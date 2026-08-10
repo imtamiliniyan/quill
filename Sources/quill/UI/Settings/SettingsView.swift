@@ -107,6 +107,9 @@ private struct SystemSettingsView: View {
 }
 
 private struct PrivacySettingsView: View {
+    @State private var confirmingClear = false
+    @State private var historyCount = DictationHistory.loadAll().count
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Label("Everything stays on this Mac", systemImage: "lock.shield.fill")
@@ -131,7 +134,41 @@ private struct PrivacySettingsView: View {
             .font(.system(size: 12))
             .foregroundColor(.white.opacity(0.55))
 
+            Divider().opacity(0.15)
+
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Dictation history")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(.white)
+                    Text("\(historyCount) \(historyCount == 1 ? "entry" : "entries") stored locally")
+                        .font(.system(size: 11))
+                        .foregroundColor(.white.opacity(0.5))
+                }
+                Spacer()
+                Button(role: .destructive) {
+                    confirmingClear = true
+                } label: {
+                    Text("Clear history")
+                }
+                .disabled(historyCount == 0)
+            }
+            .confirmationDialog(
+                "Delete all \(historyCount) dictation history entries? This can't be undone.",
+                isPresented: $confirmingClear,
+                titleVisibility: .visible
+            ) {
+                Button("Delete History", role: .destructive) {
+                    DictationHistory.clear()
+                    historyCount = 0
+                }
+                Button("Cancel", role: .cancel) {}
+            }
+
             Spacer()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .quillHistoryUpdated)) { _ in
+            historyCount = DictationHistory.loadAll().count
         }
     }
 }

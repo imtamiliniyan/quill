@@ -72,35 +72,15 @@ struct MainView: View {
     @ViewBuilder
     private var detail: some View {
         switch state.selection {
-        case .dictation: DictationComingSoonView()
-        case .insights: InsightsComingSoonView()
+        case .dictation: DictationView()
+        case .insights: InsightsView()
         case .style: StyleComingSoonView()
         case nil: EmptyView()
         }
     }
 }
 
-// MARK: - Placeholders (Phase 3 / Phase 4 fill these in)
-
-private struct DictationComingSoonView: View {
-    var body: some View {
-        ComingSoonView(
-            icon: "mic",
-            title: "Dictation history",
-            body: "Every dictation you make will show up here, grouped by day — read straight from a file on this Mac, never uploaded anywhere."
-        )
-    }
-}
-
-private struct InsightsComingSoonView: View {
-    var body: some View {
-        ComingSoonView(
-            icon: "chart.bar",
-            title: "Insights",
-            body: "Word counts, speaking speed, and streaks — all computed locally from your own history file."
-        )
-    }
-}
+// MARK: - Placeholders (Phase 4 fills this in)
 
 private struct StyleComingSoonView: View {
     var body: some View {

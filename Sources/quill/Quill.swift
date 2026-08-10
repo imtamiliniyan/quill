@@ -305,7 +305,7 @@ private func attachDictationHandlers(
             }
             Task {
                 let started = Date()
-                let transcriberNow = await MainActor.run { box.current }
+                let (transcriberNow, modelIDNow) = await MainActor.run { (box.current, box.modelID) }
                 do {
                     let text = try await transcriberNow.transcribe(samples)
                     let elapsed = Date().timeIntervalSince(started)
@@ -316,6 +316,7 @@ private func attachDictationHandlers(
                         TextInjector.inject(text)
                         overlay?.hide()
                         menuBar.setRecording(false)
+                        DictationHistory.append(text: text, model: modelIDNow, durationSeconds: seconds)
                     }
                 } catch {
                     FileHandle.standardError.write(Data("transcription failed: \(error)\n".utf8))
