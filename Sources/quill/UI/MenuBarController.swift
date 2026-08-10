@@ -6,15 +6,23 @@ import AppKit
 @MainActor
 final class MenuBarController {
     private let statusItem: NSStatusItem
+    private let menu: NSMenu
     private let modelLabel: NSMenuItem
     private let stateLabel: NSMenuItem
+    private let modelSubmenu: NSMenu
     private var modelID: String
+    private var box: TranscriberBox?
+
+    /// Called when the user picks a model that isn't downloaded yet and
+    /// confirms — Quill.swift owns opening the app window / showing progress
+    /// from here, this class only handles the menu itself.
+    var onModelNeedsDownload: ((TranscriptionModel) -> Void)?
 
     init(modelID: String) {
         self.modelID = modelID
         self.statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
 
-        let menu = NSMenu()
+        menu = NSMenu()
         menu.autoenablesItems = false
 
         stateLabel = NSMenuItem(title: "idle · hold fn to dictate", action: nil, keyEquivalent: "")
@@ -24,6 +32,11 @@ final class MenuBarController {
         modelLabel = NSMenuItem(title: "model: \(modelID)", action: nil, keyEquivalent: "")
         modelLabel.isEnabled = false
         menu.addItem(modelLabel)
+
+        modelSubmenu = NSMenu()
+        let modelItem = NSMenuItem(title: "Switch Model", action: nil, keyEquivalent: "")
+        modelItem.submenu = modelSubmenu
+        menu.addItem(modelItem)
 
         menu.addItem(.separator())
 
@@ -37,6 +50,65 @@ final class MenuBarController {
 
         statusItem.menu = menu
         configureButton(recording: false)
+    }
+
+    /// Wires the "Switch Model" submenu to a live TranscriberBox. Call once
+    /// the daemon has an actual running transcriber to swap.
+    func attachModelSwitcher(box: TranscriberBox) {
+        self.box = box
+        rebuildModelSubmenu()
+    }
+
+    private func rebuildModelSubmenu() {
+        modelSubmenu.removeAllItems()
+        for model in ModelRegistry.shared {
+            let item = NSMenuItem(
+                title: model.displayName,
+                action: #selector(modelSelected(_:)),
+                keyEquivalent: ""
+            )
+            item.target = self
+            item.representedObject = model.id
+            item.state = (model.id == modelID) ? .on : .off
+            modelSubmenu.addItem(item)
+        }
+    }
+
+    @objc private func modelSelected(_ sender: NSMenuItem) {
+        guard let id = sender.representedObject as? String,
+              let model = ModelRegistry.find(id),
+              id != modelID
+        else { return }
+
+        if ModelAvailability.isDownloaded(model) {
+            switchToModel(model)
+            return
+        }
+
+        let alert = NSAlert()
+        alert.messageText = "Download \(model.displayName)?"
+        alert.informativeText = "\(model.sizeMB) MB — not on this Mac yet. Download and switch to it?"
+        alert.addButton(withTitle: "Download")
+        alert.addButton(withTitle: "Cancel")
+        if alert.runModal() == .alertFirstButtonReturn {
+            onModelNeedsDownload?(model)
+        }
+    }
+
+    /// Switches a model already confirmed present on disk — fast (just
+    /// loads into memory), so no progress UI needed.
+    func switchToModel(_ model: TranscriptionModel) {
+        guard let box else { return }
+        let transcriber = TranscriberFactory.make(for: model)
+        Task {
+            do {
+                try await transcriber.warmUp()
+                box.switchTo(transcriber, modelID: model.id)
+                updateModel(model.id)
+            } catch {
+                FileHandle.standardError.write(Data("model switch failed: \(error)\n".utf8))
+            }
+        }
     }
 
     func setRecording(_ recording: Bool) {
@@ -53,6 +125,7 @@ final class MenuBarController {
     func updateModel(_ id: String) {
         modelID = id
         modelLabel.title = "model: \(id)"
+        rebuildModelSubmenu()
     }
 
     private func configureButton(recording: Bool) {

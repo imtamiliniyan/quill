@@ -99,11 +99,21 @@ struct Run: ParsableCommand {
             capture.onLevel = { level in overlay.pushLevel(level) }
         }
         let menuBar = MainActor.assumeIsolated { MenuBarController(modelID: chosenModel.id) }
+        let box = MainActor.assumeIsolated { TranscriberBox(transcriber: transcriber, modelID: chosenModel.id) }
+        let mainWindow = MainActor.assumeIsolated { MainWindow() }
+        MainActor.assumeIsolated {
+            menuBar.attachModelSwitcher(box: box)
+            menuBar.onModelNeedsDownload = { model in
+                mainWindow.showDownload(model: model, box: box) {
+                    menuBar.updateModel(model.id)
+                }
+            }
+        }
 
         do {
             try attachDictationHandlers(
                 monitor: monitor, capture: capture, overlay: overlay,
-                menuBar: menuBar, transcriber: transcriber, dumpWav: dumpWav
+                menuBar: menuBar, box: box, dumpWav: dumpWav
             )
         } catch {
             FileHandle.standardError.write(Data("failed to register hotkey tap: \(error)\n".utf8))
@@ -127,6 +137,7 @@ struct Run: ParsableCommand {
             MenuBarController(modelID: state.selectedModel?.id ?? "not set")
         }
         let onboarding = MainActor.assumeIsolated { OnboardingWindow(state: state) }
+        let mainWindow = MainActor.assumeIsolated { MainWindow() }
 
         let monitor = HotkeyMonitor(debug: debugHotkey)
         let capture = AudioCapture()
@@ -136,12 +147,29 @@ struct Run: ParsableCommand {
         }
         let dumpWav = self.dumpWav
 
+        var box: TranscriberBox?
+
         func startDictation(model: TranscriptionModel, transcriber: Transcriber) {
             MainActor.assumeIsolated { menuBar.updateModel(model.id) }
+            let liveBox = MainActor.assumeIsolated { () -> TranscriberBox in
+                if let existing = box {
+                    existing.switchTo(transcriber, modelID: model.id)
+                    return existing
+                }
+                let newBox = TranscriberBox(transcriber: transcriber, modelID: model.id)
+                box = newBox
+                menuBar.attachModelSwitcher(box: newBox)
+                menuBar.onModelNeedsDownload = { downloadModel in
+                    mainWindow.showDownload(model: downloadModel, box: newBox) {
+                        menuBar.updateModel(downloadModel.id)
+                    }
+                }
+                return newBox
+            }
             do {
                 try attachDictationHandlers(
                     monitor: monitor, capture: capture, overlay: overlay,
-                    menuBar: menuBar, transcriber: transcriber, dumpWav: dumpWav
+                    menuBar: menuBar, box: liveBox, dumpWav: dumpWav
                 )
                 FileHandle.standardError.write(Data("listening on fn hold · model: \(model.id)\n".utf8))
             } catch {
@@ -203,7 +231,7 @@ private func attachDictationHandlers(
     capture: AudioCapture,
     overlay: RecordingOverlay?,
     menuBar: MenuBarController,
-    transcriber: Transcriber,
+    box: TranscriberBox,
     dumpWav: Bool
 ) throws {
     try monitor.start { event in
@@ -248,8 +276,9 @@ private func attachDictationHandlers(
             }
             Task {
                 let started = Date()
+                let transcriberNow = await MainActor.run { box.current }
                 do {
-                    let text = try await transcriber.transcribe(samples)
+                    let text = try await transcriberNow.transcribe(samples)
                     let elapsed = Date().timeIntervalSince(started)
                     FileHandle.standardError.write(Data(
                         String(format: "→ %.2fs · %@\n", elapsed, text).utf8

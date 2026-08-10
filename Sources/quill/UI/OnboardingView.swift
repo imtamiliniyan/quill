@@ -1,7 +1,5 @@
 import SwiftUI
 
-private let accent = Color(red: 181 / 255, green: 209 / 255, blue: 255 / 255)
-private let bg = Color(red: 0.075, green: 0.078, blue: 0.086)
 
 struct OnboardingView: View {
     @ObservedObject var state: OnboardingState
@@ -26,7 +24,7 @@ struct OnboardingView: View {
         }
         .padding(28)
         .frame(width: 480, height: 580)
-        .background(bg)
+        .background(Theme.background)
         .foregroundColor(.white)
     }
 
@@ -87,7 +85,7 @@ private struct PermissionRow: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 8) {
                 Image(systemName: granted ? "checkmark.circle.fill" : "circle")
-                    .foregroundColor(granted ? accent : .white.opacity(0.4))
+                    .foregroundColor(granted ? Theme.accent : .white.opacity(0.4))
                 Text(title)
                     .font(.system(size: 15, weight: .medium))
                 Spacer()
@@ -99,7 +97,7 @@ private struct PermissionRow: View {
             if !granted {
                 Button(actionTitle, action: action)
                     .buttonStyle(.borderedProminent)
-                    .tint(accent)
+                    .tint(Theme.accent)
             }
         }
         .padding(16)
@@ -124,7 +122,7 @@ private struct ModelPickerStep: View {
             }
             Button("Continue") { state.beginDownload() }
                 .buttonStyle(.borderedProminent)
-                .tint(accent)
+                .tint(Theme.accent)
                 .disabled(state.selectedModel == nil)
                 .padding(.top, 8)
         }
@@ -140,7 +138,7 @@ private struct ModelRow: View {
         Button(action: onSelect) {
             HStack {
                 Image(systemName: selected ? "largecircle.fill.circle" : "circle")
-                    .foregroundColor(selected ? accent : .white.opacity(0.4))
+                    .foregroundColor(selected ? Theme.accent : .white.opacity(0.4))
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: 6) {
                         Text(model.displayName)
@@ -148,7 +146,7 @@ private struct ModelRow: View {
                         if model.recommended {
                             Text("RECOMMENDED")
                                 .font(.system(size: 9, weight: .bold))
-                                .foregroundColor(accent)
+                                .foregroundColor(Theme.accent)
                         }
                     }
                     Text("\(model.sizeMB) MB · \(model.languages.joined(separator: ", "))")
@@ -176,7 +174,7 @@ private struct DownloadingStep: View {
                 .font(.system(size: 14, weight: .medium))
             if let progress = state.downloadProgress {
                 ProgressView(value: progress)
-                    .tint(accent)
+                    .tint(Theme.accent)
                 Text("\(Int(progress * 100))%")
                     .font(.system(size: 12))
                     .foregroundColor(.white.opacity(0.6))
@@ -207,13 +205,13 @@ private struct DoneStep: View {
         VStack(spacing: 16) {
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 40))
-                .foregroundColor(accent)
+                .foregroundColor(Theme.accent)
             Text("Hold fn anywhere and start talking.")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.8))
             Button("Start Dictating") { onFinished() }
                 .buttonStyle(.borderedProminent)
-                .tint(accent)
+                .tint(Theme.accent)
         }
     }
 }
