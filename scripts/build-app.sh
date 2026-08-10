@@ -47,7 +47,13 @@ echo "→ signing ${APP}..."
 codesign --force --deep -s "$SIGN_IDENTITY" "$APP"
 
 echo "→ verifying..."
-codesign -dv "$APP" 2>&1 | head -5
+# `|| true` on the whole pipeline: codesign can still be writing when `head`
+# closes its end after 5 lines, which sends codesign SIGPIPE (exit 141).
+# Under `set -euo pipefail` that silently aborted the entire script right
+# here — before the .dmg packaging below ever ran — timing-dependent, so it
+# passed some runs and not others. Confirmed via exit code 141 after dist/Quill.dmg
+# was found still dated from a much older build despite dist/Quill.app rebuilding fine.
+(codesign -dv "$APP" 2>&1 | head -5) || true
 "$APP/Contents/MacOS/quill" doctor || true
 
 echo "→ building .dmg..."
