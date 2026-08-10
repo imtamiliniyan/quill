@@ -109,9 +109,16 @@ struct Install: ParsableCommand {
     }
 
     private func resolveBinaryPath() throws -> String {
-        // /usr/local/bin/quill is the canonical install path. Honor a real
-        // location if running from elsewhere (e.g. dev).
-        let candidate = "/usr/local/bin/quill"
+        // ~/bin/quill is the canonical install path — NOT /usr/local/bin.
+        // On this machine (and apparently this macOS version generally),
+        // ad-hoc-signed binaries placed in /usr/local/bin get killed at
+        // launch by AppleSystemPolicy ("load code signature error 2"),
+        // even with a valid signature and correct ownership. The identical
+        // binary runs fine from any user-owned directory (~/bin, /tmp,
+        // etc.) — /usr/local/bin specifically seems to get extra scrutiny
+        // as a shared system PATH location. Confirmed empirically.
+        let home = FileManager.default.homeDirectoryForCurrentUser.path
+        let candidate = "\(home)/bin/quill"
         if FileManager.default.isExecutableFile(atPath: candidate) {
             return candidate
         }
@@ -119,12 +126,12 @@ struct Install: ParsableCommand {
         let argv0 = CommandLine.arguments.first ?? "quill"
         if argv0.hasPrefix("/"), FileManager.default.isExecutableFile(atPath: argv0) {
             FileHandle.standardError.write(Data(
-                "note: /usr/local/bin/quill not found; using \(argv0)\n".utf8
+                "note: \(candidate) not found; using \(argv0)\n".utf8
             ))
             return argv0
         }
         FileHandle.standardError.write(Data(
-            "couldn't locate the quill binary. install it to /usr/local/bin/quill first.\n".utf8
+            "couldn't locate the quill binary. install it to \(candidate) first.\n".utf8
         ))
         throw ExitCode(1)
     }

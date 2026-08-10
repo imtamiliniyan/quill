@@ -12,7 +12,7 @@ quill install --launch-at-login   # optional — runs in the background on login
 
 **Requires:** macOS 14+ on Apple Silicon (M1 or newer). Transcription runs on the Apple Neural Engine via CoreML — so the installer refuses to run on Intel.
 
-The installer drops the binary in `/usr/local/bin/quill`. Builds are unsigned for now, so the installer strips the quarantine xattr — once you've inspected the script you'll see exactly what it does.
+The installer drops the binary in `~/bin/quill` (not `/usr/local/bin` — on current macOS, ad-hoc-signed binaries placed there get killed at launch by the system's security policy, even with a valid signature; user-owned directories don't get that extra scrutiny). Builds are unsigned for now, so the installer strips the quarantine xattr — once you've inspected the script you'll see exactly what it does. Make sure `~/bin` is on your `PATH` (the installer will tell you if it isn't).
 
 ## How to use
 

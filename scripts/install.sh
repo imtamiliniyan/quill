@@ -2,9 +2,15 @@
 # quill installer.
 #   curl -fsSL https://imtamiliniyan.github.io/quill/install.sh | sh
 #
-# Fetches the latest arm64 macOS binary from GitHub Releases, drops it
-# in /usr/local/bin, and strips the quarantine xattr so Gatekeeper doesn't
-# block the unsigned binary.
+# Fetches the latest arm64 macOS binary from GitHub Releases, drops it in
+# ~/bin, and strips the quarantine xattr so Gatekeeper doesn't block the
+# unsigned binary.
+#
+# Deliberately NOT /usr/local/bin: on current macOS, ad-hoc-signed binaries
+# placed there get killed at launch by AppleSystemPolicy ("load code
+# signature error 2") even with a valid signature — /usr/local/bin gets
+# extra scrutiny as a shared system PATH location. The identical binary
+# runs fine from any user-owned directory. Confirmed empirically.
 #
 # Apple Silicon only — WhisperKit uses the Apple Neural Engine via CoreML,
 # which only ships on M-series chips.
@@ -13,7 +19,7 @@ set -euo pipefail
 
 REPO="imtamiliniyan/quill"
 BIN_NAME="quill"
-INSTALL_DIR="/usr/local/bin"
+INSTALL_DIR="$HOME/bin"
 ASSET="quill-macos-arm64.tar.gz"
 
 red()    { printf "\033[31m%s\033[0m\n" "$*" >&2; }
@@ -75,21 +81,23 @@ chmod +x "$TMP/${BIN_NAME}"
 # 4. strip quarantine so Gatekeeper lets the unsigned binary run
 xattr -d com.apple.quarantine "$TMP/${BIN_NAME}" 2>/dev/null || true
 
-# 5. install
-SUDO=""
-if [ ! -w "$INSTALL_DIR" ]; then
-    if [ ! -d "$INSTALL_DIR" ]; then
-        dim "→ creating ${INSTALL_DIR} (sudo)..."
-        sudo mkdir -p "$INSTALL_DIR"
-    fi
-    SUDO="sudo"
-fi
-
-dim "→ installing to ${INSTALL_DIR}/${BIN_NAME}..."
-$SUDO mv "$TMP/${BIN_NAME}" "${INSTALL_DIR}/${BIN_NAME}"
-$SUDO chmod +x "${INSTALL_DIR}/${BIN_NAME}"
+# 5. install — user-owned directory, no sudo needed
+mkdir -p "$INSTALL_DIR"
+mv "$TMP/${BIN_NAME}" "${INSTALL_DIR}/${BIN_NAME}"
+chmod +x "${INSTALL_DIR}/${BIN_NAME}"
 
 green "✓ quill ${TAG} installed at ${INSTALL_DIR}/${BIN_NAME}"
+
+# 6. PATH check
+case ":$PATH:" in
+    *":$INSTALL_DIR:"*) ;;
+    *)
+        echo
+        red "${INSTALL_DIR} isn't on your PATH yet. Add this to ~/.zshrc:"
+        echo "  export PATH=\"\$HOME/bin:\$PATH\""
+        ;;
+esac
+
 echo
 echo "next:"
 echo "  quill setup                       # grant mic + accessibility"
