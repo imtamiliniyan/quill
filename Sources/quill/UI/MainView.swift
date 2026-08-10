@@ -28,17 +28,20 @@ struct MainView: View {
     @ObservedObject var state: AppViewState
 
     var body: some View {
-        NavigationSplitView {
+        // A plain HStack, not NavigationSplitView — NavigationSplitView
+        // auto-adds a sidebar show/hide toggle that turned out to be part
+        // of the view itself, not a real NSToolbarItem, so
+        // `.toolbar(removing: .sidebarToggle)` had nothing to act on in
+        // this AppKit-hosted NSWindow (no SwiftUI Scene/toolbar behind it).
+        // A plain HStack has no such built-in chrome to fight — the
+        // sidebar here is never meant to collapse anyway.
+        HStack(spacing: 0) {
             sidebar
-        } detail: {
+            Divider().opacity(0.08)
             detail
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Theme.background)
         }
-        // NavigationSplitView auto-adds a sidebar show/hide toggle to the
-        // toolbar — the sidebar is the whole point of the layout here,
-        // there's nothing worth collapsing it for.
-        .toolbar(removing: .sidebarToggle)
         .sheet(isPresented: $state.showSettings) {
             SettingsView()
         }
@@ -46,10 +49,15 @@ struct MainView: View {
 
     private var sidebar: some View {
         VStack(spacing: 0) {
-            List(SidebarItem.allCases, selection: $state.selection) { item in
-                Label(item.rawValue, systemImage: item.icon).tag(item)
+            VStack(alignment: .leading, spacing: 2) {
+                ForEach(SidebarItem.allCases) { item in
+                    sidebarRow(item)
+                }
             }
-            .listStyle(.sidebar)
+            .padding(.horizontal, 8)
+            .padding(.top, 12)
+
+            Spacer()
 
             Divider().opacity(0.2)
 
@@ -70,7 +78,26 @@ struct MainView: View {
             .buttonStyle(.plain)
             .padding(12)
         }
+        .frame(width: 190)
         .background(Theme.background)
+    }
+
+    private func sidebarRow(_ item: SidebarItem) -> some View {
+        let selected = state.selection == item
+        return Button {
+            state.selection = item
+        } label: {
+            Label(item.rawValue, systemImage: item.icon)
+                .font(.system(size: 13, weight: selected ? .semibold : .regular))
+                .foregroundColor(selected ? .white : .white.opacity(0.75))
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 6)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .background(selected ? Color.white.opacity(0.08) : Color.clear)
+        .cornerRadius(6)
     }
 
     @ViewBuilder
