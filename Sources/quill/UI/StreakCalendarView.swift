@@ -10,9 +10,9 @@ struct StreakCalendarView: View {
     let currentStreak: Int
 
     private let weekCount = 18
-    private let cellSize: CGFloat = 12
-    private let cellSpacing: CGFloat = 3
-    private let monthLabelHeight: CGFloat = 14
+    private let cellSize: CGFloat = 18
+    private let cellSpacing: CGFloat = 4
+    private let monthLabelHeight: CGFloat = 18
 
     private struct Day {
         let date: Date
@@ -60,11 +60,11 @@ struct StreakCalendarView: View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
                 Text("\(currentStreak) \(currentStreak == 1 ? "day" : "days") streak")
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(.white)
                 Spacer()
                 Text("Longest: \(longestStreak) \(longestStreak == 1 ? "day" : "days")")
-                    .font(.system(size: 11))
+                    .font(.system(size: 12))
                     .foregroundColor(.white.opacity(0.4))
             }
 
@@ -73,9 +73,9 @@ struct StreakCalendarView: View {
                     VStack(alignment: .leading, spacing: cellSpacing) {
                         ForEach(["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], id: \.self) { d in
                             Text(d)
-                                .font(.system(size: 9))
-                                .foregroundColor(.white.opacity(0.35))
-                                .frame(width: 28, height: cellSize, alignment: .leading)
+                                .font(.system(size: 11))
+                                .foregroundColor(.white.opacity(0.4))
+                                .frame(width: 32, height: cellSize, alignment: .leading)
                         }
                     }
                     .padding(.top, monthLabelHeight)
@@ -102,16 +102,16 @@ struct StreakCalendarView: View {
 
             HStack(spacing: 6) {
                 Text("Less")
-                    .font(.system(size: 9))
-                    .foregroundColor(.white.opacity(0.35))
+                    .font(.system(size: 11))
+                    .foregroundColor(.white.opacity(0.4))
                 ForEach([0, 1, 3, 6], id: \.self) { level in
-                    RoundedRectangle(cornerRadius: 3)
+                    RoundedRectangle(cornerRadius: 4)
                         .fill(color(for: level))
                         .frame(width: cellSize, height: cellSize)
                 }
                 Text("More")
-                    .font(.system(size: 9))
-                    .foregroundColor(.white.opacity(0.35))
+                    .font(.system(size: 11))
+                    .foregroundColor(.white.opacity(0.4))
             }
         }
     }
@@ -120,13 +120,21 @@ struct StreakCalendarView: View {
         HStack(spacing: cellSpacing) {
             ForEach(weeks.indices, id: \.self) { w in
                 let showLabel = w == 0 || monthLabel(for: weeks[w]) != monthLabel(for: weeks[w - 1])
+                // minWidth, not a fixed narrow width — a 3-letter month
+                // abbreviation ("Aug") doesn't fit in one cellSize-wide
+                // column at any readable font size, and clipping it to
+                // exactly that width was truncating every label to "…".
+                // Letting it size naturally means it can spill slightly
+                // into the next column, which is fine since labels only
+                // appear a month apart.
                 Text(showLabel ? monthLabel(for: weeks[w]) : "")
-                    .font(.system(size: 9))
-                    .foregroundColor(.white.opacity(0.35))
-                    .frame(width: cellSize, alignment: .leading)
+                    .font(.system(size: 11))
+                    .foregroundColor(.white.opacity(0.4))
+                    .fixedSize()
+                    .frame(minWidth: cellSize, alignment: .leading)
             }
         }
-        .frame(height: monthLabelHeight)
+        .frame(height: monthLabelHeight, alignment: .leading)
     }
 
     private func monthLabel(for week: [Day]) -> String {

@@ -107,8 +107,14 @@ struct InsightsView: View {
         }
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(height: Self.cardHeight)
         .quillCard()
     }
+
+    /// Shared fixed height for the three top stat cards — they hold very
+    /// different content (a gauge, a locked placeholder, a number-plus-row),
+    /// so nothing about their natural sizing lines up without forcing it.
+    private static let cardHeight: CGFloat = 150
 
     /// Preview of the Style/BYOK feature (not built yet) — shown locked
     /// rather than hidden, so it's clear what connecting an API key will
@@ -135,7 +141,7 @@ struct InsightsView: View {
         }
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .frame(minHeight: 130)
+        .frame(height: Self.cardHeight)
         .quillCard()
     }
 
@@ -164,7 +170,7 @@ struct InsightsView: View {
         }
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .frame(minHeight: 130)
+        .frame(height: Self.cardHeight)
         .quillCard()
     }
 

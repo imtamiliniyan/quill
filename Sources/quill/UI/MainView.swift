@@ -35,6 +35,10 @@ struct MainView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Theme.background)
         }
+        // NavigationSplitView auto-adds a sidebar show/hide toggle to the
+        // toolbar — the sidebar is the whole point of the layout here,
+        // there's nothing worth collapsing it for.
+        .toolbar(removing: .sidebarToggle)
         .sheet(isPresented: $state.showSettings) {
             SettingsView()
         }
