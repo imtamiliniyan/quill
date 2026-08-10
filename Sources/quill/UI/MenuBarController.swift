@@ -143,6 +143,10 @@ final class MenuBarController {
         stateLabel.title = "transcribing…"
     }
 
+    func setPolishing() {
+        stateLabel.title = "polishing…"
+    }
+
     /// Called once onboarding picks a model (the initial `modelID` may just
     /// be a placeholder like "not set" if the menu bar had to appear before
     /// a choice was made).

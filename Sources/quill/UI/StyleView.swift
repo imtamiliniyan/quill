@@ -2,6 +2,8 @@ import AppKit
 import SwiftUI
 
 struct StyleView: View {
+    @State private var autoCleanupLevel: AutoCleanupLevel = QuillSettings.autoCleanupLevel
+
     @State private var provider: StyleProvider = QuillSettings.styleProvider
     @State private var apiKeyField: String = ""
     @State private var openAIConnected = APIKeyStore.hasKey(for: .openAI)
@@ -29,6 +31,7 @@ struct StyleView: View {
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
+                    autoCleanupCard
                     apiKeyCard
                     rewriteCard
                 }
@@ -37,6 +40,65 @@ struct StyleView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    }
+
+    // MARK: - Auto Cleanup
+
+    /// The actual answer to "clean up my speech while I dictate" — applies
+    /// automatically to every dictation, before it's typed, across every
+    /// app. Set once here; nothing to touch again per-dictation. The
+    /// separate Rewrite box below is for polishing arbitrary text on
+    /// demand, not live dictation.
+    private var autoCleanupCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("Auto Cleanup")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(.white)
+            Text("Applies automatically to every dictation, before it's typed — across every app. Set once, not per-dictation.")
+                .font(.system(size: 11))
+                .foregroundColor(.white.opacity(0.5))
+
+            VStack(spacing: 8) {
+                ForEach(AutoCleanupLevel.allCases) { level in
+                    autoCleanupRow(level)
+                }
+            }
+        }
+        .padding(18)
+        .quillCard()
+    }
+
+    private func autoCleanupRow(_ level: AutoCleanupLevel) -> some View {
+        let selected = autoCleanupLevel == level
+        return Button {
+            autoCleanupLevel = level
+            QuillSettings.autoCleanupLevel = level
+        } label: {
+            HStack(alignment: .top, spacing: 10) {
+                Image(systemName: selected ? "largecircle.fill.circle" : "circle")
+                    .foregroundColor(selected ? Theme.accent : .white.opacity(0.35))
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(spacing: 6) {
+                        Text(level.rawValue)
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(.white)
+                        if level == .medium {
+                            Text(hasKey ? "USES YOUR KEY" : "NO KEY YET — USES LIGHT")
+                                .font(.system(size: 9, weight: .bold))
+                                .foregroundColor(hasKey ? Theme.accent : .white.opacity(0.35))
+                        }
+                    }
+                    Text(level.summary)
+                        .font(.system(size: 11))
+                        .foregroundColor(.white.opacity(0.5))
+                }
+                Spacer()
+            }
+            .padding(12)
+            .background(selected ? Color.white.opacity(0.06) : Color.white.opacity(0.02))
+            .cornerRadius(8)
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - API key
@@ -110,9 +172,12 @@ struct StyleView: View {
 
     private var rewriteCard: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("Rewrite")
+            Text("Rewrite on demand")
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundColor(.white)
+            Text("For polishing arbitrary text whenever you want, separate from Auto Cleanup above.")
+                .font(.system(size: 11))
+                .foregroundColor(.white.opacity(0.5))
 
             Picker("", selection: $tone) {
                 ForEach(StyleTone.allCases) { t in

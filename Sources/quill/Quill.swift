@@ -307,16 +307,34 @@ private func attachDictationHandlers(
                 let started = Date()
                 let (transcriberNow, modelIDNow) = await MainActor.run { (box.current, box.modelID) }
                 do {
-                    let text = try await transcriberNow.transcribe(samples)
+                    let rawText = try await transcriberNow.transcribe(samples)
                     let elapsed = Date().timeIntervalSince(started)
                     FileHandle.standardError.write(Data(
-                        String(format: "→ %.2fs · %@\n", elapsed, text).utf8
+                        String(format: "→ %.2fs · %@\n", elapsed, rawText).utf8
                     ))
+
+                    // Auto Cleanup runs on every dictation automatically —
+                    // that's the point (a one-time setting in Style, not a
+                    // per-dictation decision). Light is local/instant;
+                    // Medium calls out to the user's own Style API key, so
+                    // show a "polishing…" beat instead of looking stuck.
+                    let level = QuillSettings.autoCleanupLevel
+                    if level != .none {
+                        await MainActor.run {
+                            overlay?.show(.polishing)
+                            menuBar.setPolishing()
+                        }
+                    }
+                    let finalText = await AutoCleanup.apply(rawText, level: level)
+
                     await MainActor.run {
-                        TextInjector.inject(text)
+                        TextInjector.inject(finalText)
                         overlay?.hide()
                         menuBar.setRecording(false)
-                        DictationHistory.append(text: text, model: modelIDNow, durationSeconds: seconds)
+                        DictationHistory.append(
+                            text: finalText, rawText: rawText,
+                            model: modelIDNow, durationSeconds: seconds
+                        )
                     }
                 } catch {
                     FileHandle.standardError.write(Data("transcription failed: \(error)\n".utf8))

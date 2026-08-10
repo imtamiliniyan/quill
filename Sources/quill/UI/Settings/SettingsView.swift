@@ -109,6 +109,7 @@ private struct SystemSettingsView: View {
 private struct PrivacySettingsView: View {
     @State private var confirmingClear = false
     @State private var historyCount = DictationHistory.loadAll().count
+    @State private var autoCleanupLevel = QuillSettings.autoCleanupLevel
     private var apiKeyConnected: Bool {
         StyleProvider.allCases.contains { APIKeyStore.hasKey(for: $0) }
     }
@@ -129,13 +130,24 @@ private struct PrivacySettingsView: View {
             .foregroundColor(.white.opacity(0.75))
 
             Text("""
-            The one exception: if you add your own OpenAI or Anthropic API key \
-            in Style to rewrite tone, the text you choose to rewrite is sent \
-            directly to that provider using your key. Nothing else is ever \
-            transmitted, and rewriting only happens when you press Rewrite.
+            The one exception: Style's cloud rewriting, using your own OpenAI or \
+            Anthropic key. That happens either when you press Rewrite in Style, \
+            or automatically on every dictation if Auto Cleanup is set to \
+            Medium — in that case, every dictation is sent to your chosen \
+            provider before it's typed. Auto Cleanup's Light level, and Style's \
+            "Clean Up" tone, never touch the network at all.
             """)
             .font(.system(size: 12))
             .foregroundColor(.white.opacity(0.55))
+
+            HStack(spacing: 6) {
+                Image(systemName: "wand.and.stars")
+                    .font(.system(size: 11))
+                    .foregroundColor(autoCleanupLevel == .medium ? Theme.accent : .white.opacity(0.35))
+                Text("Auto Cleanup is set to \(autoCleanupLevel.rawValue).")
+                    .font(.system(size: 12))
+                    .foregroundColor(.white.opacity(0.55))
+            }
 
             HStack(spacing: 6) {
                 Image(systemName: apiKeyConnected ? "key.fill" : "key")

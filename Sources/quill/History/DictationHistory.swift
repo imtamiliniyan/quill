@@ -13,6 +13,11 @@ struct DictationEntry: Codable, Identifiable {
     /// "Claude", "Notes"). Purely local, used for the Insights "where you
     /// dictate" breakdown — never transmitted anywhere.
     let appName: String?
+    /// The transcript before Auto Cleanup ran, if it changed anything —
+    /// nil when Auto Cleanup is off or made no changes. Quill can't undo
+    /// text already typed into another app, but keeping the original
+    /// here means it's never actually lost, just a copy away.
+    let rawText: String?
 }
 
 extension Notification.Name {
@@ -44,13 +49,14 @@ enum DictationHistory {
         return d
     }()
 
-    static func append(text: String, model: String, durationSeconds: Double) {
+    static func append(text: String, rawText: String? = nil, model: String, durationSeconds: Double) {
         guard !text.isEmpty else { return }
         let wordCount = text.split(whereSeparator: { $0.isWhitespace }).count
         let appName = NSWorkspace.shared.frontmostApplication?.localizedName
         let entry = DictationEntry(
             timestamp: Date(), text: text, wordCount: wordCount,
-            model: model, durationSeconds: durationSeconds, appName: appName
+            model: model, durationSeconds: durationSeconds, appName: appName,
+            rawText: (rawText != text) ? rawText : nil
         )
         guard let line = try? encoder.encode(entry), let json = String(data: line, encoding: .utf8) else { return }
 

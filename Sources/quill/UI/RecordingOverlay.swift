@@ -9,6 +9,10 @@ final class RecordingOverlay {
         case hidden
         case recording
         case transcribing
+        /// Auto Cleanup (Medium) is calling out to the user's Style API
+        /// key. Same visual as .transcribing — the distinction only
+        /// matters to the menu bar's text label.
+        case polishing
     }
 
     private var window: NSPanel?
@@ -137,7 +141,7 @@ private struct OverlayPill: View {
         case .hidden, .recording:
             Waveform(levels: model.levels)
                 .frame(width: 54, height: 22)
-        case .transcribing:
+        case .transcribing, .polishing:
             ProgressView()
                 .controlSize(.small)
                 .scaleEffect(0.8)

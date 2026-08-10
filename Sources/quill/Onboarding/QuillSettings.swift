@@ -19,6 +19,7 @@ enum QuillSettings {
         static let selectedModelID = "selectedModelID"
         static let onboardingCompleted = "onboardingCompleted"
         static let styleProvider = "styleProvider"
+        static let autoCleanupLevel = "autoCleanupLevel"
     }
 
     static var selectedModelID: String? {
@@ -37,5 +38,14 @@ enum QuillSettings {
     static var styleProvider: StyleProvider {
         get { StyleProvider(rawValue: defaults.string(forKey: Key.styleProvider) ?? "") ?? .openAI }
         set { defaults.set(newValue.rawValue, forKey: Key.styleProvider) }
+    }
+
+    /// Off (.none) by default — same "opt in, not silently on" posture as
+    /// everything else in Quill. Once set, though, it applies to every
+    /// dictation automatically with no further interaction, which is the
+    /// whole point: a one-time setting, not a per-dictation decision.
+    static var autoCleanupLevel: AutoCleanupLevel {
+        get { AutoCleanupLevel(rawValue: defaults.string(forKey: Key.autoCleanupLevel) ?? "") ?? .none }
+        set { defaults.set(newValue.rawValue, forKey: Key.autoCleanupLevel) }
     }
 }
