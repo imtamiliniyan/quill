@@ -52,11 +52,17 @@ enum QuillSettings {
 
     /// Which tone Medium rewrites into, chosen once here rather than
     /// per-dictation — set it and forget it, same posture as
-    /// `autoCleanupLevel` itself. Defaults to `.concise`, matching Medium's
-    /// original hardcoded behavior, so existing Medium users see no
-    /// silent change until they pick something else.
+    /// `autoCleanupLevel` itself. Auto Cleanup only ever offers
+    /// Formal/Casual/Very Casual (Clean Up and Concise are Rewrite-on-
+    /// demand-only); anything else stored — including a stale `.concise`
+    /// from before this option set changed — falls back to `.casual`.
     static var autoCleanupTone: StyleTone {
-        get { StyleTone(rawValue: defaults.string(forKey: Key.autoCleanupTone) ?? "") ?? .concise }
+        get {
+            let allowed: [StyleTone] = [.formal, .casual, .veryCasual]
+            let stored = StyleTone(rawValue: defaults.string(forKey: Key.autoCleanupTone) ?? "")
+            guard let stored, allowed.contains(stored) else { return .casual }
+            return stored
+        }
         set { defaults.set(newValue.rawValue, forKey: Key.autoCleanupTone) }
     }
 }

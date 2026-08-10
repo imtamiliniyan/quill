@@ -5,6 +5,7 @@ enum StyleTone: String, CaseIterable, Identifiable {
     case formal = "Formal"
     case casual = "Casual"
     case concise = "Concise"
+    case veryCasual = "Very Casual"
 
     var id: String { rawValue }
 
@@ -18,6 +19,39 @@ enum StyleTone: String, CaseIterable, Identifiable {
             return "Rewrite in a relaxed, casual tone, like texting a friend. Fix grammar. Keep the same meaning."
         case .concise:
             return "Rewrite to be shorter and more direct, cutting unnecessary words. Keep the same meaning."
+        case .veryCasual:
+            return "Rewrite in a very relaxed, informal tone — lowercase, minimal punctuation, like a quick text to a close friend. Fix only major grammar issues. Keep the same meaning."
+        }
+    }
+
+    /// Short caption shown under the tone name in Auto Cleanup's tone
+    /// cards — same spot as Wispr Flow's "Caps + Punctuation" subtitle.
+    var styleHint: String {
+        switch self {
+        case .cleanUp: return "Grammar fixed, tone unchanged"
+        case .formal: return "Full punctuation, proper capitalization"
+        case .casual: return "Relaxed punctuation, natural capitalization"
+        case .concise: return "Shorter, more direct"
+        case .veryCasual: return "Lowercase, minimal punctuation"
+        }
+    }
+
+    /// One sample sentence rewritten per tone, so the Auto Cleanup tone
+    /// cards show what each option actually sounds like instead of
+    /// leaving it to the name alone — same idea as Wispr Flow's preview
+    /// bubbles, original wording.
+    var example: String {
+        switch self {
+        case .cleanUp:
+            return "Let's grab lunch sometime this week."
+        case .formal:
+            return "Would you be available to have lunch together sometime this week?"
+        case .casual:
+            return "Want to grab lunch sometime this week?"
+        case .concise:
+            return "Lunch this week?"
+        case .veryCasual:
+            return "wanna grab lunch this week lol"
         }
     }
 }
