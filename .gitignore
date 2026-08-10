@@ -3,6 +3,7 @@
 *.xcodeproj
 *.xcworkspace
 .DS_Store
+dist/
 
 # kdb auto-rendered task index (regenerate with `kdb render`)
 .tasks/
