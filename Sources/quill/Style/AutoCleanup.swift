@@ -12,9 +12,9 @@ enum AutoCleanupLevel: String, CaseIterable, Identifiable {
         case .none:
             return "Types exactly what you said, including filler words."
         case .light:
-            return "Removes filler words and fixes basic punctuation — local, instant, no key needed."
+            return "Removes filler words and fixes basic punctuation: local, instant, no key needed."
         case .medium:
-            return "Rewrites using your chosen tone and Style API key — adds a short delay while it processes."
+            return "Rewrites using your chosen tone and Style API key. Adds a short delay while it processes."
         }
     }
 }

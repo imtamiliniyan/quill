@@ -103,7 +103,7 @@ final class MenuBarController {
 
         let alert = NSAlert()
         alert.messageText = "Download \(model.displayName)?"
-        alert.informativeText = "\(model.sizeMB) MB — not on this Mac yet. Download and switch to it?"
+        alert.informativeText = "\(model.sizeMB) MB, not on this Mac yet. Download and switch to it?"
         alert.addButton(withTitle: "Download")
         alert.addButton(withTitle: "Cancel")
         if alert.runModal() == .alertFirstButtonReturn {

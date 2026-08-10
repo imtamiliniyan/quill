@@ -83,7 +83,7 @@ struct DictationView: View {
             Text("No dictations yet")
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundColor(Theme.textPrimary)
-            Text("Hold Fn and speak anywhere — what you dictate shows up here, read straight from a file on this Mac, never uploaded.")
+            Text("Hold Fn and speak anywhere. What you dictate shows up here, read straight from a file on this Mac, never uploaded.")
                 .font(.system(size: 12))
                 .foregroundColor(Theme.textSecondary)
                 .multilineTextAlignment(.center)

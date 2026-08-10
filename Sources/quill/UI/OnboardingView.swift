@@ -65,7 +65,7 @@ private struct PermissionsStep: View {
             )
             PermissionRow(
                 title: "Accessibility",
-                detail: "Needed to detect the hotkey and type text into whatever app you're focused on. macOS doesn't let apps grant this to themselves — click below, then toggle Quill on in the list that opens.",
+                detail: "Needed to detect the hotkey and type text into whatever app you're focused on. macOS doesn't let apps grant this to themselves. Click below, then toggle Quill on in the list that opens.",
                 granted: state.accessibilityGranted,
                 actionTitle: "Open Accessibility Settings",
                 action: state.openAccessibilitySettings

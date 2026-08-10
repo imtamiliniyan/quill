@@ -55,7 +55,7 @@ struct StyleView: View {
             Text("Auto Cleanup")
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundColor(Theme.textPrimary)
-            Text("Applies automatically to every dictation, before it's typed — across every app. Set once, not per-dictation.")
+            Text("Applies automatically to every dictation, before it's typed, across every app. Set once, not per-dictation.")
                 .font(.system(size: 11))
                 .foregroundColor(Theme.textSecondary)
 
@@ -161,7 +161,7 @@ struct StyleView: View {
                             .font(.system(size: 13, weight: .medium))
                             .foregroundColor(Theme.textPrimary)
                         if level == .medium {
-                            Text(hasKey ? "USES YOUR KEY" : "NO KEY YET — USES LIGHT")
+                            Text(hasKey ? "USES YOUR KEY" : "NO KEY YET · USES LIGHT")
                                 .font(.system(size: 9, weight: .bold))
                                 .foregroundColor(hasKey ? Theme.accent : Theme.textTertiary)
                         }
@@ -209,7 +209,7 @@ struct StyleView: View {
 
             HStack(spacing: 8) {
                 SecureField(
-                    hasKey ? "Key saved — paste a new one to replace it" : "Paste your \(provider.rawValue) API key",
+                    hasKey ? "Key saved, paste a new one to replace it" : "Paste your \(provider.rawValue) API key",
                     text: $apiKeyField
                 )
                 .textFieldStyle(.roundedBorder)
@@ -230,7 +230,7 @@ struct StyleView: View {
             }
 
             Text("""
-            Stored in the macOS Keychain on this Mac only — never written to disk in plain text, \
+            Stored in the macOS Keychain on this Mac only, never written to disk in plain text, \
             never committed to a repo, never sent anywhere except directly to \(provider.rawValue) \
             itself, and only at the moment you press Rewrite below.
             """)
@@ -266,11 +266,11 @@ struct StyleView: View {
             .labelsHidden()
 
             if tone == .cleanUp {
-                Text("Runs entirely on this Mac — filler words and basic punctuation, no network, no key needed.")
+                Text("Runs entirely on this Mac: filler words and basic punctuation, no network, no key needed.")
                     .font(.system(size: 11))
                     .foregroundColor(Theme.textTertiary)
             } else if !hasKey {
-                Text("Add an API key above to use \(tone.rawValue) — Clean Up works offline without one.")
+                Text("Add an API key above to use \(tone.rawValue). Clean Up works offline without one.")
                     .font(.system(size: 11))
                     .foregroundColor(Theme.textSecondary)
             }

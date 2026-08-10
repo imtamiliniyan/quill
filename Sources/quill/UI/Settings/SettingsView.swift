@@ -80,7 +80,7 @@ private struct GeneralSettingsView: View {
                     .textFieldStyle(.roundedBorder)
                     .onChange(of: lastName) { _, new in QuillProfile.lastName = new }
             }
-            Text("Shown only inside Quill on this Mac — there's no account or sign-in.")
+            Text("Shown only inside Quill on this Mac. There's no account or sign-in.")
                 .font(.system(size: 11))
                 .foregroundColor(Theme.textSecondary)
         }
@@ -100,7 +100,7 @@ private struct SystemSettingsView: View {
                     let ok = LaunchAtLoginManager.setEnabled(wantsOn)
                     if !ok { launchAtLogin = LaunchAtLoginManager.isEnabled }
                 }
-            Text("Runs quietly in the menu bar as soon as you log in — no dock icon until you open this window.")
+            Text("Runs quietly in the menu bar as soon as you log in. No dock icon until you open this window.")
                 .font(.system(size: 11))
                 .foregroundColor(Theme.textSecondary)
 
@@ -112,7 +112,7 @@ private struct SystemSettingsView: View {
                 .onChange(of: darkModeEnabled) { _, wantsOn in
                     QuillSettings.darkModeEnabled = wantsOn
                 }
-            Text("Overrides System Settings > Appearance for Quill specifically — takes effect immediately.")
+            Text("Overrides System Settings > Appearance for Quill specifically. Takes effect immediately.")
                 .font(.system(size: 11))
                 .foregroundColor(Theme.textSecondary)
         }
@@ -136,7 +136,7 @@ private struct PrivacySettingsView: View {
             Text("""
             Quill transcribes with an on-device model. Your dictation history, \
             transcripts, and settings never leave this Mac and are never sent \
-            to a cloud service — including Anthropic, OpenAI, or Quill's own \
+            to a cloud service, including Anthropic, OpenAI, or Quill's own \
             developer.
             """)
             .font(.system(size: 12))
@@ -146,7 +146,7 @@ private struct PrivacySettingsView: View {
             The one exception: Style's cloud rewriting, using your own OpenAI or \
             Anthropic key. That happens either when you press Rewrite in Style, \
             or automatically on every dictation if Auto Cleanup is set to \
-            Medium — in that case, every dictation is sent to your chosen \
+            Medium. In that case, every dictation is sent to your chosen \
             provider before it's typed. Auto Cleanup's Light level, and Style's \
             "Clean Up" tone, never touch the network at all.
             """)

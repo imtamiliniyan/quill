@@ -7,9 +7,15 @@ struct DictationStats {
     let totalWords: Int
     let wordsPerMinute: Int
     let streak: Int
+    /// Count of entries where Auto Cleanup actually changed something —
+    /// `rawText` is only ever stored when it differs from the final typed
+    /// text (see DictationHistory.append), so `rawText != nil` is exactly
+    /// "this dictation was modified." Covers both Light and Medium fixes.
+    let fixesCount: Int
 
     init(entries: [DictationEntry]) {
         totalWords = entries.reduce(0) { $0 + $1.wordCount }
+        fixesCount = entries.filter { $0.rawText != nil }.count
 
         let totalSeconds = entries.reduce(0.0) { $0 + $1.durationSeconds }
         wordsPerMinute = totalSeconds > 0 ? Int((Double(totalWords) / totalSeconds) * 60) : 0

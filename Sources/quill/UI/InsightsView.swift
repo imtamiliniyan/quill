@@ -61,7 +61,7 @@ struct InsightsView: View {
                             .padding(18)
                             .quillCard()
 
-                        Label("Computed entirely from history.jsonl on this Mac — nothing here is sent anywhere.", systemImage: "lock.shield")
+                        Label("Computed entirely from history.jsonl on this Mac. Nothing here is sent anywhere.", systemImage: "lock.shield")
                             .font(.system(size: 11))
                             .foregroundColor(Theme.textTertiary)
                     }
@@ -116,28 +116,37 @@ struct InsightsView: View {
     /// so nothing about their natural sizing lines up without forcing it.
     private static let cardHeight: CGFloat = 150
 
-    /// Preview of the Style/BYOK feature (not built yet) — shown locked
-    /// rather than hidden, so it's clear what connecting an API key will
-    /// unlock, per the plan: rewriting is entirely opt-in, off until a key
-    /// is added, and never touches text without one.
+    /// Style/BYOK is actually built now — this used to be a permanent
+    /// locked placeholder from before it shipped. Unlocks the moment
+    /// either provider has a key connected (matches the card's own copy,
+    /// which talks about connecting a key, not about which Auto Cleanup
+    /// level is on), and shows the real count once unlocked.
+    private var hasStyleKey: Bool {
+        APIKeyStore.hasKey(for: .openAI) || APIKeyStore.hasKey(for: .anthropic)
+    }
+
     private var fixesLockedCard: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 5) {
-                Image(systemName: "lock.fill")
+                Image(systemName: hasStyleKey ? "checkmark.circle.fill" : "lock.fill")
                     .font(.system(size: 10))
-                    .foregroundColor(Theme.textTertiary)
+                    .foregroundColor(hasStyleKey ? Theme.accent : Theme.textTertiary)
                 Text("FIXES MADE BY QUILL")
                     .font(.system(size: 10, weight: .semibold))
                     .foregroundColor(Theme.textTertiary)
             }
-            Text("—")
+            Text(hasStyleKey ? "\(stats.fixesCount)" : "--")
                 .font(.system(size: 26, weight: .bold))
-                .foregroundColor(Theme.textTertiary)
+                .foregroundColor(hasStyleKey ? Theme.textPrimary : Theme.textTertiary)
             Spacer(minLength: 0)
-            Text("Connect an OpenAI or Anthropic key in Style to enable grammar and tone fixes.")
-                .font(.system(size: 11))
-                .foregroundColor(Theme.textTertiary)
-                .fixedSize(horizontal: false, vertical: true)
+            Text(
+                hasStyleKey
+                    ? "Dictations cleaned up by Auto Cleanup so far, across Light and Medium."
+                    : "Connect an OpenAI or Anthropic key in Style to enable grammar and tone fixes."
+            )
+            .font(.system(size: 11))
+            .foregroundColor(Theme.textTertiary)
+            .fixedSize(horizontal: false, vertical: true)
         }
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -209,7 +218,7 @@ struct InsightsView: View {
             Text("No insights yet")
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundColor(Theme.textPrimary)
-            Text("Word counts, speaking speed, and streaks will show up here once you've dictated a few times — all computed locally.")
+            Text("Word counts, speaking speed, and streaks will show up here once you've dictated a few times, all computed locally.")
                 .font(.system(size: 12))
                 .foregroundColor(Theme.textSecondary)
                 .multilineTextAlignment(.center)
