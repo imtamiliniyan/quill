@@ -30,7 +30,7 @@ enum AutoCleanup {
             return text
 
         case .light:
-            return TranscriptSanitizer.cleanUpFillers(text)
+            return localCleanup(text)
 
         case .medium:
             let provider = QuillSettings.styleProvider
@@ -48,5 +48,24 @@ enum AutoCleanup {
                 return TranscriptSanitizer.cleanUpFillers(text)
             }
         }
+    }
+
+    /// The local-only pass: filler-word/punctuation cleanup, nothing more.
+    /// Used by Light here, and by Style's manual "Clean Up" tone — same
+    /// function, so the two never drift into different behavior for what
+    /// the UI presents as the same thing.
+    ///
+    /// Deliberately NOT running real grammar correction here. Tried
+    /// NSSpellChecker's local grammar engine (the one behind Mail/Notes'
+    /// inline corrections) — verified empirically it returns zero results
+    /// even on clearly broken grammar ("he dont know what he doing"),
+    /// with or without a running NSApplication context. Even if that had
+    /// worked, this function sits directly in the dictation path with an
+    /// explicit no-added-latency requirement, and an unverified local
+    /// check isn't worth that risk. Real grammar correction stays a
+    /// Medium/BYOK capability, where the latency is already an accepted,
+    /// clearly-surfaced tradeoff — not snuck into the instant default.
+    static func localCleanup(_ text: String) -> String {
+        TranscriptSanitizer.cleanUpFillers(text)
     }
 }

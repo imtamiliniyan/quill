@@ -263,7 +263,7 @@ struct StyleView: View {
         // Clean Up never touches the network, regardless of whether a key
         // is set — it's the always-local tier, on purpose.
         if tone == .cleanUp {
-            outputText = TranscriptSanitizer.cleanUpFillers(inputText)
+            outputText = AutoCleanup.localCleanup(inputText)
             return
         }
 
