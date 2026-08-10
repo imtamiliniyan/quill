@@ -17,12 +17,20 @@ struct Install: ParsableCommand {
     @Flag(name: .long, help: "Remove the launch-at-login agent.")
     var uninstall: Bool = false
 
+    @Option(name: .long, help: "Model id the background daemon should load. Defaults to the recommended model if omitted.")
+    var model: String?
+
     func run() throws {
         if launchAtLogin == uninstall {
             FileHandle.standardError.write(Data(
                 "specify exactly one of --launch-at-login or --uninstall\n".utf8
             ))
             throw ExitCode(64)
+        }
+        if let model, ModelRegistry.find(model) == nil {
+            FileHandle.standardError.write(Data("unknown model: \(model)\n".utf8))
+            FileHandle.standardError.write(Data("run `quill models list` to see options.\n".utf8))
+            throw ExitCode(1)
         }
 
         if uninstall {
@@ -46,9 +54,14 @@ struct Install: ParsableCommand {
     private func writeAgent() throws {
         let binary = try resolveBinaryPath()
 
+        var args = [binary, "run", "--skip-doctor"]
+        if let model {
+            args += ["--model", model]
+        }
+
         let plist: [String: Any] = [
             "Label": Self.label,
-            "ProgramArguments": [binary, "run", "--skip-doctor"],
+            "ProgramArguments": args,
             "RunAtLoad": true,
             "KeepAlive": ["SuccessfulExit": false] as [String: Any],
             "ProcessType": "Interactive",
@@ -80,6 +93,7 @@ struct Install: ParsableCommand {
         print("✓ launch-at-login installed")
         print("  plist:  \(url.path)")
         print("  binary: \(binary)")
+        print("  model:  \(model ?? ModelRegistry.recommended()?.id ?? "default")")
         print("  logs:   /tmp/quill.out.log, /tmp/quill.err.log")
     }
 
