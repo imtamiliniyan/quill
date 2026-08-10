@@ -20,6 +20,7 @@ enum QuillSettings {
         static let onboardingCompleted = "onboardingCompleted"
         static let styleProvider = "styleProvider"
         static let autoCleanupLevel = "autoCleanupLevel"
+        static let autoCleanupTone = "autoCleanupTone"
     }
 
     static var selectedModelID: String? {
@@ -47,5 +48,15 @@ enum QuillSettings {
     static var autoCleanupLevel: AutoCleanupLevel {
         get { AutoCleanupLevel(rawValue: defaults.string(forKey: Key.autoCleanupLevel) ?? "") ?? .none }
         set { defaults.set(newValue.rawValue, forKey: Key.autoCleanupLevel) }
+    }
+
+    /// Which tone Medium rewrites into, chosen once here rather than
+    /// per-dictation — set it and forget it, same posture as
+    /// `autoCleanupLevel` itself. Defaults to `.concise`, matching Medium's
+    /// original hardcoded behavior, so existing Medium users see no
+    /// silent change until they pick something else.
+    static var autoCleanupTone: StyleTone {
+        get { StyleTone(rawValue: defaults.string(forKey: Key.autoCleanupTone) ?? "") ?? .concise }
+        set { defaults.set(newValue.rawValue, forKey: Key.autoCleanupTone) }
     }
 }

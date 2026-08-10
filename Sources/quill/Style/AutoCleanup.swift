@@ -14,7 +14,7 @@ enum AutoCleanupLevel: String, CaseIterable, Identifiable {
         case .light:
             return "Removes filler words and fixes basic punctuation — local, instant, no key needed."
         case .medium:
-            return "Rewrites for clarity and conciseness using your Style API key — adds a short delay while it processes."
+            return "Rewrites using your chosen tone and Style API key — adds a short delay while it processes."
         }
     }
 }
@@ -40,7 +40,7 @@ enum AutoCleanup {
                 return TranscriptSanitizer.cleanUpFillers(text)
             }
             do {
-                return try await StyleRewriter.rewrite(text, tone: .concise, provider: provider)
+                return try await StyleRewriter.rewrite(text, tone: QuillSettings.autoCleanupTone, provider: provider)
             } catch {
                 FileHandle.standardError.write(Data(
                     "auto cleanup (medium) failed, falling back to local cleanup: \(error)\n".utf8

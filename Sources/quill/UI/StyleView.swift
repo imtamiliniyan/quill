@@ -3,6 +3,7 @@ import SwiftUI
 
 struct StyleView: View {
     @State private var autoCleanupLevel: AutoCleanupLevel = QuillSettings.autoCleanupLevel
+    @State private var autoCleanupTone: StyleTone = QuillSettings.autoCleanupTone
 
     @State private var provider: StyleProvider = QuillSettings.styleProvider
     @State private var apiKeyField: String = ""
@@ -63,9 +64,39 @@ struct StyleView: View {
                     autoCleanupRow(level)
                 }
             }
+
+            if autoCleanupLevel == .medium {
+                autoCleanupToneRow
+            }
         }
         .padding(18)
         .quillCard()
+    }
+
+    /// Which tone Medium rewrites into — one global choice, applied to
+    /// every dictation the same way regardless of which app it's typed
+    /// into. Deliberately not per-app: no monitoring of the frontmost app,
+    /// same tone everywhere. Set once here, then just hold the dictation
+    /// key like normal.
+    private var autoCleanupToneRow: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Tone")
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundColor(.white.opacity(0.5))
+                .padding(.top, 2)
+
+            Picker("", selection: $autoCleanupTone) {
+                ForEach(StyleTone.allCases) { t in
+                    Text(t.rawValue).tag(t)
+                }
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            .onChange(of: autoCleanupTone) { _, new in
+                QuillSettings.autoCleanupTone = new
+            }
+        }
+        .padding(.horizontal, 2)
     }
 
     private func autoCleanupRow(_ level: AutoCleanupLevel) -> some View {
