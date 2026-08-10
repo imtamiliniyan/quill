@@ -25,7 +25,7 @@ struct OnboardingView: View {
         .padding(28)
         .frame(width: 480, height: 580)
         .background(Theme.background)
-        .foregroundColor(.white)
+        .foregroundColor(Theme.textPrimary)
     }
 
     private var header: some View {
@@ -34,7 +34,7 @@ struct OnboardingView: View {
                 .font(.system(size: 22, weight: .semibold))
             Text(subtitle)
                 .font(.system(size: 13))
-                .foregroundColor(.white.opacity(0.6))
+                .foregroundColor(Theme.textSecondary)
         }
         .padding(.top, 8)
     }
@@ -85,14 +85,14 @@ private struct PermissionRow: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 8) {
                 Image(systemName: granted ? "checkmark.circle.fill" : "circle")
-                    .foregroundColor(granted ? Theme.accent : .white.opacity(0.4))
+                    .foregroundColor(granted ? Theme.accent : Theme.textTertiary)
                 Text(title)
                     .font(.system(size: 15, weight: .medium))
                 Spacer()
             }
             Text(detail)
                 .font(.system(size: 12))
-                .foregroundColor(.white.opacity(0.6))
+                .foregroundColor(Theme.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
             if !granted {
                 Button(actionTitle, action: action)
@@ -101,7 +101,7 @@ private struct PermissionRow: View {
             }
         }
         .padding(16)
-        .background(Color.white.opacity(0.05))
+        .background(Theme.textQuaternary)
         .cornerRadius(10)
     }
 }
@@ -138,7 +138,7 @@ private struct ModelRow: View {
         Button(action: onSelect) {
             HStack {
                 Image(systemName: selected ? "largecircle.fill.circle" : "circle")
-                    .foregroundColor(selected ? Theme.accent : .white.opacity(0.4))
+                    .foregroundColor(selected ? Theme.accent : Theme.textTertiary)
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: 6) {
                         Text(model.displayName)
@@ -151,12 +151,12 @@ private struct ModelRow: View {
                     }
                     Text("\(model.sizeMB) MB · \(model.languages.joined(separator: ", "))")
                         .font(.system(size: 11))
-                        .foregroundColor(.white.opacity(0.5))
+                        .foregroundColor(Theme.textSecondary)
                 }
                 Spacer()
             }
             .padding(12)
-            .background(selected ? Color.white.opacity(0.08) : Color.white.opacity(0.03))
+            .background(selected ? Theme.fillHover : Theme.textQuaternary)
             .cornerRadius(8)
         }
         .buttonStyle(.plain)
@@ -177,7 +177,7 @@ private struct DownloadingStep: View {
                     .tint(Theme.accent)
                 Text("\(Int(progress * 100))%")
                     .font(.system(size: 12))
-                    .foregroundColor(.white.opacity(0.6))
+                    .foregroundColor(Theme.textSecondary)
             } else {
                 ProgressView()
             }
@@ -191,7 +191,7 @@ private struct DownloadingStep: View {
         }
         .frame(maxWidth: .infinity)
         .padding(20)
-        .background(Color.white.opacity(0.05))
+        .background(Theme.textQuaternary)
         .cornerRadius(10)
     }
 }
@@ -208,7 +208,7 @@ private struct DoneStep: View {
                 .foregroundColor(Theme.accent)
             Text("Hold fn anywhere and start talking.")
                 .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.8))
+                .foregroundColor(Theme.textPrimary)
             Button("Start Dictating") { onFinished() }
                 .buttonStyle(.borderedProminent)
                 .tint(Theme.accent)

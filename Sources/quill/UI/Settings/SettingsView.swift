@@ -29,7 +29,7 @@ struct SettingsView: View {
                 } label: {
                     Image(systemName: "xmark.circle.fill")
                         .font(.system(size: 16))
-                        .foregroundColor(.white.opacity(0.5))
+                        .foregroundColor(Theme.textSecondary)
                 }
                 .buttonStyle(.plain)
                 .keyboardShortcut(.cancelAction)
@@ -61,7 +61,7 @@ struct SettingsView: View {
         }
         .frame(width: 460, height: 380)
         .background(Theme.background)
-        .foregroundColor(.white)
+        .foregroundColor(Theme.textPrimary)
     }
 }
 
@@ -82,7 +82,7 @@ private struct GeneralSettingsView: View {
             }
             Text("Shown only inside Quill on this Mac — there's no account or sign-in.")
                 .font(.system(size: 11))
-                .foregroundColor(.white.opacity(0.5))
+                .foregroundColor(Theme.textSecondary)
         }
     }
 }
@@ -101,7 +101,7 @@ private struct SystemSettingsView: View {
                 }
             Text("Runs quietly in the menu bar as soon as you log in — no dock icon until you open this window.")
                 .font(.system(size: 11))
-                .foregroundColor(.white.opacity(0.5))
+                .foregroundColor(Theme.textSecondary)
         }
     }
 }
@@ -127,7 +127,7 @@ private struct PrivacySettingsView: View {
             developer.
             """)
             .font(.system(size: 12))
-            .foregroundColor(.white.opacity(0.75))
+            .foregroundColor(Theme.textPrimary)
 
             Text("""
             The one exception: Style's cloud rewriting, using your own OpenAI or \
@@ -138,24 +138,24 @@ private struct PrivacySettingsView: View {
             "Clean Up" tone, never touch the network at all.
             """)
             .font(.system(size: 12))
-            .foregroundColor(.white.opacity(0.55))
+            .foregroundColor(Theme.textSecondary)
 
             HStack(spacing: 6) {
                 Image(systemName: "wand.and.stars")
                     .font(.system(size: 11))
-                    .foregroundColor(autoCleanupLevel == .medium ? Theme.accent : .white.opacity(0.35))
+                    .foregroundColor(autoCleanupLevel == .medium ? Theme.accent : Theme.textTertiary)
                 Text("Auto Cleanup is set to \(autoCleanupLevel.rawValue).")
                     .font(.system(size: 12))
-                    .foregroundColor(.white.opacity(0.55))
+                    .foregroundColor(Theme.textSecondary)
             }
 
             HStack(spacing: 6) {
                 Image(systemName: apiKeyConnected ? "key.fill" : "key")
                     .font(.system(size: 11))
-                    .foregroundColor(apiKeyConnected ? Theme.accent : .white.opacity(0.35))
+                    .foregroundColor(apiKeyConnected ? Theme.accent : Theme.textTertiary)
                 Text(apiKeyConnected ? "A Style API key is connected." : "No Style API key connected.")
                     .font(.system(size: 12))
-                    .foregroundColor(.white.opacity(0.55))
+                    .foregroundColor(Theme.textSecondary)
             }
 
             Divider().opacity(0.15)
@@ -164,10 +164,10 @@ private struct PrivacySettingsView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Dictation history")
                         .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(.white)
+                        .foregroundColor(Theme.textPrimary)
                     Text("\(historyCount) \(historyCount == 1 ? "entry" : "entries") stored locally")
                         .font(.system(size: 11))
-                        .foregroundColor(.white.opacity(0.5))
+                        .foregroundColor(Theme.textSecondary)
                 }
                 Spacer()
                 Button(role: .destructive) {

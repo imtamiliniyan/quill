@@ -25,7 +25,7 @@ struct StyleView: View {
         VStack(alignment: .leading, spacing: 0) {
             Text("Style")
                 .font(.system(size: 20, weight: .bold))
-                .foregroundColor(.white)
+                .foregroundColor(Theme.textPrimary)
                 .padding(.horizontal, Theme.pagePadding)
                 .padding(.top, Theme.pagePadding)
                 .padding(.bottom, 16)
@@ -54,10 +54,10 @@ struct StyleView: View {
         VStack(alignment: .leading, spacing: 14) {
             Text("Auto Cleanup")
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(.white)
+                .foregroundColor(Theme.textPrimary)
             Text("Applies automatically to every dictation, before it's typed — across every app. Set once, not per-dictation.")
                 .font(.system(size: 11))
-                .foregroundColor(.white.opacity(0.5))
+                .foregroundColor(Theme.textSecondary)
 
             VStack(spacing: 8) {
                 ForEach(AutoCleanupLevel.allCases) { level in
@@ -89,7 +89,7 @@ struct StyleView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Tone")
                 .font(.system(size: 11, weight: .semibold))
-                .foregroundColor(.white.opacity(0.5))
+                .foregroundColor(Theme.textSecondary)
                 .padding(.top, 2)
 
             HStack(alignment: .top, spacing: 10) {
@@ -111,26 +111,26 @@ struct StyleView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(tone.rawValue)
                         .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(.white)
+                        .foregroundColor(Theme.textPrimary)
                     Text(tone.styleHint)
                         .font(.system(size: 10))
-                        .foregroundColor(.white.opacity(0.4))
+                        .foregroundColor(Theme.textTertiary)
                 }
                 Text(tone.example)
                     .font(.system(size: 11))
-                    .foregroundColor(.white.opacity(0.75))
+                    .foregroundColor(Theme.textPrimary)
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(10)
-                    .background(Color.white.opacity(0.05))
+                    .background(Theme.textQuaternary)
                     .cornerRadius(8)
             }
             .padding(12)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(selected ? Theme.accent.opacity(0.12) : Color.white.opacity(0.02))
+            .background(selected ? Theme.accent.opacity(0.12) : Theme.textQuaternary)
             .overlay(
                 RoundedRectangle(cornerRadius: 10)
-                    .stroke(selected ? Theme.accent : Color.white.opacity(0.08), lineWidth: selected ? 1.5 : 1)
+                    .stroke(selected ? Theme.accent : Theme.fillHover, lineWidth: selected ? 1.5 : 1)
             )
             .cornerRadius(10)
         }
@@ -145,26 +145,26 @@ struct StyleView: View {
         } label: {
             HStack(alignment: .top, spacing: 10) {
                 Image(systemName: selected ? "largecircle.fill.circle" : "circle")
-                    .foregroundColor(selected ? Theme.accent : .white.opacity(0.35))
+                    .foregroundColor(selected ? Theme.accent : Theme.textTertiary)
                 VStack(alignment: .leading, spacing: 3) {
                     HStack(spacing: 6) {
                         Text(level.rawValue)
                             .font(.system(size: 13, weight: .medium))
-                            .foregroundColor(.white)
+                            .foregroundColor(Theme.textPrimary)
                         if level == .medium {
                             Text(hasKey ? "USES YOUR KEY" : "NO KEY YET — USES LIGHT")
                                 .font(.system(size: 9, weight: .bold))
-                                .foregroundColor(hasKey ? Theme.accent : .white.opacity(0.35))
+                                .foregroundColor(hasKey ? Theme.accent : Theme.textTertiary)
                         }
                     }
                     Text(level.summary)
                         .font(.system(size: 11))
-                        .foregroundColor(.white.opacity(0.5))
+                        .foregroundColor(Theme.textSecondary)
                 }
                 Spacer()
             }
             .padding(12)
-            .background(selected ? Color.white.opacity(0.06) : Color.white.opacity(0.02))
+            .background(selected ? Theme.fillHover : Theme.textQuaternary)
             .cornerRadius(8)
         }
         .buttonStyle(.plain)
@@ -177,7 +177,7 @@ struct StyleView: View {
             HStack {
                 Text("Connect an API key")
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(.white)
+                    .foregroundColor(Theme.textPrimary)
                 Spacer()
                 if hasKey {
                     Label("Connected", systemImage: "checkmark.circle.fill")
@@ -226,7 +226,7 @@ struct StyleView: View {
             itself, and only at the moment you press Rewrite below.
             """)
             .font(.system(size: 11))
-            .foregroundColor(.white.opacity(0.4))
+            .foregroundColor(Theme.textTertiary)
         }
         .padding(18)
         .quillCard()
@@ -243,10 +243,10 @@ struct StyleView: View {
         VStack(alignment: .leading, spacing: 14) {
             Text("Rewrite on demand")
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(.white)
+                .foregroundColor(Theme.textPrimary)
             Text("For polishing arbitrary text whenever you want, separate from Auto Cleanup above.")
                 .font(.system(size: 11))
-                .foregroundColor(.white.opacity(0.5))
+                .foregroundColor(Theme.textSecondary)
 
             Picker("", selection: $tone) {
                 ForEach([StyleTone.cleanUp, .formal, .casual, .concise]) { t in
@@ -259,11 +259,11 @@ struct StyleView: View {
             if tone == .cleanUp {
                 Text("Runs entirely on this Mac — filler words and basic punctuation, no network, no key needed.")
                     .font(.system(size: 11))
-                    .foregroundColor(.white.opacity(0.4))
+                    .foregroundColor(Theme.textTertiary)
             } else if !hasKey {
                 Text("Add an API key above to use \(tone.rawValue) — Clean Up works offline without one.")
                     .font(.system(size: 11))
-                    .foregroundColor(.white.opacity(0.5))
+                    .foregroundColor(Theme.textSecondary)
             }
 
             ZStack(alignment: .topLeading) {
@@ -272,13 +272,13 @@ struct StyleView: View {
                     .scrollContentBackground(.hidden)
                     .frame(height: 90)
                     .padding(6)
-                    .background(Color.white.opacity(0.04))
+                    .background(Theme.textQuaternary)
                     .cornerRadius(8)
 
                 if inputText.isEmpty {
                     Text("Paste or type text to clean up or rewrite…")
                         .font(.system(size: 13))
-                        .foregroundColor(.white.opacity(0.3))
+                        .foregroundColor(Theme.textTertiary)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 14)
                         .allowsHitTesting(false)
@@ -311,7 +311,7 @@ struct StyleView: View {
                     Divider().opacity(0.1)
                     Text(outputText)
                         .font(.system(size: 13))
-                        .foregroundColor(.white.opacity(0.9))
+                        .foregroundColor(Theme.textPrimary)
                         .textSelection(.enabled)
                     Button(action: copyOutput) {
                         Label(copied ? "Copied" : "Copy", systemImage: copied ? "checkmark" : "doc.on.doc")

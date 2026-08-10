@@ -61,11 +61,11 @@ struct StreakCalendarView: View {
             HStack {
                 Text("\(currentStreak) \(currentStreak == 1 ? "day" : "days") streak")
                     .font(.system(size: 17, weight: .semibold))
-                    .foregroundColor(.white)
+                    .foregroundColor(Theme.textPrimary)
                 Spacer()
                 Text("Longest: \(longestStreak) \(longestStreak == 1 ? "day" : "days")")
                     .font(.system(size: 12))
-                    .foregroundColor(.white.opacity(0.4))
+                    .foregroundColor(Theme.textTertiary)
             }
 
             ScrollView(.horizontal, showsIndicators: false) {
@@ -74,7 +74,7 @@ struct StreakCalendarView: View {
                         ForEach(["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], id: \.self) { d in
                             Text(d)
                                 .font(.system(size: 11))
-                                .foregroundColor(.white.opacity(0.4))
+                                .foregroundColor(Theme.textTertiary)
                                 .frame(width: 32, height: cellSize, alignment: .leading)
                         }
                     }
@@ -103,7 +103,7 @@ struct StreakCalendarView: View {
             HStack(spacing: 6) {
                 Text("Less")
                     .font(.system(size: 11))
-                    .foregroundColor(.white.opacity(0.4))
+                    .foregroundColor(Theme.textTertiary)
                 ForEach([0, 1, 3, 6], id: \.self) { level in
                     RoundedRectangle(cornerRadius: 4)
                         .fill(color(for: level))
@@ -111,7 +111,7 @@ struct StreakCalendarView: View {
                 }
                 Text("More")
                     .font(.system(size: 11))
-                    .foregroundColor(.white.opacity(0.4))
+                    .foregroundColor(Theme.textTertiary)
             }
         }
     }
@@ -129,7 +129,7 @@ struct StreakCalendarView: View {
                 // appear a month apart.
                 Text(showLabel ? monthLabel(for: weeks[w]) : "")
                     .font(.system(size: 11))
-                    .foregroundColor(.white.opacity(0.4))
+                    .foregroundColor(Theme.textTertiary)
                     .fixedSize()
                     .frame(minWidth: cellSize, alignment: .leading)
             }
@@ -145,7 +145,7 @@ struct StreakCalendarView: View {
 
     private func color(for count: Int) -> Color {
         switch count {
-        case 0: return Color.white.opacity(0.05)
+        case 0: return Theme.textQuaternary
         case 1...2: return Theme.accent.opacity(0.3)
         case 3...5: return Theme.accent.opacity(0.6)
         default: return Theme.accent

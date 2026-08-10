@@ -63,7 +63,7 @@ struct MainView: View {
 
             Label("Stored locally, not in the cloud", systemImage: "lock.shield")
                 .font(.system(size: 10))
-                .foregroundColor(.white.opacity(0.45))
+                .foregroundColor(Theme.textTertiary)
                 .padding(.horizontal, 12)
                 .padding(.top, 8)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -89,14 +89,14 @@ struct MainView: View {
         } label: {
             Label(item.rawValue, systemImage: item.icon)
                 .font(.system(size: 13, weight: selected ? .semibold : .regular))
-                .foregroundColor(selected ? .white : .white.opacity(0.75))
+                .foregroundColor(selected ? .white : Theme.textPrimary)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 6)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .background(selected ? Color.white.opacity(0.08) : Color.clear)
+        .background(selected ? Theme.fillHover : Color.clear)
         .cornerRadius(6)
     }
 

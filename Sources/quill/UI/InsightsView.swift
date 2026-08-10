@@ -20,7 +20,7 @@ struct InsightsView: View {
         VStack(alignment: .leading, spacing: 0) {
             Text("Insights")
                 .font(.system(size: 20, weight: .bold))
-                .foregroundColor(.white)
+                .foregroundColor(Theme.textPrimary)
                 .padding(.horizontal, Theme.pagePadding)
                 .padding(.top, Theme.pagePadding)
                 .padding(.bottom, 16)
@@ -41,11 +41,11 @@ struct InsightsView: View {
                                 HStack {
                                     Text("Where you dictate")
                                         .font(.system(size: 13, weight: .semibold))
-                                        .foregroundColor(.white)
+                                        .foregroundColor(Theme.textPrimary)
                                     Spacer()
                                     Text("\(appBreakdown.count) apps used")
                                         .font(.system(size: 11))
-                                        .foregroundColor(.white.opacity(0.4))
+                                        .foregroundColor(Theme.textTertiary)
                                 }
                                 VStack(spacing: 10) {
                                     ForEach(appBreakdown.prefix(6), id: \.name) { item in
@@ -63,7 +63,7 @@ struct InsightsView: View {
 
                         Label("Computed entirely from history.jsonl on this Mac — nothing here is sent anywhere.", systemImage: "lock.shield")
                             .font(.system(size: 11))
-                            .foregroundColor(.white.opacity(0.35))
+                            .foregroundColor(Theme.textTertiary)
                     }
                     .padding(.horizontal, Theme.pagePadding)
                     .padding(.bottom, 20)
@@ -87,12 +87,12 @@ struct InsightsView: View {
         VStack(alignment: .leading, spacing: 10) {
             Text("WORDS PER MINUTE")
                 .font(.system(size: 10, weight: .semibold))
-                .foregroundColor(.white.opacity(0.4))
+                .foregroundColor(Theme.textTertiary)
 
             ZStack {
                 Circle()
                     .trim(from: 0, to: 0.75)
-                    .stroke(Color.white.opacity(0.08), style: StrokeStyle(lineWidth: 7, lineCap: .round))
+                    .stroke(Theme.fillHover, style: StrokeStyle(lineWidth: 7, lineCap: .round))
                     .rotationEffect(.degrees(135))
                 Circle()
                     .trim(from: 0, to: 0.75 * min(Double(stats.wordsPerMinute) / 220.0, 1.0))
@@ -100,7 +100,7 @@ struct InsightsView: View {
                     .rotationEffect(.degrees(135))
                 Text("\(stats.wordsPerMinute)")
                     .font(.system(size: 20, weight: .bold))
-                    .foregroundColor(.white)
+                    .foregroundColor(Theme.textPrimary)
             }
             .frame(width: 64, height: 64)
             .frame(maxWidth: .infinity)
@@ -125,18 +125,18 @@ struct InsightsView: View {
             HStack(spacing: 5) {
                 Image(systemName: "lock.fill")
                     .font(.system(size: 10))
-                    .foregroundColor(.white.opacity(0.35))
+                    .foregroundColor(Theme.textTertiary)
                 Text("FIXES MADE BY QUILL")
                     .font(.system(size: 10, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.4))
+                    .foregroundColor(Theme.textTertiary)
             }
             Text("—")
                 .font(.system(size: 26, weight: .bold))
-                .foregroundColor(.white.opacity(0.25))
+                .foregroundColor(Theme.textTertiary)
             Spacer(minLength: 0)
             Text("Connect an OpenAI or Anthropic key in Style to enable grammar and tone fixes.")
                 .font(.system(size: 11))
-                .foregroundColor(.white.opacity(0.4))
+                .foregroundColor(Theme.textTertiary)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding(18)
@@ -149,23 +149,23 @@ struct InsightsView: View {
         VStack(alignment: .leading, spacing: 10) {
             Text("\(stats.totalWords)")
                 .font(.system(size: 26, weight: .bold))
-                .foregroundColor(.white)
+                .foregroundColor(Theme.textPrimary)
             Text("TOTAL WORDS DICTATED")
                 .font(.system(size: 10, weight: .semibold))
-                .foregroundColor(.white.opacity(0.4))
+                .foregroundColor(Theme.textTertiary)
             Spacer(minLength: 8)
             Divider().opacity(0.1)
             HStack(spacing: 6) {
                 Image(systemName: "desktopcomputer")
                     .font(.system(size: 11))
-                    .foregroundColor(.white.opacity(0.4))
+                    .foregroundColor(Theme.textTertiary)
                 Text("Desktop")
                     .font(.system(size: 11))
-                    .foregroundColor(.white.opacity(0.6))
+                    .foregroundColor(Theme.textSecondary)
                 Spacer()
                 Text("\(stats.totalWords)")
                     .font(.system(size: 11))
-                    .foregroundColor(.white.opacity(0.4))
+                    .foregroundColor(Theme.textTertiary)
             }
         }
         .padding(18)
@@ -182,16 +182,16 @@ struct InsightsView: View {
             HStack {
                 Text(name)
                     .font(.system(size: 12))
-                    .foregroundColor(.white.opacity(0.85))
+                    .foregroundColor(Theme.textPrimary)
                 Spacer()
                 Text("\(count)")
                     .font(.system(size: 12))
-                    .foregroundColor(.white.opacity(0.4))
+                    .foregroundColor(Theme.textTertiary)
             }
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 3)
-                        .fill(Color.white.opacity(0.06))
+                        .fill(Theme.fillHover)
                     RoundedRectangle(cornerRadius: 3)
                         .fill(Theme.accent.opacity(0.7))
                         .frame(width: geo.size.width * fraction)
@@ -208,10 +208,10 @@ struct InsightsView: View {
                 .foregroundColor(Theme.accent)
             Text("No insights yet")
                 .font(.system(size: 15, weight: .semibold))
-                .foregroundColor(.white)
+                .foregroundColor(Theme.textPrimary)
             Text("Word counts, speaking speed, and streaks will show up here once you've dictated a few times — all computed locally.")
                 .font(.system(size: 12))
-                .foregroundColor(.white.opacity(0.6))
+                .foregroundColor(Theme.textSecondary)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 320)
         }

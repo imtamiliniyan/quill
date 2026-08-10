@@ -9,7 +9,7 @@ struct ModelDownloadView: View {
                 .font(.system(size: 16, weight: .semibold))
             Text(state.model?.displayName ?? "")
                 .font(.system(size: 13))
-                .foregroundColor(.white.opacity(0.7))
+                .foregroundColor(Theme.textPrimary)
 
             if state.done {
                 Image(systemName: "checkmark.circle.fill")
@@ -20,7 +20,7 @@ struct ModelDownloadView: View {
                     .tint(Theme.accent)
                 Text("\(Int(progress * 100))%")
                     .font(.system(size: 12))
-                    .foregroundColor(.white.opacity(0.6))
+                    .foregroundColor(Theme.textSecondary)
             } else {
                 ProgressView()
             }
@@ -37,6 +37,6 @@ struct ModelDownloadView: View {
         .padding(28)
         .frame(width: 420, height: 320)
         .background(Theme.background)
-        .foregroundColor(.white)
+        .foregroundColor(Theme.textPrimary)
     }
 }

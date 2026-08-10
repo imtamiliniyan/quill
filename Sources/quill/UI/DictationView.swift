@@ -15,7 +15,7 @@ struct DictationView: View {
             VStack(alignment: .leading, spacing: 0) {
                 Text("Dictation")
                     .font(.system(size: 20, weight: .bold))
-                    .foregroundColor(.white)
+                    .foregroundColor(Theme.textPrimary)
                     .padding(.horizontal, Theme.pagePadding)
                     .padding(.top, Theme.pagePadding)
                     .padding(.bottom, 16)
@@ -30,7 +30,7 @@ struct DictationView: View {
                                     Text(label(for: group.day))
                                         .font(.system(size: 11, weight: .semibold))
                                         .tracking(0.4)
-                                        .foregroundColor(.white.opacity(0.4))
+                                        .foregroundColor(Theme.textTertiary)
                                         .padding(.horizontal, 4)
 
                                     VStack(spacing: 0) {
@@ -82,10 +82,10 @@ struct DictationView: View {
                 .foregroundColor(Theme.accent)
             Text("No dictations yet")
                 .font(.system(size: 15, weight: .semibold))
-                .foregroundColor(.white)
+                .foregroundColor(Theme.textPrimary)
             Text("Hold Fn and speak anywhere — what you dictate shows up here, read straight from a file on this Mac, never uploaded.")
                 .font(.system(size: 12))
-                .foregroundColor(.white.opacity(0.6))
+                .foregroundColor(Theme.textSecondary)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 320)
         }
@@ -104,7 +104,7 @@ private struct StatsSidebar: View {
         VStack(alignment: .leading, spacing: 14) {
             Text("At a glance")
                 .font(.system(size: 12, weight: .semibold))
-                .foregroundColor(.white.opacity(0.5))
+                .foregroundColor(Theme.textSecondary)
                 .padding(.top, Theme.pagePadding)
 
             statRow(value: "\(stats.totalWords)", label: "total words")
@@ -115,7 +115,7 @@ private struct StatsSidebar: View {
 
             Label("Local only, never uploaded", systemImage: "lock.shield")
                 .font(.system(size: 10))
-                .foregroundColor(.white.opacity(0.35))
+                .foregroundColor(Theme.textTertiary)
                 .padding(.bottom, 16)
         }
         .padding(.horizontal, 18)
@@ -127,10 +127,10 @@ private struct StatsSidebar: View {
         VStack(alignment: .leading, spacing: 2) {
             Text(value)
                 .font(.system(size: 22, weight: .bold))
-                .foregroundColor(.white)
+                .foregroundColor(Theme.textPrimary)
             Text(label)
                 .font(.system(size: 11))
-                .foregroundColor(.white.opacity(0.5))
+                .foregroundColor(Theme.textSecondary)
         }
     }
 }
@@ -149,13 +149,13 @@ private struct DictationRow: View {
         HStack(alignment: .top, spacing: 12) {
             Text(entry.timestamp, style: .time)
                 .font(.system(size: 12))
-                .foregroundColor(.white.opacity(0.4))
+                .foregroundColor(Theme.textTertiary)
                 .frame(width: 64, alignment: .leading)
                 .padding(.top, 1)
 
             Text(entry.text)
                 .font(.system(size: 13))
-                .foregroundColor(.white.opacity(0.9))
+                .foregroundColor(Theme.textPrimary)
                 .lineLimit(3)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -163,7 +163,7 @@ private struct DictationRow: View {
                 Button(action: copy) {
                     Image(systemName: copied ? "checkmark" : "doc.on.doc")
                         .font(.system(size: 12))
-                        .foregroundColor(copied ? Theme.accent : .white.opacity(0.55))
+                        .foregroundColor(copied ? Theme.accent : Theme.textSecondary)
                         .frame(width: 22, height: 22)
                 }
                 .buttonStyle(.plain)
@@ -172,7 +172,7 @@ private struct DictationRow: View {
                 Button(action: onDelete) {
                     Image(systemName: "trash")
                         .font(.system(size: 12))
-                        .foregroundColor(.white.opacity(0.55))
+                        .foregroundColor(Theme.textSecondary)
                         .frame(width: 22, height: 22)
                 }
                 .buttonStyle(.plain)
@@ -185,7 +185,7 @@ private struct DictationRow: View {
         .padding(.vertical, 12)
         .padding(.leading, 4)
         .contentShape(Rectangle())
-        .background(hovering ? Color.white.opacity(0.03) : Color.clear)
+        .background(hovering ? Theme.textQuaternary : Color.clear)
         .onHover { hovering = $0 }
     }
 
