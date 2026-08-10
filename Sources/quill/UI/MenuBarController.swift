@@ -12,6 +12,7 @@ final class MenuBarController {
     private let modelSubmenu: NSMenu
     private var modelID: String
     private var box: TranscriberBox?
+    private var isSwitching = false
 
     /// Called when the user picks a model that isn't downloaded yet and
     /// confirms — Quill.swift owns opening the app window / showing progress
@@ -95,19 +96,27 @@ final class MenuBarController {
         }
     }
 
-    /// Switches a model already confirmed present on disk — fast (just
-    /// loads into memory), so no progress UI needed.
+    /// Switches a model already confirmed present on disk. Still takes a
+    /// couple seconds to load the CoreML model into memory, so show
+    /// "switching…" in the meantime instead of looking like nothing
+    /// happened — this was confusing enough in practice to be worth fixing.
     func switchToModel(_ model: TranscriptionModel) {
-        guard let box else { return }
+        guard let box, !isSwitching else { return }
+        isSwitching = true
+        let previousState = stateLabel.title
+        stateLabel.title = "switching model…"
         let transcriber = TranscriberFactory.make(for: model)
         Task {
             do {
                 try await transcriber.warmUp()
                 box.switchTo(transcriber, modelID: model.id)
                 updateModel(model.id)
+                stateLabel.title = previousState
             } catch {
                 FileHandle.standardError.write(Data("model switch failed: \(error)\n".utf8))
+                stateLabel.title = previousState
             }
+            isSwitching = false
         }
     }
 
