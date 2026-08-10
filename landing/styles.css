@@ -32,6 +32,10 @@
 
 html {
   scroll-behavior: smooth;
+  /* body already clips horizontal overflow, but fixed-position elements
+     (the floating topbar) are positioned against the viewport and bypass
+     a plain body clip — this closes that gap on real mobile Safari. */
+  overflow-x: hidden;
 }
 
 body {
@@ -1837,14 +1841,18 @@ body {
     font-size: 10px;
   }
 
-  /* Pill chips — scrollable row */
+  /* Pill chips — scrollable row. Right edge fades instead of hard-cutting
+     the last chip, so it reads as "swipe for more" rather than broken. */
   .pill-chips {
     flex-wrap: nowrap;
     overflow-x: auto;
     justify-content: flex-start;
     padding-bottom: 4px;
+    padding-right: 24px;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
+    -webkit-mask-image: linear-gradient(to right, black 0%, black 88%, transparent 100%);
+    mask-image: linear-gradient(to right, black 0%, black 88%, transparent 100%);
   }
   .pill-chips::-webkit-scrollbar {
     display: none;
@@ -1926,24 +1934,5 @@ body {
     flex-wrap: wrap;
     justify-content: center;
     gap: 16px;
-  }
-}
-
-  }
-  .final-cta-card h2 {
-    font-size: 32px;
-  }
-  .final-cta-card {
-    padding: 40px 24px;
-    border-radius: 20px;
-  }
-  .pricing-card {
-    padding: 24px;
-  }
-  .price {
-    font-size: 42px;
-  }
-  .faq-trigger {
-    font-size: 16px;
   }
 }
