@@ -29,6 +29,11 @@
       <svg class="brand-icon" aria-hidden="true"><use href="#quill-mark"/></svg>
       <span>Quill</span>
     </div>
+    <nav class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#privacy">Privacy</a>
+    </nav>
+    <a href="#waitlist-form" class="nav-cta">Join the waitlist</a>
   </header>
 
   <main>
@@ -60,24 +65,24 @@
         </div>
         <svg class="hero-icon-center" aria-hidden="true"><use href="#quill-mark"/></svg>
       </div>
-      <h1>Dictation that never<br />leaves your Mac.</h1>
+      <p class="eyebrow">QUILL DICTATION</p>
+      <h1>Speak, and it's typed —<br /><em>nothing leaves this Mac.</em></h1>
       <p class="hero-sub">
         A free, on-device replacement for paid dictation tools like Wispr Flow and Gladio.
         Hold a key, speak, release — transcribed locally on the Neural Engine and typed
-        straight into whatever's focused. No subscription, no account, no audio ever
-        sent anywhere.
+        straight into whatever's focused.
       </p>
 
       <form id="waitlist-form" class="waitlist-form" action="https://formspree.io/f/YOUR_FORM_ID" method="POST">
         <label for="email" class="sr-only">Email address</label>
-        <input id="email" name="email" type="email" required placeholder="you@example.com" autocomplete="email" />
+        <input id="email" name="email" type="email" required placeholder="Enter your email" autocomplete="email" />
         <button type="submit">Join the waitlist</button>
       </form>
       <p id="form-status" class="form-status" role="status" aria-live="polite"></p>
-      <p class="hero-note">No spam. One email when it's ready to download.</p>
+      <p class="hero-note">Available for macOS on Apple Silicon.</p>
     </section>
 
-    <section class="features">
+    <section class="features" id="features">
       <div class="feature">
         <div class="feature-icon">🔒</div>
         <h3>Runs entirely on-device</h3>
@@ -103,7 +108,7 @@
       </div>
     </section>
 
-    <section class="privacy-banner">
+    <section class="privacy-banner" id="privacy">
       <p><strong>Your data stays on your Mac.</strong> Quill doesn't have a server. There's nothing to send your
         dictation to, so it never does.</p>
     </section>
