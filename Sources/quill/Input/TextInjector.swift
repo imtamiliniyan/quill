@@ -1,47 +1,59 @@
+import AppKit
 import CoreGraphics
 import Foundation
 
-/// Posts a string of text at the current cursor location by synthesizing
-/// keyboard events with `CGEventKeyboardSetUnicodeString`. Works in nearly
-/// every text field on macOS; some Electron apps and secure password fields
-/// can drop characters (platform constraint).
+/// Types the given text at the current cursor location.
+///
+/// Uses clipboard-paste (set the pasteboard, synthesize Cmd+V), not raw
+/// synthetic keystrokes. The original implementation posted
+/// `CGEventKeyboardSetUnicodeString` events directly — reliable in native
+/// AppKit/UIKit text fields, but Electron apps (Claude Desktop, Slack,
+/// VS Code, etc.) run their own text editors on top of Chromium and don't
+/// consistently pick up synthetic per-character keyboard events the way a
+/// native `NSTextField` does. Confirmed empirically: dictation transcribed
+/// correctly (visible in the daemon's log) but nothing appeared while Claude
+/// Desktop was focused. A simulated Cmd+V goes through the exact same path
+/// as a real paste, which every one of these apps already has to support —
+/// this is the same approach Wispr Flow and similar tools use, for the
+/// same reason.
 enum TextInjector {
-    /// Inject the given text at the current cursor location.
-    /// Splits long strings into chunks because the underlying API has a
-    /// per-event character limit (~20 chars).
     static func inject(_ text: String) {
         guard !text.isEmpty else { return }
 
-        let utf16 = Array(text.utf16)
-        let chunkSize = 20
-        var index = 0
+        let pasteboard = NSPasteboard.general
+        let previous = pasteboard.string(forType: .string)
+        let previousChangeCount = pasteboard.changeCount
 
-        while index < utf16.count {
-            let end = min(index + chunkSize, utf16.count)
-            var chunk = Array(utf16[index..<end])
-            postChunk(&chunk)
-            index = end
+        pasteboard.clearContents()
+        pasteboard.setString(text, forType: .string)
+
+        postCmdV()
+
+        // Restore whatever was on the clipboard before we touched it, but
+        // only if nothing else changed it in the meantime (the target app
+        // needs a moment to actually read the paste first).
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+            guard pasteboard.changeCount == previousChangeCount + 1 else { return }
+            pasteboard.clearContents()
+            if let previous {
+                pasteboard.setString(previous, forType: .string)
+            }
         }
     }
 
-    private static func postChunk(_ chunk: inout [UniChar]) {
-        let length = chunk.count
-        guard length > 0 else { return }
+    private static func postCmdV() {
+        // Same tap location as before — .cgSessionEventTap collides with
+        // HotkeyMonitor's own listen-only tap at that spot and gets
+        // silently swallowed; .cgAnnotatedSessionEventTap is further down
+        // the pipeline and delivers reliably. Confirmed empirically.
+        let source = CGEventSource(stateID: .hidSystemState)
 
-        // NOTE: posting to `.cgSessionEventTap` collides with HotkeyMonitor's
-        // own listen-only tap, which is installed at `.headInsertEventTap` on
-        // that same `.cgSessionEventTap` location — the synthetic keystrokes
-        // get silently swallowed before reaching the focused app. Posting to
-        // `.cgAnnotatedSessionEventTap` (further down the pipeline, past that
-        // tap) delivers reliably. Confirmed empirically: cghidEventTap and
-        // cgSessionEventTap both silently no-op here; cgAnnotatedSessionEventTap
-        // lands in the focused text field every time.
-        let down = CGEvent(keyboardEventSource: nil, virtualKey: 0, keyDown: true)
-        down?.keyboardSetUnicodeString(stringLength: length, unicodeString: &chunk)
-        down?.post(tap: .cgAnnotatedSessionEventTap)
+        let vDown = CGEvent(keyboardEventSource: source, virtualKey: 0x09, keyDown: true) // 'v'
+        vDown?.flags = .maskCommand
+        vDown?.post(tap: .cgAnnotatedSessionEventTap)
 
-        let up = CGEvent(keyboardEventSource: nil, virtualKey: 0, keyDown: false)
-        up?.keyboardSetUnicodeString(stringLength: length, unicodeString: &chunk)
-        up?.post(tap: .cgAnnotatedSessionEventTap)
+        let vUp = CGEvent(keyboardEventSource: source, virtualKey: 0x09, keyDown: false)
+        vUp?.flags = .maskCommand
+        vUp?.post(tap: .cgAnnotatedSessionEventTap)
     }
 }
