@@ -49,28 +49,26 @@ final class MenuBarController {
 
     private func configureButton(recording: Bool) {
         guard let button = statusItem.button else { return }
-        let image = Self.birdImage()
+        let image = Self.featherImage()
         image?.isTemplate = true
         button.image = image
     }
 
-    // Inlined Lucide bird SVG. Keeping it in source means the executable has
-    // no separate resource bundle to install alongside it — true single-binary.
-    private static let birdSVG = """
+    // Inlined Feather-icons "feather" SVG (quill/pen theme, matches the
+    // project name). Keeping it in source means the executable has no
+    // separate resource bundle to install alongside it — true single-binary.
+    private static let featherSVG = """
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" \
     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" \
     stroke-linecap="round" stroke-linejoin="round">\
-    <path d="M16 7h.01"/>\
-    <path d="M3.4 18H12a8 8 0 0 0 8-8V7a4 4 0 0 0-7.28-2.3L2 20"/>\
-    <path d="m20 7 2 .5-2 .5"/>\
-    <path d="M10 18v3"/>\
-    <path d="M14 17.75V21"/>\
-    <path d="M7 18a6 6 0 0 0 3.84-10.61"/>\
+    <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/>\
+    <line x1="16" y1="8" x2="2" y2="22"/>\
+    <line x1="17.5" y1="15" x2="9" y2="15"/>\
     </svg>
     """
 
-    private static func birdImage() -> NSImage? {
-        guard let data = birdSVG.data(using: .utf8),
+    private static func featherImage() -> NSImage? {
+        guard let data = featherSVG.data(using: .utf8),
               let image = NSImage(data: data)
         else { return nil }
         // Menu-bar status icons are nominally 18pt tall; size the SVG to match.
