@@ -109,6 +109,9 @@ private struct SystemSettingsView: View {
 private struct PrivacySettingsView: View {
     @State private var confirmingClear = false
     @State private var historyCount = DictationHistory.loadAll().count
+    private var apiKeyConnected: Bool {
+        StyleProvider.allCases.contains { APIKeyStore.hasKey(for: $0) }
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -127,12 +130,21 @@ private struct PrivacySettingsView: View {
 
             Text("""
             The one exception: if you add your own OpenAI or Anthropic API key \
-            in Style (coming soon) to rewrite tone, the text you choose to \
-            rewrite is sent directly to that provider using your key. Nothing \
-            else is ever transmitted, and rewriting is off unless you turn it on.
+            in Style to rewrite tone, the text you choose to rewrite is sent \
+            directly to that provider using your key. Nothing else is ever \
+            transmitted, and rewriting only happens when you press Rewrite.
             """)
             .font(.system(size: 12))
             .foregroundColor(.white.opacity(0.55))
+
+            HStack(spacing: 6) {
+                Image(systemName: apiKeyConnected ? "key.fill" : "key")
+                    .font(.system(size: 11))
+                    .foregroundColor(apiKeyConnected ? Theme.accent : .white.opacity(0.35))
+                Text(apiKeyConnected ? "A Style API key is connected." : "No Style API key connected.")
+                    .font(.system(size: 12))
+                    .foregroundColor(.white.opacity(0.55))
+            }
 
             Divider().opacity(0.15)
 

@@ -18,6 +18,7 @@ enum QuillSettings {
     private enum Key {
         static let selectedModelID = "selectedModelID"
         static let onboardingCompleted = "onboardingCompleted"
+        static let styleProvider = "styleProvider"
     }
 
     static var selectedModelID: String? {
@@ -28,5 +29,13 @@ enum QuillSettings {
     static var onboardingCompleted: Bool {
         get { defaults.bool(forKey: Key.onboardingCompleted) }
         set { defaults.set(newValue, forKey: Key.onboardingCompleted) }
+    }
+
+    /// Which provider Style targets — not sensitive (just a picker
+    /// choice), unlike the actual API key which lives in APIKeyStore
+    /// (Keychain), never here.
+    static var styleProvider: StyleProvider {
+        get { StyleProvider(rawValue: defaults.string(forKey: Key.styleProvider) ?? "") ?? .openAI }
+        set { defaults.set(newValue.rawValue, forKey: Key.styleProvider) }
     }
 }

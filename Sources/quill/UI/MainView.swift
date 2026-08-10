@@ -105,53 +105,8 @@ struct MainView: View {
         switch state.selection {
         case .dictation: DictationView()
         case .insights: InsightsView()
-        case .style: StyleComingSoonView()
+        case .style: StyleView()
         case nil: EmptyView()
         }
-    }
-}
-
-// MARK: - Placeholders (Phase 4 fills this in)
-
-private struct StyleComingSoonView: View {
-    var body: some View {
-        ComingSoonView(
-            icon: "wand.and.stars",
-            title: "Style rewriting",
-            body: "Bring your own OpenAI or Anthropic API key to rewrite dictated text (formal, casual, cleanup). Off by default — text is only sent to the provider you pick, using your own key, when you ask for a rewrite."
-        )
-    }
-}
-
-private struct ComingSoonView: View {
-    let icon: String
-    let title: String
-    let body_: String
-
-    init(icon: String, title: String, body: String) {
-        self.icon = icon
-        self.title = title
-        self.body_ = body
-    }
-
-    var body: some View {
-        VStack(spacing: 12) {
-            Image(systemName: icon)
-                .font(.system(size: 28))
-                .foregroundColor(Theme.accent)
-            Text(title)
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundColor(.white)
-            Text(body_)
-                .font(.system(size: 12))
-                .foregroundColor(.white.opacity(0.6))
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: 320)
-            Text("Coming soon")
-                .font(.system(size: 11, weight: .medium))
-                .foregroundColor(.white.opacity(0.4))
-                .padding(.top, 4)
-        }
-        .padding(32)
     }
 }
