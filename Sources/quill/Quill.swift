@@ -35,6 +35,26 @@ struct Run: ParsableCommand {
     var model: String?
 
     func run() throws {
+        // Exactly one quill process may own the Fn-key tap at a time. Two
+        // running together (the "Launch at login" LaunchAgent daemon plus
+        // a double-clicked Quill.app, say) don't just waste CPU — neither
+        // tap consumes the key, so both independently capture, transcribe,
+        // and inject on every hold, and every dictation gets typed twice.
+        // Confirmed via `ps` showing both processes alive at once.
+        guard SingleInstance.acquire() else {
+            if !skipDoctor {
+                // Most likely case: the background daemon is already
+                // running and the user just double-clicked the app to look
+                // at it. Don't fail silently — hand off to the instance
+                // that's actually listening.
+                SingleInstance.requestOpenMain()
+            }
+            FileHandle.standardError.write(Data(
+                "quill is already running — opening its window instead of starting a second instance.\n".utf8
+            ))
+            return
+        }
+
         // --skip-doctor means "I already know what I'm doing" — this is what
         // the LaunchAgent (and any scripted/CLI use) passes. That path keeps
         // today's exact behavior: hard-fail and exit on missing permissions,
@@ -110,6 +130,9 @@ struct Run: ParsableCommand {
             }
             menuBar.onOpenMain = { mainWindow.showMain() }
         }
+        SingleInstance.observeOpenMainRequests {
+            MainActor.assumeIsolated { mainWindow.showMain() }
+        }
 
         do {
             try attachDictationHandlers(
@@ -140,6 +163,9 @@ struct Run: ParsableCommand {
         let onboarding = MainActor.assumeIsolated { OnboardingWindow(state: state) }
         let mainWindow = MainActor.assumeIsolated { MainWindow() }
         MainActor.assumeIsolated { menuBar.onOpenMain = { mainWindow.showMain() } }
+        SingleInstance.observeOpenMainRequests {
+            MainActor.assumeIsolated { mainWindow.showMain() }
+        }
 
         let monitor = HotkeyMonitor(debug: debugHotkey)
         let capture = AudioCapture()

@@ -15,10 +15,29 @@ private enum SettingsTab: String, CaseIterable, Identifiable {
 }
 
 struct SettingsView: View {
+    @Environment(\.dismiss) private var dismiss
     @State private var tab: SettingsTab = .general
 
     var body: some View {
         VStack(spacing: 0) {
+            HStack {
+                Text("Settings")
+                    .font(.system(size: 14, weight: .semibold))
+                Spacer()
+                Button {
+                    dismiss()
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 16))
+                        .foregroundColor(.white.opacity(0.5))
+                }
+                .buttonStyle(.plain)
+                .keyboardShortcut(.cancelAction)
+                .help("Close (Esc)")
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 14)
+
             Picker("", selection: $tab) {
                 ForEach(SettingsTab.allCases) { t in
                     Label(t.rawValue, systemImage: t.icon).tag(t)
