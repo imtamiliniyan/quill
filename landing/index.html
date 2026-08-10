@@ -928,106 +928,70 @@
       });
     });
 
-    // --- PART 3: FIREBASE WAITLIST INTEGRATION ---
+    // --- PART 3: WAITLIST FORM SUBMISSION ---
+    // Posts to the /api/waitlist serverless function on Vercel.
+    // No Firebase credentials are ever loaded in the browser.
 
-    // Developer Firebase Web Configuration Block
-    const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_PROJECT_ID.appspot.com",
-      messagingSenderId: "YOUR_SENDER_ID",
-      appId: "YOUR_APP_ID"
-    };
-
-    const isConfigured = firebaseConfig.apiKey !== "YOUR_API_KEY" && firebaseConfig.projectId !== "YOUR_PROJECT_ID";
-
-    let db = null;
-    if (isConfigured) {
-      try {
-        const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js');
-        const { getFirestore } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js');
-        const app = initializeApp(firebaseConfig);
-        db = getFirestore(app);
-      } catch (e) {
-        console.error("Failed to initialize Firebase", e);
-      }
-    } else {
-      console.warn("Quill: Firebase is not configured yet. Waitlist submissions will run in mock demo mode.");
-    }
-
-    // Handle Forms Submit
     const waitlistForms = document.querySelectorAll('.waitlist-form');
 
     waitlistForms.forEach(form => {
       const emailInput = form.querySelector('input[type="email"]');
-      const nameInput = form.querySelector('input[type="text"]');
-      const button = form.querySelector('button');
-      const statusId = form.getAttribute('data-status-id');
-      const status = document.getElementById(statusId);
+      const nameInput  = form.querySelector('input[type="text"]');
+      const button     = form.querySelector('button');
+      const statusId   = form.getAttribute('data-status-id');
+      const status     = document.getElementById(statusId);
 
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        // Step 1: If name input is hidden, validate email and transition to name step
+        // ── Step 1: Validate email → reveal name field ──────────────────
         if (nameInput.style.display === 'none') {
           if (!emailInput.checkValidity()) {
             emailInput.reportValidity();
             return;
           }
-          
-          // Switch to Name Step with smooth animation
           emailInput.style.display = 'none';
-          nameInput.style.display = '';
-          nameInput.required = true;
+          nameInput.style.display  = '';
+          nameInput.required       = true;
           nameInput.style.animation = 'waitlistFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards';
           nameInput.focus();
           button.textContent = 'Submit';
           return;
         }
 
-        // Step 2: Submit both name and email to Firebase
+        // ── Step 2: POST email + name to serverless API ─────────────────
         const email = emailInput.value.trim();
-        const name = nameInput.value.trim();
-
+        const name  = nameInput.value.trim();
         if (!email || !name) return;
 
-        button.disabled = true;
-        status.textContent = 'Joining waitlist...';
-        status.className = 'form-status';
+        button.disabled    = true;
+        status.textContent = 'Joining waitlist…';
+        status.className   = 'form-status';
 
-        if (isConfigured && db) {
-          try {
-            const { collection, addDoc, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js');
-            await addDoc(collection(db, 'waitlist'), {
-              email: email,
-              name: name,
-              timestamp: serverTimestamp()
-            });
-            
-            // Hide the input fields and submit button on success
+        try {
+          const res  = await fetch('/api/waitlist', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ email, name }),
+          });
+
+          const data = await res.json();
+
+          if (res.ok) {
             nameInput.style.display = 'none';
-            button.style.display = 'none';
-            
-            status.textContent = "You're on the list. We'll email you when Quill is ready to download.";
+            button.style.display    = 'none';
+            status.textContent      = "You're on the list. We'll email you when Quill is ready to download.";
             status.classList.add('success');
-          } catch (err) {
-            console.error("Firestore write failed", err);
-            status.textContent = "Something went wrong. Try again in a moment.";
+          } else {
+            status.textContent = data.error ?? 'Something went wrong. Try again in a moment.';
             status.classList.add('error');
             button.disabled = false;
           }
-        } else {
-          // Fallback mockup demo mode
-          setTimeout(() => {
-            // Hide the input fields and submit button on success
-            nameInput.style.display = 'none';
-            button.style.display = 'none';
-            
-            status.textContent = "You're on the list. We'll email you when Quill is ready to download.";
-            status.classList.add('success');
-            button.disabled = false;
-          }, 800);
+        } catch (err) {
+          console.error('[waitlist] fetch failed:', err);
+          status.textContent = 'Network error. Please check your connection and try again.';
+          status.classList.add('error');
+          button.disabled = false;
         }
       });
     });

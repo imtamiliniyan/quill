@@ -7,3 +7,12 @@ dist/
 
 # kdb auto-rendered task index (regenerate with `kdb render`)
 .tasks/
+
+# Environment variables — NEVER commit real credentials
+.env
+.env.local
+.env.*.local
+.env.example
+
+# Node
+node_modules/
