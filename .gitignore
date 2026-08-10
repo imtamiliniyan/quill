@@ -9,10 +9,12 @@ dist/
 .tasks/
 
 # Environment variables — NEVER commit real credentials
+# .env.example is safe to commit (it contains no real values)
 .env
 .env.local
-.env.*.local
-.env.example
+.env.development.local
+.env.test.local
+.env.production.local
 
 # Node
 node_modules/
