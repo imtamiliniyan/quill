@@ -15,10 +15,13 @@ actor ParakeetTranscriber: Transcriber {
     }
 
     /// Loads the model into memory; downloads first if not already on disk.
-    func warmUp() async throws {
+    func warmUp(progress: ((Double) -> Void)?) async throws {
         if manager != nil { return }
         FileHandle.standardError.write(Data("loading \(model.id)...\n".utf8))
-        let models = try await AsrModels.downloadAndLoad(version: .v3)
+        let models = try await AsrModels.downloadAndLoad(
+            version: .v3,
+            progressHandler: progress.map { cb in { @Sendable p in cb(p.fractionCompleted) } }
+        )
         manager = AsrManager(config: .default, models: models)
         FileHandle.standardError.write(Data("✓ \(model.id) ready\n".utf8))
     }

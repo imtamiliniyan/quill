@@ -35,16 +35,27 @@ struct Run: ParsableCommand {
     var model: String?
 
     func run() throws {
-        if !skipDoctor {
-            let checks = DoctorReport.run()
-            if !DoctorReport.allOK(checks) {
-                FileHandle.standardError.write(Data("startup checks failed:\n".utf8))
-                DoctorReport.print(checks)
-                FileHandle.standardError.write(Data("\nfix the above or pass --skip-doctor\n".utf8))
-                throw ExitCode(1)
-            }
+        // --skip-doctor means "I already know what I'm doing" — this is what
+        // the LaunchAgent (and any scripted/CLI use) passes. That path keeps
+        // today's exact behavior: hard-fail and exit on missing permissions,
+        // since there's no one at a screen to walk through onboarding and
+        // launchd is the one who should decide whether to restart it.
+        //
+        // Without --skip-doctor (a bare `quill`, or double-clicking the
+        // .app), missing permissions/model instead show an onboarding
+        // window and keep the process alive — the app used to just
+        // silently exit here, which is unusable for anyone not watching
+        // the terminal it was launched from.
+        if skipDoctor {
+            try runAssumingConfigured()
+        } else {
+            try runWithOnboarding()
         }
+    }
 
+    // MARK: - CLI / LaunchAgent path (unchanged behavior)
+
+    private func runAssumingConfigured() throws {
         let chosenModel: TranscriptionModel
         if let id = model {
             guard let m = ModelRegistry.find(id) else {
@@ -83,7 +94,6 @@ struct Run: ParsableCommand {
 
         let monitor = HotkeyMonitor(debug: debugHotkey)
         let capture = AudioCapture()
-        let dumpWav = self.dumpWav
         let overlay: RecordingOverlay? = noOverlay ? nil : MainActor.assumeIsolated { RecordingOverlay() }
         if let overlay {
             capture.onLevel = { level in overlay.pushLevel(level) }
@@ -91,75 +101,89 @@ struct Run: ParsableCommand {
         let menuBar = MainActor.assumeIsolated { MenuBarController(modelID: chosenModel.id) }
 
         do {
-            try monitor.start { event in
-                switch event {
-                case .pressed:
-                    do {
-                        try capture.start()
-                        FileHandle.standardError.write(Data("● recording\n".utf8))
-                        MainActor.assumeIsolated {
-                            overlay?.show(.recording)
-                            menuBar.setRecording(true)
-                        }
-                    } catch {
-                        FileHandle.standardError.write(Data("capture failed: \(error)\n".utf8))
-                    }
-                case .released:
-                    let samples = capture.stop()
-                    MainActor.assumeIsolated {
-                        overlay?.show(.transcribing)
-                        menuBar.setTranscribing()
-                    }
-                    let seconds = Double(samples.count) / AudioCapture.targetSampleRate
-                    let rms = computeRMS(samples)
-                    FileHandle.standardError.write(Data(
-                        String(format: "○ captured %.2fs · rms %.3f\n", seconds, rms).utf8
-                    ))
-                    if dumpWav, !samples.isEmpty {
-                        let path = "/tmp/quill-last.wav"
-                        do {
-                            try WAVWriter.write(samples: samples, sampleRate: 16_000, to: path)
-                            FileHandle.standardError.write(Data("  wrote \(path)\n".utf8))
-                        } catch {
-                            FileHandle.standardError.write(Data("  wav write failed: \(error)\n".utf8))
-                        }
-                    }
-                    guard !samples.isEmpty else {
-                        MainActor.assumeIsolated {
-                            overlay?.hide()
-                            menuBar.setRecording(false)
-                        }
-                        return
-                    }
-                    Task {
-                        let started = Date()
-                        do {
-                            let text = try await transcriber.transcribe(samples)
-                            let elapsed = Date().timeIntervalSince(started)
-                            FileHandle.standardError.write(Data(
-                                String(format: "→ %.2fs · %@\n", elapsed, text).utf8
-                            ))
-                            await MainActor.run {
-                                TextInjector.inject(text)
-                                overlay?.hide()
-                                menuBar.setRecording(false)
-                            }
-                        } catch {
-                            FileHandle.standardError.write(Data("transcription failed: \(error)\n".utf8))
-                            await MainActor.run {
-                                overlay?.hide()
-                                menuBar.setRecording(false)
-                            }
-                        }
-                    }
-                }
-            }
+            try attachDictationHandlers(
+                monitor: monitor, capture: capture, overlay: overlay,
+                menuBar: menuBar, transcriber: transcriber, dumpWav: dumpWav
+            )
         } catch {
             FileHandle.standardError.write(Data("failed to register hotkey tap: \(error)\n".utf8))
             FileHandle.standardError.write(Data("run `quill setup` to configure permissions.\n".utf8))
             throw ExitCode(1)
         }
 
+        installSigintHandler(monitor: monitor)
+        FileHandle.standardError.write(Data("listening on fn hold · model: \(chosenModel.id) · ^C to quit\n".utf8))
+        app.run()
+    }
+
+    // MARK: - Onboarding-gated path (bare `quill`, or the .app double-clicked)
+
+    private func runWithOnboarding() throws {
+        let app = NSApplication.shared
+        app.setActivationPolicy(.accessory)
+
+        let state = MainActor.assumeIsolated { OnboardingState() }
+        let menuBar = MainActor.assumeIsolated {
+            MenuBarController(modelID: state.selectedModel?.id ?? "not set")
+        }
+        let onboarding = MainActor.assumeIsolated { OnboardingWindow(state: state) }
+
+        let monitor = HotkeyMonitor(debug: debugHotkey)
+        let capture = AudioCapture()
+        let overlay: RecordingOverlay? = noOverlay ? nil : MainActor.assumeIsolated { RecordingOverlay() }
+        if let overlay {
+            capture.onLevel = { level in overlay.pushLevel(level) }
+        }
+        let dumpWav = self.dumpWav
+
+        func startDictation(model: TranscriptionModel, transcriber: Transcriber) {
+            MainActor.assumeIsolated { menuBar.updateModel(model.id) }
+            do {
+                try attachDictationHandlers(
+                    monitor: monitor, capture: capture, overlay: overlay,
+                    menuBar: menuBar, transcriber: transcriber, dumpWav: dumpWav
+                )
+                FileHandle.standardError.write(Data("listening on fn hold · model: \(model.id)\n".utf8))
+            } catch {
+                // Don't exit — permission may have been revoked after the
+                // fact. Re-show onboarding instead of silently disappearing.
+                FileHandle.standardError.write(Data("failed to register hotkey tap: \(error)\n".utf8))
+                MainActor.assumeIsolated { onboarding.show() }
+            }
+        }
+
+        MainActor.assumeIsolated {
+            onboarding.onFinished = {
+                guard let model = state.selectedModel, let t = state.warmedTranscriber else { return }
+                startDictation(model: model, transcriber: t)
+            }
+        }
+
+        let readyModel: TranscriptionModel? = MainActor.assumeIsolated {
+            state.isReady ? state.selectedModel : nil
+        }
+        if let model = readyModel {
+            // Already configured from a previous run: model's on disk, just
+            // needs loading into memory — no window needed.
+            let transcriber = TranscriberFactory.make(for: model)
+            Task { @MainActor in
+                do {
+                    try await transcriber.warmUp()
+                    startDictation(model: model, transcriber: transcriber)
+                } catch {
+                    FileHandle.standardError.write(Data("warmup failed: \(error)\n".utf8))
+                    onboarding.show()
+                }
+            }
+        } else {
+            MainActor.assumeIsolated { onboarding.show() }
+        }
+
+        installSigintHandler(monitor: monitor)
+        app.run()
+    }
+
+    private func installSigintHandler(monitor: HotkeyMonitor) {
         let sigint = DispatchSource.makeSignalSource(signal: SIGINT, queue: .main)
         sigint.setEventHandler {
             FileHandle.standardError.write(Data("\nshutting down\n".utf8))
@@ -168,9 +192,82 @@ struct Run: ParsableCommand {
         }
         sigint.resume()
         signal(SIGINT, SIG_IGN)
+    }
+}
 
-        FileHandle.standardError.write(Data("listening on fn hold · model: \(chosenModel.id) · ^C to quit\n".utf8))
-        app.run()
+/// Wires up the press/release hotkey handler shared by both the
+/// already-configured (LaunchAgent) path and the onboarding path — capture
+/// audio, show recording state, transcribe on release, inject the result.
+private func attachDictationHandlers(
+    monitor: HotkeyMonitor,
+    capture: AudioCapture,
+    overlay: RecordingOverlay?,
+    menuBar: MenuBarController,
+    transcriber: Transcriber,
+    dumpWav: Bool
+) throws {
+    try monitor.start { event in
+        switch event {
+        case .pressed:
+            do {
+                try capture.start()
+                FileHandle.standardError.write(Data("● recording\n".utf8))
+                MainActor.assumeIsolated {
+                    overlay?.show(.recording)
+                    menuBar.setRecording(true)
+                }
+            } catch {
+                FileHandle.standardError.write(Data("capture failed: \(error)\n".utf8))
+            }
+        case .released:
+            let samples = capture.stop()
+            MainActor.assumeIsolated {
+                overlay?.show(.transcribing)
+                menuBar.setTranscribing()
+            }
+            let seconds = Double(samples.count) / AudioCapture.targetSampleRate
+            let rms = computeRMS(samples)
+            FileHandle.standardError.write(Data(
+                String(format: "○ captured %.2fs · rms %.3f\n", seconds, rms).utf8
+            ))
+            if dumpWav, !samples.isEmpty {
+                let path = "/tmp/quill-last.wav"
+                do {
+                    try WAVWriter.write(samples: samples, sampleRate: 16_000, to: path)
+                    FileHandle.standardError.write(Data("  wrote \(path)\n".utf8))
+                } catch {
+                    FileHandle.standardError.write(Data("  wav write failed: \(error)\n".utf8))
+                }
+            }
+            guard !samples.isEmpty else {
+                MainActor.assumeIsolated {
+                    overlay?.hide()
+                    menuBar.setRecording(false)
+                }
+                return
+            }
+            Task {
+                let started = Date()
+                do {
+                    let text = try await transcriber.transcribe(samples)
+                    let elapsed = Date().timeIntervalSince(started)
+                    FileHandle.standardError.write(Data(
+                        String(format: "→ %.2fs · %@\n", elapsed, text).utf8
+                    ))
+                    await MainActor.run {
+                        TextInjector.inject(text)
+                        overlay?.hide()
+                        menuBar.setRecording(false)
+                    }
+                } catch {
+                    FileHandle.standardError.write(Data("transcription failed: \(error)\n".utf8))
+                    await MainActor.run {
+                        overlay?.hide()
+                        menuBar.setRecording(false)
+                    }
+                }
+            }
+        }
     }
 }
 

@@ -8,7 +8,7 @@ final class MenuBarController {
     private let statusItem: NSStatusItem
     private let modelLabel: NSMenuItem
     private let stateLabel: NSMenuItem
-    private let modelID: String
+    private var modelID: String
 
     init(modelID: String) {
         self.modelID = modelID
@@ -45,6 +45,14 @@ final class MenuBarController {
 
     func setTranscribing() {
         stateLabel.title = "transcribing…"
+    }
+
+    /// Called once onboarding picks a model (the initial `modelID` may just
+    /// be a placeholder like "not set" if the menu bar had to appear before
+    /// a choice was made).
+    func updateModel(_ id: String) {
+        modelID = id
+        modelLabel.title = "model: \(id)"
     }
 
     private func configureButton(recording: Bool) {
