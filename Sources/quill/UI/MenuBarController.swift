@@ -10,7 +10,7 @@ final class MenuBarController {
     private let modelLabel: NSMenuItem
     private let stateLabel: NSMenuItem
     private let modelSubmenu: NSMenu
-    private var modelID: String
+    private(set) var modelID: String
     private var box: TranscriberBox?
     private var isSwitching = false
 
@@ -92,9 +92,17 @@ final class MenuBarController {
 
     @objc private func modelSelected(_ sender: NSMenuItem) {
         guard let id = sender.representedObject as? String,
-              let model = ModelRegistry.find(id),
-              id != modelID
+              let model = ModelRegistry.find(id)
         else { return }
+        selectModel(model)
+    }
+
+    /// Shared entry point for "the user picked a model" — used by both the
+    /// menu's own submenu and Settings > General > Models, so the
+    /// already-downloaded-vs-needs-confirm-and-download logic lives in
+    /// exactly one place.
+    func selectModel(_ model: TranscriptionModel) {
+        guard model.id != modelID else { return }
 
         if ModelAvailability.isDownloaded(model) {
             switchToModel(model)
@@ -154,6 +162,7 @@ final class MenuBarController {
         modelID = id
         modelLabel.title = "model: \(id)"
         rebuildModelSubmenu()
+        NotificationCenter.default.post(name: .quillModelChanged, object: nil)
     }
 
     private func configureButton(recording: Bool) {

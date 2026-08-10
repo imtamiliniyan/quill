@@ -1,0 +1,12 @@
+{
+  "name": "quill-landing",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Quill landing page with serverless waitlist API",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.0.0"
+  }
+}

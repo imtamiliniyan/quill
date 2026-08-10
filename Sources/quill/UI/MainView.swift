@@ -26,6 +26,7 @@ final class AppViewState: ObservableObject {
 
 struct MainView: View {
     @ObservedObject var state: AppViewState
+    let menuBar: MenuBarController
 
     var body: some View {
         // A plain HStack, not NavigationSplitView — NavigationSplitView
@@ -43,7 +44,7 @@ struct MainView: View {
                 .background(Theme.background)
         }
         .sheet(isPresented: $state.showSettings) {
-            SettingsView()
+            SettingsView(menuBar: menuBar)
         }
     }
 

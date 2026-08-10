@@ -22,6 +22,12 @@ struct DictationEntry: Codable, Identifiable {
 
 extension Notification.Name {
     static let quillHistoryUpdated = Notification.Name("com.tamiliniyan.quill.historyUpdated")
+    /// Fired whenever the active transcription model changes, from any
+    /// trigger (menu bar switch, post-download auto-switch, or the
+    /// Settings > General > Models picker) — lets Settings' Models section
+    /// stay in sync without holding its own reference to the live model
+    /// state.
+    static let quillModelChanged = Notification.Name("com.tamiliniyan.quill.modelChanged")
 }
 
 /// Append-only local history of dictations, one JSON object per line at

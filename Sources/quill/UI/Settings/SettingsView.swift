@@ -15,6 +15,7 @@ private enum SettingsTab: String, CaseIterable, Identifiable {
 }
 
 struct SettingsView: View {
+    let menuBar: MenuBarController
     @Environment(\.dismiss) private var dismiss
     @State private var tab: SettingsTab = .general
 
@@ -51,7 +52,7 @@ struct SettingsView: View {
 
             Group {
                 switch tab {
-                case .general: GeneralSettingsView()
+                case .general: GeneralSettingsView(menuBar: menuBar)
                 case .system: SystemSettingsView()
                 case .privacy: PrivacySettingsView()
                 }
@@ -66,23 +67,149 @@ struct SettingsView: View {
 }
 
 private struct GeneralSettingsView: View {
+    let menuBar: MenuBarController
     @State private var firstName = QuillProfile.firstName
     @State private var lastName = QuillProfile.lastName
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text("Your name").font(.system(size: 13, weight: .semibold))
-            HStack(spacing: 10) {
-                TextField("First name", text: $firstName)
-                    .textFieldStyle(.roundedBorder)
-                    .onChange(of: firstName) { _, new in QuillProfile.firstName = new }
-                TextField("Last name", text: $lastName)
-                    .textFieldStyle(.roundedBorder)
-                    .onChange(of: lastName) { _, new in QuillProfile.lastName = new }
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                VStack(alignment: .leading, spacing: 14) {
+                    Text("Your name").font(.system(size: 13, weight: .semibold))
+                    HStack(spacing: 10) {
+                        TextField("First name", text: $firstName)
+                            .textFieldStyle(.roundedBorder)
+                            .onChange(of: firstName) { _, new in QuillProfile.firstName = new }
+                        TextField("Last name", text: $lastName)
+                            .textFieldStyle(.roundedBorder)
+                            .onChange(of: lastName) { _, new in QuillProfile.lastName = new }
+                    }
+                    Text("Shown only inside Quill on this Mac. There's no account or sign-in.")
+                        .font(.system(size: 11))
+                        .foregroundColor(Theme.textSecondary)
+                }
+
+                Divider().opacity(0.15)
+
+                ModelsSettingsView(menuBar: menuBar)
             }
-            Text("Shown only inside Quill on this Mac. There's no account or sign-in.")
+        }
+    }
+}
+
+/// Radio-button model picker plus a per-model delete (trash icon), so
+/// switching or freeing up disk space never requires the terminal —
+/// mirrors exactly what the menu bar's "Switch Model" submenu already does,
+/// through the same `MenuBarController.selectModel` entry point.
+private struct ModelsSettingsView: View {
+    let menuBar: MenuBarController
+    @State private var currentModelID: String
+    @State private var confirmingDelete: TranscriptionModel?
+    @State private var deleteError: String?
+
+    init(menuBar: MenuBarController) {
+        self.menuBar = menuBar
+        _currentModelID = State(initialValue: menuBar.modelID)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Models").font(.system(size: 13, weight: .semibold))
+            Text("Choose which model transcribes your dictation. Downloaded models can be removed here to free up space.")
                 .font(.system(size: 11))
                 .foregroundColor(Theme.textSecondary)
+
+            VStack(spacing: 8) {
+                ForEach(ModelRegistry.shared, id: \.id) { model in
+                    modelRow(model)
+                }
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .quillModelChanged)) { _ in
+            currentModelID = menuBar.modelID
+        }
+        .confirmationDialog(
+            "Delete \(confirmingDelete?.displayName ?? "")? You'll need to download it again to use it.",
+            isPresented: Binding(
+                get: { confirmingDelete != nil },
+                set: { if !$0 { confirmingDelete = nil } }
+            ),
+            titleVisibility: .visible
+        ) {
+            Button("Delete Model", role: .destructive) {
+                if let model = confirmingDelete { delete(model) }
+                confirmingDelete = nil
+            }
+            Button("Cancel", role: .cancel) { confirmingDelete = nil }
+        }
+        .alert(
+            "Couldn't delete model",
+            isPresented: Binding(
+                get: { deleteError != nil },
+                set: { if !$0 { deleteError = nil } }
+            )
+        ) {
+            Button("OK") { deleteError = nil }
+        } message: {
+            Text(deleteError ?? "")
+        }
+    }
+
+    private func modelRow(_ model: TranscriptionModel) -> some View {
+        let selected = model.id == currentModelID
+        let downloaded = ModelAvailability.isDownloaded(model)
+        return HStack(spacing: 10) {
+            Button {
+                guard !selected else { return }
+                menuBar.selectModel(model)
+                currentModelID = menuBar.modelID
+            } label: {
+                HStack(spacing: 10) {
+                    Image(systemName: selected ? "largecircle.fill.circle" : "circle")
+                        .foregroundColor(selected ? Theme.accent : Theme.textTertiary)
+                    VStack(alignment: .leading, spacing: 2) {
+                        HStack(spacing: 6) {
+                            Text(model.displayName)
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundColor(Theme.textPrimary)
+                            if model.recommended {
+                                Text("RECOMMENDED")
+                                    .font(.system(size: 8, weight: .bold))
+                                    .foregroundColor(Theme.accent)
+                            }
+                        }
+                        Text(downloaded ? "\(model.sizeMB) MB · downloaded" : "\(model.sizeMB) MB · not downloaded")
+                            .font(.system(size: 10))
+                            .foregroundColor(Theme.textTertiary)
+                    }
+                    Spacer()
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+
+            if downloaded && !selected {
+                Button {
+                    confirmingDelete = model
+                } label: {
+                    Image(systemName: "trash")
+                        .font(.system(size: 12))
+                        .foregroundColor(Theme.textTertiary)
+                }
+                .buttonStyle(.plain)
+                .help("Delete downloaded model")
+            }
+        }
+        .padding(10)
+        .background(selected ? Theme.fillHover : Theme.textQuaternary)
+        .cornerRadius(8)
+    }
+
+    private func delete(_ model: TranscriptionModel) {
+        do {
+            try ModelAvailability.deleteFiles(for: model)
+        } catch {
+            deleteError = error.localizedDescription
         }
     }
 }

@@ -122,7 +122,7 @@ struct Run: ParsableCommand {
         }
         let menuBar = MainActor.assumeIsolated { MenuBarController(modelID: chosenModel.id) }
         let box = MainActor.assumeIsolated { TranscriberBox(transcriber: transcriber, modelID: chosenModel.id) }
-        let mainWindow = MainActor.assumeIsolated { MainWindow() }
+        let mainWindow = MainActor.assumeIsolated { MainWindow(menuBar: menuBar) }
         MainActor.assumeIsolated {
             menuBar.attachModelSwitcher(box: box)
             menuBar.onModelNeedsDownload = { model in
@@ -164,7 +164,7 @@ struct Run: ParsableCommand {
             MenuBarController(modelID: state.selectedModel?.id ?? "not set")
         }
         let onboarding = MainActor.assumeIsolated { OnboardingWindow(state: state) }
-        let mainWindow = MainActor.assumeIsolated { MainWindow() }
+        let mainWindow = MainActor.assumeIsolated { MainWindow(menuBar: menuBar) }
         MainActor.assumeIsolated { menuBar.onOpenMain = { mainWindow.showMain() } }
         SingleInstance.observeOpenMainRequests {
             MainActor.assumeIsolated { mainWindow.showMain() }

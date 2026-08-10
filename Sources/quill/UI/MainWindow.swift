@@ -18,6 +18,11 @@ final class MainWindow: NSObject, NSWindowDelegate {
     private var mainAppWindow: NSWindow?
     let downloadState = ModelDownloadState()
     private let appState = AppViewState()
+    private let menuBar: MenuBarController
+
+    init(menuBar: MenuBarController) {
+        self.menuBar = menuBar
+    }
 
     func showDownload(model: TranscriptionModel, box: TranscriberBox, onSwitched: @escaping () -> Void) {
         downloadState.start(model: model, box: box, onSwitched: onSwitched)
@@ -28,7 +33,7 @@ final class MainWindow: NSObject, NSWindowDelegate {
     /// download flow's completed state both land here.
     func showMain() {
         if mainAppWindow == nil {
-            let hosting = NSHostingView(rootView: MainView(state: appState))
+            let hosting = NSHostingView(rootView: MainView(state: appState, menuBar: menuBar))
             let win = NSWindow(
                 contentRect: NSRect(x: 0, y: 0, width: 940, height: 620),
                 styleMask: [.titled, .closable, .miniaturizable, .resizable],

@@ -24,4 +24,29 @@ enum ModelAvailability {
             return !contents.isEmpty
         }
     }
+
+    /// Deletes a downloaded model's on-disk cache directly, so Settings >
+    /// General > Models can offer a trash icon with no terminal use
+    /// required. Mirrors the exact paths `isDownloaded` above checks — see
+    /// there for why these paths aren't discoverable through any public
+    /// API.
+    static func deleteFiles(for model: TranscriptionModel) throws {
+        let fm = FileManager.default
+        switch model.engine {
+        case .parakeet:
+            let dir = AsrModels.defaultCacheDirectory(for: .v3)
+            if fm.fileExists(atPath: dir.path) {
+                try fm.removeItem(at: dir)
+            }
+        case .whisperKit:
+            guard let whisperKitID = model.whisperKitID else { return }
+            let home = fm.homeDirectoryForCurrentUser
+            let dir = home
+                .appendingPathComponent("Documents/huggingface/models/argmaxinc/whisperkit-coreml")
+                .appendingPathComponent(whisperKitID)
+            if fm.fileExists(atPath: dir.path) {
+                try fm.removeItem(at: dir)
+            }
+        }
+    }
 }
