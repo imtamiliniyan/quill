@@ -112,15 +112,24 @@ struct StyleView: View {
                     Text(tone.rawValue)
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundColor(Theme.textPrimary)
+                    // Fixed 2-line height regardless of actual wrap — the
+                    // three style hints are different lengths ("Lowercase,
+                    // minimal punctuation" vs "Relaxed punctuation, natural
+                    // capitalization"), so without this the cards drift out
+                    // of alignment with each other by a line.
                     Text(tone.styleHint)
                         .font(.system(size: 10))
                         .foregroundColor(Theme.textTertiary)
+                        .frame(maxWidth: .infinity, minHeight: 24, alignment: .topLeading)
                 }
+                // Same reasoning, fixed 2-line height: the example
+                // sentences wrap to different line counts per tone (Very
+                // Casual's is one short line, Formal's wraps to two).
                 Text(tone.example)
                     .font(.system(size: 11))
                     .foregroundColor(Theme.textPrimary)
                     .fixedSize(horizontal: false, vertical: true)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .frame(maxWidth: .infinity, minHeight: 32, alignment: .topLeading)
                     .padding(10)
                     .background(Theme.textQuaternary)
                     .cornerRadius(8)

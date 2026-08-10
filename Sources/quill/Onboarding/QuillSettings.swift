@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 
 /// Persisted app settings.
@@ -21,6 +22,7 @@ enum QuillSettings {
         static let styleProvider = "styleProvider"
         static let autoCleanupLevel = "autoCleanupLevel"
         static let autoCleanupTone = "autoCleanupTone"
+        static let darkModeEnabled = "darkModeEnabled"
     }
 
     static var selectedModelID: String? {
@@ -64,5 +66,26 @@ enum QuillSettings {
             return stored
         }
         set { defaults.set(newValue.rawValue, forKey: Key.autoCleanupTone) }
+    }
+
+    /// Manual override, not "follow system": Theme.swift's dynamic colors
+    /// resolve off `NSApp.appearance` (not the raw system setting), and
+    /// setting that explicitly is exactly how a manual light/dark toggle
+    /// is meant to work in AppKit — it takes effect immediately on every
+    /// open window, no restart needed. Defaults to false (light) since
+    /// light is the primary palette now, matching the landing page.
+    static var darkModeEnabled: Bool {
+        get { defaults.bool(forKey: Key.darkModeEnabled) }
+        set {
+            defaults.set(newValue, forKey: Key.darkModeEnabled)
+            applyAppearance()
+        }
+    }
+
+    /// Pushes `darkModeEnabled` onto NSApp — call once at each app-launch
+    /// entry point (before any window is shown) and again whenever the
+    /// Settings toggle changes it.
+    static func applyAppearance() {
+        NSApp.appearance = NSAppearance(named: darkModeEnabled ? .darkAqua : .aqua)
     }
 }

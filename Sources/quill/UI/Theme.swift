@@ -5,16 +5,24 @@ import SwiftUI
 /// progress, and the main app window. Keeps the look consistent without
 /// every view redeclaring its own palette.
 ///
-/// Every color below (besides `accent`, which is identical in both
-/// modes) is appearance-aware via `dynamic(dark:light:)`: light mode
-/// mirrors the landing page's warm palette (landing/styles-v2.css), dark
-/// mode keeps Quill's original look. Nothing outside this file needs to
-/// know which mode is active — `Theme.textPrimary` etc. just resolves to
-/// the right color per-draw, following System Settings > Appearance.
+/// Every color below is appearance-aware via `dynamic(dark:light:)`:
+/// light mode mirrors the landing page's warm palette
+/// (landing/styles-v2.css), dark mode keeps Quill's original look.
+/// Nothing outside this file needs to know which mode is active —
+/// `Theme.textPrimary` etc. just resolves to the right color per-draw,
+/// following System Settings > Appearance (or the manual override in
+/// Settings > System, see QuillSettings.darkModeEnabled).
 enum Theme {
-    // Shared with the landing page's --quill-accent — same value in both
-    // light and dark, the one deliberate continuity thread between them.
-    static let accent = Color(red: 181 / 255, green: 209 / 255, blue: 255 / 255)
+    // Same hue as the landing page's --quill-accent (#B5D1FF) in dark
+    // mode, kept as the deliberate continuity thread — but that light
+    // pastel blue has poor contrast used as text/highlight on a *light*
+    // background (light-on-light), confirmed by the actual light-mode
+    // screenshots once this shipped. Light mode uses a darker, more
+    // saturated shade of the same hue instead, for legibility.
+    static let accent = dynamic(
+        dark: NSColor(red: 181 / 255, green: 209 / 255, blue: 255 / 255, alpha: 1),
+        light: NSColor(red: 38 / 255, green: 113 / 255, blue: 217 / 255, alpha: 1) // #2671D9
+    )
 
     static let background = dynamic(
         dark: NSColor(red: 0.075, green: 0.078, blue: 0.086, alpha: 1),

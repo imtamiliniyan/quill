@@ -89,6 +89,7 @@ private struct GeneralSettingsView: View {
 
 private struct SystemSettingsView: View {
     @State private var launchAtLogin = LaunchAtLoginManager.isEnabled
+    @State private var darkModeEnabled = QuillSettings.darkModeEnabled
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -100,6 +101,18 @@ private struct SystemSettingsView: View {
                     if !ok { launchAtLogin = LaunchAtLoginManager.isEnabled }
                 }
             Text("Runs quietly in the menu bar as soon as you log in — no dock icon until you open this window.")
+                .font(.system(size: 11))
+                .foregroundColor(Theme.textSecondary)
+
+            Divider().opacity(0.15)
+
+            Toggle("Enable Dark Mode", isOn: $darkModeEnabled)
+                .toggleStyle(.switch)
+                .tint(Theme.accent)
+                .onChange(of: darkModeEnabled) { _, wantsOn in
+                    QuillSettings.darkModeEnabled = wantsOn
+                }
+            Text("Overrides System Settings > Appearance for Quill specifically — takes effect immediately.")
                 .font(.system(size: 11))
                 .foregroundColor(Theme.textSecondary)
         }

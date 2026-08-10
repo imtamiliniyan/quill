@@ -89,7 +89,7 @@ struct MainView: View {
         } label: {
             Label(item.rawValue, systemImage: item.icon)
                 .font(.system(size: 13, weight: selected ? .semibold : .regular))
-                .foregroundColor(selected ? .white : Theme.textPrimary)
+                .foregroundColor(Theme.textPrimary)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 6)

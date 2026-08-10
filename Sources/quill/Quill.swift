@@ -111,6 +111,7 @@ struct Run: ParsableCommand {
 
         let app = NSApplication.shared
         app.setActivationPolicy(.accessory)
+        QuillSettings.applyAppearance()
 
         // Never prompt from this path — see HotkeyMonitor's promptForAccessibility doc.
         let monitor = HotkeyMonitor(debug: debugHotkey, promptForAccessibility: false)
@@ -156,6 +157,7 @@ struct Run: ParsableCommand {
     private func runWithOnboarding() throws {
         let app = NSApplication.shared
         app.setActivationPolicy(.accessory)
+        QuillSettings.applyAppearance()
 
         let state = MainActor.assumeIsolated { OnboardingState() }
         let menuBar = MainActor.assumeIsolated {
