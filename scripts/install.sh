@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# parrot installer.
-#   curl -fsSL https://digimata.github.io/parrot/install.sh | sh
+# quill installer.
+#   curl -fsSL https://imtamiliniyan.github.io/quill/install.sh | sh
 #
 # Fetches the latest arm64 macOS binary from GitHub Releases, drops it
 # in /usr/local/bin, and strips the quarantine xattr so Gatekeeper doesn't
@@ -11,10 +11,10 @@
 
 set -euo pipefail
 
-REPO="digimata/parrot"
-BIN_NAME="parrot"
+REPO="imtamiliniyan/quill"
+BIN_NAME="quill"
 INSTALL_DIR="/usr/local/bin"
-ASSET="parrot-macos-arm64.tar.gz"
+ASSET="quill-macos-arm64.tar.gz"
 
 red()    { printf "\033[31m%s\033[0m\n" "$*" >&2; }
 green()  { printf "\033[32m%s\033[0m\n" "$*"; }
@@ -22,13 +22,13 @@ dim()    { printf "\033[2m%s\033[0m\n" "$*"; }
 
 # 1. sanity
 if [ "$(uname -s)" != "Darwin" ]; then
-    red "parrot is macOS-only (detected $(uname -s))"
+    red "quill is macOS-only (detected $(uname -s))"
     exit 1
 fi
 
 ARCH=$(uname -m)
 if [ "$ARCH" != "arm64" ]; then
-    red "parrot requires Apple Silicon (detected $ARCH)"
+    red "quill requires Apple Silicon (detected $ARCH)"
     red "the on-device inference engine uses the Apple Neural Engine, which Intel Macs don't have."
     exit 1
 fi
@@ -89,9 +89,9 @@ dim "→ installing to ${INSTALL_DIR}/${BIN_NAME}..."
 $SUDO mv "$TMP/${BIN_NAME}" "${INSTALL_DIR}/${BIN_NAME}"
 $SUDO chmod +x "${INSTALL_DIR}/${BIN_NAME}"
 
-green "✓ parrot ${TAG} installed at ${INSTALL_DIR}/${BIN_NAME}"
+green "✓ quill ${TAG} installed at ${INSTALL_DIR}/${BIN_NAME}"
 echo
 echo "next:"
-echo "  parrot setup                       # grant mic + accessibility"
-echo "  parrot install --launch-at-login   # (optional) start at login"
-echo "  parrot                             # run the daemon"
+echo "  quill setup                       # grant mic + accessibility"
+echo "  quill install --launch-at-login   # (optional) start at login"
+echo "  quill                             # run the daemon"

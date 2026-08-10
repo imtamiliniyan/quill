@@ -2,7 +2,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "parrot",
+    name: "quill",
     platforms: [.macOS(.v14)],
     dependencies: [
         .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.3.0"),
@@ -10,7 +10,7 @@ let package = Package(
     ],
     targets: [
         .executableTarget(
-            name: "parrot",
+            name: "quill",
             dependencies: [
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
                 .product(name: "WhisperKit", package: "WhisperKit"),

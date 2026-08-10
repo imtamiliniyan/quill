@@ -9,21 +9,21 @@ struct Setup: ParsableCommand {
     )
 
     func run() throws {
-        print("parrot setup")
+        print("quill setup")
         print("============")
         print()
-        print("Parrot needs two permissions:")
+        print("Quill needs two permissions:")
         print("  1. Accessibility — to detect the Fn key globally and inject text at the cursor.")
         print("  2. Microphone — to record audio while you hold Fn.")
         print()
-        print("These attach to your terminal app (Terminal/iTerm/Ghostty/etc.), not parrot itself.")
+        print("These attach to your terminal app (Terminal/iTerm/Ghostty/etc.), not quill itself.")
         print()
 
         try waitForAccessibility()
         print()
         try waitForMicrophone()
         print()
-        print("✓ all set. Run `parrot` to start the daemon.")
+        print("✓ all set. Run `quill` to start the daemon.")
     }
 
     private func waitForAccessibility() throws {
@@ -38,7 +38,7 @@ struct Setup: ParsableCommand {
 
         print()
         print("  1. Toggle your terminal on in the Accessibility list.")
-        print("  2. Re-run `parrot setup` — macOS only picks up the grant on a fresh process.")
+        print("  2. Re-run `quill setup` — macOS only picks up the grant on a fresh process.")
         throw ExitCode(0)
     }
 
@@ -52,7 +52,7 @@ struct Setup: ParsableCommand {
             print("✗ microphone is denied — macOS won't re-prompt once denied.")
             print("  opening Settings → Privacy & Security → Microphone...")
             openSettings("Privacy_Microphone")
-            print("  enable your terminal, then re-run `parrot setup`.")
+            print("  enable your terminal, then re-run `quill setup`.")
             throw ExitCode(1)
         case .notDetermined:
             print("→ requesting microphone access...")

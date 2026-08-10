@@ -35,19 +35,19 @@ jobs:
 
       - name: stage
         run: |
-          BIN=.build/arm64-apple-macosx/release/parrot
+          BIN=.build/arm64-apple-macosx/release/quill
           file "$BIN"
           mkdir -p dist
-          cp "$BIN" dist/parrot
+          cp "$BIN" dist/quill
 
       - name: strip
-        run: strip -x dist/parrot
+        run: strip -x dist/quill
 
       - name: package
         run: |
           cd dist
-          tar -czf parrot-macos-arm64.tar.gz parrot
-          shasum -a 256 parrot-macos-arm64.tar.gz > parrot-macos-arm64.tar.gz.sha256
+          tar -czf quill-macos-arm64.tar.gz quill
+          shasum -a 256 quill-macos-arm64.tar.gz > quill-macos-arm64.tar.gz.sha256
           ls -lh
 
       - name: release
@@ -55,7 +55,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |
-            dist/parrot-macos-arm64.tar.gz
-            dist/parrot-macos-arm64.tar.gz.sha256
+            dist/quill-macos-arm64.tar.gz
+            dist/quill-macos-arm64.tar.gz.sha256
           generate_release_notes: true
           fail_on_unmatched_files: true

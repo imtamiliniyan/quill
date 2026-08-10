@@ -30,9 +30,9 @@ The binary is a Swift Package executable — `swift build`, `swift run`, ship a 
 ## High-level shape
 
 ```
-$ parrot
+$ quill
                                     ┌──────────────────┐
-                                    │   ParrotCLI      │
+                                    │   QuillCLI      │
                                     │   (main.swift)   │
                                     └────────┬─────────┘
                                              │ wires modules, runs RunLoop
@@ -63,21 +63,21 @@ $ parrot
 
 ## Modules
 
-### `main.swift` (ParrotCLI)
+### `main.swift` (QuillCLI)
 
 Argument parsing (via `swift-argument-parser`), config loading, module wiring. Calls `NSApplication.shared.setActivationPolicy(.accessory)` so the process has no dock icon and no menu bar entry, then runs `NSApp.run()` to keep the process alive and drive the AppKit run loop (needed for `NSWindow`, `CGEventTap`, and AVFoundation). Exits cleanly on SIGINT. Logs status to stderr so a user running it in a terminal can see what's happening.
 
 Subcommands:
-- `parrot` (default) — run the daemon
-- `parrot models list` — show registered models, mark which are downloaded
-- `parrot models download <id>` — pre-fetch a model
-- `parrot doctor` — check microphone and accessibility permissions, print remediation steps
+- `quill` (default) — run the daemon
+- `quill models list` — show registered models, mark which are downloaded
+- `quill models download <id>` — pre-fetch a model
+- `quill doctor` — check microphone and accessibility permissions, print remediation steps
 
 ### `HotkeyMonitor`
 
 Global hotkey via `CGEventTap` (requires Accessibility permission). Default: **hold Fn**. Detected via `flagsChanged` events with `NSEvent.ModifierFlags.function` / `kCGEventFlagMaskSecondaryFn`. Emits `.pressed` / `.released`. Configurable via `--hotkey` flag or config file.
 
-**Fn key caveat:** macOS by default maps the Fn (🌐) key to "Show Emoji & Symbols" or "Start Dictation" depending on the user's setting in System Settings → Keyboard → Press 🌐 key to. The CGEventTap sees the keypress regardless, but the system action also fires. `parrot doctor` will detect this setting and instruct the user to change it to "Do Nothing" so Fn becomes a clean modifier.
+**Fn key caveat:** macOS by default maps the Fn (🌐) key to "Show Emoji & Symbols" or "Start Dictation" depending on the user's setting in System Settings → Keyboard → Press 🌐 key to. The CGEventTap sees the keypress regardless, but the system action also fires. `quill doctor` will detect this setting and instruct the user to change it to "Do Nothing" so Fn becomes a clean modifier.
 
 ### `AudioCapture`
 
@@ -144,15 +144,15 @@ enum Engine: String, Codable { case whisperKit, parakeet }
 
 Backed by a bundled `models.json` resource. Adding a model = appending an entry. Adding an engine = one new `Transcriber` conformance + one entry in the `Engine` enum.
 
-The registry is the single source of truth for: download URLs, file names, sizes, recommended flags, what shows up in `parrot models list`.
+The registry is the single source of truth for: download URLs, file names, sizes, recommended flags, what shows up in `quill models list`.
 
 ### `ModelDownloader`
 
-On first selection (or via `parrot models download <id>`), downloads to `~/Library/Application Support/parrot/models/<engine>/<id>/`. Progress bar to stderr (using `\r` overwrites). Resumable, validates size. Refuses to start the daemon if the selected model isn't present.
+On first selection (or via `quill models download <id>`), downloads to `~/Library/Application Support/quill/models/<engine>/<id>/`. Progress bar to stderr (using `\r` overwrites). Resumable, validates size. Refuses to start the daemon if the selected model isn't present.
 
 ### `Config`
 
-Plain `Codable` struct. Loaded from (in order): CLI flags > `~/.config/parrot/config.toml` > defaults.
+Plain `Codable` struct. Loaded from (in order): CLI flags > `~/.config/quill/config.toml` > defaults.
 
 ```toml
 model = "whisper-large-v3-turbo"
@@ -165,20 +165,20 @@ CLI flags override the file. No settings UI; you edit the TOML.
 
 ## Permissions
 
-Two prompts on first run, both surfaced via `parrot doctor`:
+Two prompts on first run, both surfaced via `quill doctor`:
 
 1. **Microphone** — standard `AVCaptureDevice` request, fires on first audio engine start.
-2. **Accessibility** — required for `CGEventTap` (hotkey) and `CGEvent` posting (text injection). User toggles in System Settings → Privacy & Security → Accessibility, granting the *terminal* (or whatever launched parrot) permission, since the binary inherits its parent's TCC identity.
+2. **Accessibility** — required for `CGEventTap` (hotkey) and `CGEvent` posting (text injection). User toggles in System Settings → Privacy & Security → Accessibility, granting the *terminal* (or whatever launched quill) permission, since the binary inherits its parent's TCC identity.
 
-`parrot doctor` checks both and prints actionable next steps if either is missing. Without these, the daemon refuses to start.
+`quill doctor` checks both and prints actionable next steps if either is missing. Without these, the daemon refuses to start.
 
 ### TCC quirk worth knowing
 
-When you launch `parrot` from `Terminal.app`, accessibility permission is granted to *Terminal*, not parrot itself. This means:
+When you launch `quill` from `Terminal.app`, accessibility permission is granted to *Terminal*, not quill itself. This means:
 - Switching terminals (Terminal → iTerm → Ghostty) requires re-granting permission.
 - Running under `launchd` requires granting permission to whatever spawns it.
 
-This is a macOS platform behavior, not a parrot bug. `parrot doctor` will identify the parent process and tell the user which app needs the permission.
+This is a macOS platform behavior, not a quill bug. `quill doctor` will identify the parent process and tell the user which app needs the permission.
 
 ## Models — what ships
 
@@ -190,12 +190,12 @@ Initial registry:
 | WhisperKit | `whisper-large-v3-turbo` | ~800 MB | Recommended for daily use |
 | Parakeet | `parakeet-tdt-0.6b-v3` | ~600 MB | English, fastest on ANE |
 
-Models live in `~/Library/Application Support/parrot/models/`. Not bundled — fetched on first selection or via `parrot models download`.
+Models live in `~/Library/Application Support/quill/models/`. Not bundled — fetched on first selection or via `quill models download`.
 
 ## Data flow, end-to-end
 
-1. User runs `parrot` in a terminal.
-2. `ParrotCLI` validates permissions (`parrot doctor` logic), loads config, instantiates modules.
+1. User runs `quill` in a terminal.
+2. `QuillCLI` validates permissions (`quill doctor` logic), loads config, instantiates modules.
 3. Sets `.accessory` activation policy and enters `NSApp.run()`. Status: `listening`. Overlay hidden.
 4. User holds Fn.
 5. `HotkeyMonitor` fires `.pressed`. `RecordingOverlay` shows. Status: `recording`.
@@ -225,9 +225,9 @@ These are deliberate cuts. Each can be revisited if real usage demands it.
 Organized by feature area. These are folders within a single SPM executable target — Swift sees them as one module, but the directory grouping keeps related code together. If a group later earns its keep as a reusable library (e.g. `Transcription` consumed by another tool), it can be promoted to its own SPM target with no rewriting.
 
 ```
-parrot/
+quill/
   Package.swift                 # SPM, single executable target
-  Sources/parrot/
+  Sources/quill/
     main.swift                  # entry point, argument parsing, NSApp.run()
     Config.swift
     Doctor.swift
@@ -259,15 +259,15 @@ parrot/
   README.md
 ```
 
-Build: `swift build -c release`. Resulting binary at `.build/release/parrot`. Install: copy to `~/.local/bin/` or `/usr/local/bin/`.
+Build: `swift build -c release`. Resulting binary at `.build/release/quill`. Install: copy to `~/.local/bin/` or `/usr/local/bin/`.
 
 ### On Swift "modules"
 
-Swift's module unit is the **SPM target** (one target = one module = one `import` namespace). For parrot v1 we use a single executable target with the folder structure above; everything is in the same module so no `import` statements between files. If we ever want enforced boundaries (e.g. `Transcription` and `UI` shouldn't reach into `Audio` internals), we promote folders to separate targets in `Package.swift` — a structural change, not a semantic one.
+Swift's module unit is the **SPM target** (one target = one module = one `import` namespace). For quill v1 we use a single executable target with the folder structure above; everything is in the same module so no `import` statements between files. If we ever want enforced boundaries (e.g. `Transcription` and `UI` shouldn't reach into `Audio` internals), we promote folders to separate targets in `Package.swift` — a structural change, not a semantic one.
 
 ## Open questions
 
 - **Parakeet via FluidAudio vs. direct CoreML?** FluidAudio is faster to integrate but adds a dependency. Decide once we benchmark both.
 - **Hotkey conflicts.** Right-Option is unused on most keyboards but some users remap it. Print a clear error if `CGEventTap` registration fails.
-- **First-run UX.** Bundle `whisper-base.en` so `parrot` works out of the box, or always require an explicit download? Probably the latter — keeps the binary small and the model directory clean.
+- **First-run UX.** Bundle `whisper-base.en` so `quill` works out of the box, or always require an explicit download? Probably the latter — keeps the binary small and the model directory clean.
 - **Code signing.** A self-built unsigned binary works fine locally but accessibility permission persistence is more reliable for signed binaries. Decide if we sign for personal distribution.

@@ -33,7 +33,7 @@ enum DoctorReport {
             return Check(
                 name: "microphone",
                 status: .warn("not yet requested — will prompt on first recording"),
-                remediation: "run parrot and hold Fn once; macOS will prompt"
+                remediation: "run quill and hold Fn once; macOS will prompt"
             )
         case .denied, .restricted:
             return Check(
@@ -162,7 +162,7 @@ enum DoctorReport {
         }
     }
 
-    /// True only if every check passed cleanly (used by `parrot doctor` exit code).
+    /// True only if every check passed cleanly (used by `quill doctor` exit code).
     static func allClean(_ checks: [Check]) -> Bool {
         checks.allSatisfy {
             if case .ok = $0.status { return true }

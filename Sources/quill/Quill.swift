@@ -4,9 +4,9 @@ import Foundation
 import WhisperKit
 
 @main
-struct Parrot: ParsableCommand {
+struct Quill: ParsableCommand {
     static let configuration = CommandConfiguration(
-        commandName: "parrot",
+        commandName: "quill",
         abstract: "Minimal macOS dictation daemon. Hold Fn, speak, release.",
         subcommands: [Run.self, Setup.self, Doctor.self, Models.self, Install.self],
         defaultSubcommand: Run.self
@@ -25,7 +25,7 @@ struct Run: ParsableCommand {
     @Flag(name: .long, help: "Print every keyboard event the tap sees (debug).")
     var debugHotkey: Bool = false
 
-    @Flag(name: .long, help: "Write each capture to /tmp/parrot-last.wav for inspection.")
+    @Flag(name: .long, help: "Write each capture to /tmp/quill-last.wav for inspection.")
     var dumpWav: Bool = false
 
     @Flag(name: .long, help: "Disable the on-screen recording overlay.")
@@ -49,7 +49,7 @@ struct Run: ParsableCommand {
         if let id = model {
             guard let m = ModelRegistry.find(id) else {
                 FileHandle.standardError.write(Data("unknown model: \(id)\n".utf8))
-                FileHandle.standardError.write(Data("run `parrot models list` to see options.\n".utf8))
+                FileHandle.standardError.write(Data("run `quill models list` to see options.\n".utf8))
                 throw ExitCode(1)
             }
             chosenModel = m
@@ -116,7 +116,7 @@ struct Run: ParsableCommand {
                         String(format: "○ captured %.2fs · rms %.3f\n", seconds, rms).utf8
                     ))
                     if dumpWav, !samples.isEmpty {
-                        let path = "/tmp/parrot-last.wav"
+                        let path = "/tmp/quill-last.wav"
                         do {
                             try WAVWriter.write(samples: samples, sampleRate: 16_000, to: path)
                             FileHandle.standardError.write(Data("  wrote \(path)\n".utf8))
@@ -156,7 +156,7 @@ struct Run: ParsableCommand {
             }
         } catch {
             FileHandle.standardError.write(Data("failed to register hotkey tap: \(error)\n".utf8))
-            FileHandle.standardError.write(Data("run `parrot setup` to configure permissions.\n".utf8))
+            FileHandle.standardError.write(Data("run `quill setup` to configure permissions.\n".utf8))
             throw ExitCode(1)
         }
 
