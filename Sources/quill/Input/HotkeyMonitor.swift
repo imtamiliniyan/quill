@@ -13,24 +13,48 @@ final class HotkeyMonitor {
     /// Mask of the modifier we treat as the hotkey. Fn = `.maskSecondaryFn`.
     private let mask: CGEventFlags
     private let debug: Bool
+    private let promptForAccessibility: Bool
     private var onEvent: ((Event) -> Void)?
     private var tap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
     private var isPressed = false
 
-    init(mask: CGEventFlags = .maskSecondaryFn, debug: Bool = false) {
+    /// `promptForAccessibility` gates whether `start()` is allowed to pop
+    /// macOS's system Accessibility consent dialog on failure, vs. just
+    /// checking silently.
+    ///
+    /// This must be `false` for the LaunchAgent ("Launch at login") path.
+    /// Root-caused a real incident: that daemon restarts on every failed
+    /// exit (`KeepAlive: SuccessfulExit=false`), and this call used to
+    /// prompt unconditionally — so once Accessibility trust was lost (e.g.
+    /// a rebuild, which invalidates trust for an ad-hoc-signed binary),
+    /// every single restart re-triggered the system consent dialog. With
+    /// no cooldown between restarts, that produced a tight loop of
+    /// system-modal permission panels that kept stealing key/window focus
+    /// faster than a click or keystroke could land anywhere durable —
+    /// which is exactly what looked like "the keyboard stopped working."
+    /// The interactive paths (bare `quill`, double-clicked .app) keep
+    /// prompting — there's someone at the screen there, and it only
+    /// happens once through onboarding, not on a restart loop.
+    init(mask: CGEventFlags = .maskSecondaryFn, debug: Bool = false, promptForAccessibility: Bool = true) {
         self.mask = mask
         self.debug = debug
+        self.promptForAccessibility = promptForAccessibility
     }
 
     func start(onEvent: @escaping (Event) -> Void) throws {
         self.onEvent = onEvent
 
-        let promptKey = kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String
-        let trusted = AXIsProcessTrustedWithOptions([promptKey: true] as CFDictionary)
+        let trusted: Bool
+        if promptForAccessibility {
+            let promptKey = kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String
+            trusted = AXIsProcessTrustedWithOptions([promptKey: true] as CFDictionary)
+        } else {
+            trusted = AXIsProcessTrusted()
+        }
         if !trusted {
             FileHandle.standardError.write(Data(
-                "accessibility not granted — system prompt opened. Grant access, then quit and relaunch quill.\n".utf8
+                "accessibility not granted — grant it in System Settings > Privacy & Security > Accessibility, then restart quill.\n".utf8
             ))
             throw HotkeyError.tapCreateFailed
         }

@@ -64,6 +64,10 @@ struct Install: ParsableCommand {
             "ProgramArguments": args,
             "RunAtLoad": true,
             "KeepAlive": ["SuccessfulExit": false] as [String: Any],
+            // Defense-in-depth against any tight crash-restart loop (not just
+            // the Accessibility-prompt one HotkeyMonitor now avoids outright):
+            // launchd won't respawn more than once per this many seconds.
+            "ThrottleInterval": 30,
             "ProcessType": "Interactive",
             "StandardOutPath": "/tmp/quill.out.log",
             "StandardErrorPath": "/tmp/quill.err.log",

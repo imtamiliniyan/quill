@@ -112,7 +112,8 @@ struct Run: ParsableCommand {
         let app = NSApplication.shared
         app.setActivationPolicy(.accessory)
 
-        let monitor = HotkeyMonitor(debug: debugHotkey)
+        // Never prompt from this path — see HotkeyMonitor's promptForAccessibility doc.
+        let monitor = HotkeyMonitor(debug: debugHotkey, promptForAccessibility: false)
         let capture = AudioCapture()
         let overlay: RecordingOverlay? = noOverlay ? nil : MainActor.assumeIsolated { RecordingOverlay() }
         if let overlay {
