@@ -1,0 +1,238 @@
+/* Color tokens match Sources/quill/UI/Theme.swift exactly — the page
+   should look like the app, not invent a new palette. */
+:root {
+  --accent: #b5d1ff; /* rgb(181,209,255) */
+  --bg: #131416; /* rgb(19,20,22) */
+  --bg-raised: rgba(255, 255, 255, 0.035);
+  --border: rgba(255, 255, 255, 0.08);
+  --text: #ffffff;
+  --text-dim: rgba(255, 255, 255, 0.65);
+  --text-dimmer: rgba(255, 255, 255, 0.45);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+  overflow-x: hidden;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+}
+
+.bg-glow {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(600px 400px at 50% -10%, rgba(181, 209, 255, 0.12), transparent 70%);
+}
+
+.topbar {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  padding: 24px 32px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.brand-icon {
+  width: 20px;
+  height: 20px;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+main {
+  position: relative;
+  z-index: 1;
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 40px 24px 80px;
+}
+
+.hero {
+  text-align: center;
+  padding: 40px 0 64px;
+}
+
+.hero-icon {
+  width: 72px;
+  height: 72px;
+  color: var(--accent);
+  margin-bottom: 20px;
+  filter: drop-shadow(0 20px 40px rgba(181, 209, 255, 0.2));
+}
+
+.hero h1 {
+  font-size: 44px;
+  font-weight: 700;
+  line-height: 1.15;
+  margin: 0 0 20px;
+  letter-spacing: -0.02em;
+}
+
+.hero-sub {
+  max-width: 560px;
+  margin: 0 auto 36px;
+  color: var(--text-dim);
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.waitlist-form {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+.waitlist-form input {
+  flex: 1;
+  padding: 13px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg-raised);
+  color: var(--text);
+  font-size: 14px;
+  outline: none;
+}
+
+.waitlist-form input::placeholder {
+  color: var(--text-dimmer);
+}
+
+.waitlist-form input:focus {
+  border-color: var(--accent);
+}
+
+.waitlist-form button {
+  padding: 13px 22px;
+  border-radius: 10px;
+  border: none;
+  background: var(--accent);
+  color: #0b0c0d;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.waitlist-form button:hover {
+  filter: brightness(1.05);
+}
+
+.waitlist-form button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.form-status {
+  min-height: 20px;
+  margin: 14px 0 0;
+  font-size: 13px;
+  color: var(--text-dimmer);
+}
+
+.form-status.success {
+  color: var(--accent);
+}
+
+.hero-note {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--text-dimmer);
+}
+
+.features {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 40px;
+}
+
+.feature {
+  padding: 24px;
+  border-radius: 14px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+}
+
+.feature-icon {
+  font-size: 22px;
+  margin-bottom: 12px;
+}
+
+.feature h3 {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0 0 8px;
+}
+
+.feature p {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-dim);
+  margin: 0;
+}
+
+.privacy-banner {
+  text-align: center;
+  padding: 22px 24px;
+  border-radius: 14px;
+  background: rgba(181, 209, 255, 0.07);
+  border: 1px solid rgba(181, 209, 255, 0.2);
+}
+
+.privacy-banner p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-dim);
+}
+
+.privacy-banner strong {
+  color: var(--accent);
+}
+
+.footer {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  padding: 24px;
+  font-size: 12px;
+  color: var(--text-dimmer);
+}
+
+@media (max-width: 640px) {
+  .hero h1 {
+    font-size: 32px;
+  }
+  .features {
+    grid-template-columns: 1fr;
+  }
+  .waitlist-form {
+    flex-direction: column;
+  }
+}
