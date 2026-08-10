@@ -1,6 +1,6 @@
 # Quill
 
-A minimal macOS dictation daemon. Push-to-talk, on-device transcription, text inserted at the cursor.
+A free, on-device replacement for paid dictation tools like Wispr Flow and Gladio. Push-to-talk, transcribes locally on the Neural Engine, types directly into whatever's focused — no subscription, no audio leaving your Mac.
 
 > Quill is a fork of [digimata/parrot](https://github.com/digimata/parrot) by Andrew Jones, under the MIT license. It started from a fix for a bug where dictated text never reached the focused app (see [digimata/parrot#27](https://github.com/digimata/parrot/pull/27)), and is developed independently from here.
 
