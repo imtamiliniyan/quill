@@ -34,6 +34,15 @@ enum ModelRegistry {
             languages: ["en"],
             recommended: false
         ),
+        TranscriptionModel(
+            id: "parakeet-tdt-0.6b-v3",
+            displayName: "Parakeet TDT 0.6B v3",
+            engine: .parakeet,
+            whisperKitID: nil,
+            sizeMB: 480,
+            languages: ["multi"],
+            recommended: false
+        ),
     ]
 
     static func find(_ id: String) -> TranscriptionModel? {

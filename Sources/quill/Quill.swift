@@ -61,7 +61,7 @@ struct Run: ParsableCommand {
             chosenModel = m
         }
 
-        let transcriber = WhisperKitTranscriber(model: chosenModel)
+        let transcriber = TranscriberFactory.make(for: chosenModel)
         let warmupSemaphore = DispatchSemaphore(value: 0)
         var warmupError: Error?
         Task.detached {
@@ -215,7 +215,7 @@ struct Models: ParsableCommand {
                 print("unknown model: \(id)")
                 throw ExitCode(1)
             }
-            let t = WhisperKitTranscriber(model: m)
+            let t = TranscriberFactory.make(for: m)
 
             let sem = DispatchSemaphore(value: 0)
             var capturedError: Error?
