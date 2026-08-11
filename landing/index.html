@@ -39,7 +39,7 @@
           <a href="#features">Features</a>
           <a href="#privacy">Privacy</a>
         </nav>
-        <a href="#waitlist-section" class="btn-pill-dark">Join the waitlist</a>
+        <a href="#waitlist" class="btn-pill-dark">Join the waitlist</a>
       </header>
     </div>
   </div>
@@ -574,7 +574,7 @@
             rewriting, you bring your own OpenAI or Anthropic key and pay that provider directly. Quill never sees a
             cent either way.
           </p>
-          <a href="#waitlist-section" class="btn-pill-dark pricing-cta">Join the Waitlist</a>
+          <a href="#waitlist" class="btn-pill-dark pricing-cta">Join the Waitlist</a>
           <p class="pricing-comparison">
             Wispr Flow and Gladio charge a monthly subscription for the same core idea. Quill doesn't.
           </p>
@@ -930,7 +930,9 @@
     // --- PART 2.5: CUSTOM SMOOTH SCROLL FOR ANCHOR LINKS ---
     // Smooth scroll offset handler for links and initial page load hash targets
     const scrollToTarget = (targetId) => {
-      const targetElement = document.querySelector(targetId);
+      // Map virtual target '#waitlist' to '#waitlist-section' element
+      const elementId = targetId === '#waitlist' ? '#waitlist-section' : targetId;
+      const targetElement = document.querySelector(elementId);
       if (!targetElement) return;
 
       const elementRect = targetElement.getBoundingClientRect();
@@ -938,7 +940,7 @@
 
       // Center the waitlist form element in the middle of the screen
       let offset = 90;
-      if (targetId === '#waitlist-section') {
+      if (elementId === '#waitlist-section') {
         offset = Math.max(90, (window.innerHeight - targetElement.offsetHeight) / 2);
       }
 
@@ -950,7 +952,7 @@
       });
 
       // Focus the email input field once scrolled into view
-      if (targetId === '#waitlist-section') {
+      if (elementId === '#waitlist-section') {
         setTimeout(() => {
           const emailInput = document.getElementById('email-hero');
           if (emailInput && emailInput.style.display !== 'none') {
@@ -972,17 +974,23 @@
       });
     });
 
-    // Page load hash handler (prevents native jump-cuts on reload)
-    window.addEventListener('DOMContentLoaded', () => {
+    // Page load hash handler (prevents native jump-cuts on reload, fires after asset load)
+    const handleInitialHash = () => {
       const hash = window.location.hash;
       if (hash && hash.startsWith('#')) {
         // Temporarily reset scroll to top to prevent browser jump
         window.scrollTo(0, 0);
         setTimeout(() => {
           scrollToTarget(hash);
-        }, 200);
+        }, 300);
       }
-    });
+    };
+
+    if (document.readyState === 'complete') {
+      handleInitialHash();
+    } else {
+      window.addEventListener('load', handleInitialHash);
+    }
 
     // --- PART 3: WAITLIST FORM SUBMISSION ---
     // Posts to the /api/waitlist serverless function on Vercel.
