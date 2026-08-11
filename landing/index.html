@@ -928,39 +928,60 @@
     });
 
     // --- PART 2.5: CUSTOM SMOOTH SCROLL FOR ANCHOR LINKS ---
-    // Intercept anchor link clicks to calculate custom responsive view offsets
-    const anchorLinks = document.querySelectorAll('a[href^="#"]');
+    // Smooth scroll offset handler for links and initial page load hash targets
+    const scrollToTarget = (targetId) => {
+      const targetElement = document.querySelector(targetId);
+      if (!targetElement) return;
 
+      const elementRect = targetElement.getBoundingClientRect();
+      const absoluteElementTop = elementRect.top + window.pageYOffset;
+
+      // Center the waitlist form element in the middle of the screen
+      let offset = 90;
+      if (targetId === '#waitlist-section') {
+        offset = Math.max(90, (window.innerHeight - targetElement.offsetHeight) / 2);
+      }
+
+      const targetScrollY = Math.max(0, absoluteElementTop - offset);
+
+      window.scrollTo({
+        top: targetScrollY,
+        behavior: 'smooth'
+      });
+
+      // Focus the email input field once scrolled into view
+      if (targetId === '#waitlist-section') {
+        setTimeout(() => {
+          const emailInput = document.getElementById('email-hero');
+          if (emailInput && emailInput.style.display !== 'none') {
+            emailInput.focus({ preventScroll: true });
+          }
+        }, 300);
+      }
+    };
+
+    // Click handler
+    const anchorLinks = document.querySelectorAll('a[href^="#"]');
     anchorLinks.forEach(link => {
       link.addEventListener('click', (e) => {
         const targetId = link.getAttribute('href');
         if (targetId === '#') return;
-
-        const targetElement = document.querySelector(targetId);
-        if (targetElement) {
-          e.preventDefault();
-
-          const elementRect = targetElement.getBoundingClientRect();
-          const absoluteElementTop = elementRect.top + window.pageYOffset;
-
-          // Custom offsets: center the waitlist form vertically, align sections below topbar
-          let offset = 90;
-          if (targetId === '#waitlist-section') {
-            // Attempt to center the form element in the middle of the screen
-            offset = Math.max(90, (window.innerHeight - targetElement.offsetHeight) / 2);
-          }
-
-          const targetScrollY = Math.max(0, absoluteElementTop - offset);
-
-          window.scrollTo({
-            top: targetScrollY,
-            behavior: 'smooth'
-          });
-
-          // Update URL hash without causing native browser jump-cut scrolling
-          history.pushState(null, null, targetId);
-        }
+        e.preventDefault();
+        scrollToTarget(targetId);
+        history.pushState(null, null, targetId);
       });
+    });
+
+    // Page load hash handler (prevents native jump-cuts on reload)
+    window.addEventListener('DOMContentLoaded', () => {
+      const hash = window.location.hash;
+      if (hash && hash.startsWith('#')) {
+        // Temporarily reset scroll to top to prevent browser jump
+        window.scrollTo(0, 0);
+        setTimeout(() => {
+          scrollToTarget(hash);
+        }, 200);
+      }
     });
 
     // --- PART 3: WAITLIST FORM SUBMISSION ---
