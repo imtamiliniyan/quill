@@ -9,86 +9,6 @@
   <link rel="stylesheet" href="styles.css" />
   <link rel="icon" type="image/svg+xml" href="assets/quill-mark.svg">
   <link rel="apple-touch-icon" sizes="180x180" href="assets/icon-180.png">
-  <style>
-    .terms-content-card {
-      background: var(--surface);
-      border: 1px solid rgba(26, 26, 26, 0.06);
-      border-radius: 24px;
-      padding: 48px;
-      box-shadow: var(--shadow-md);
-      margin-top: 40px;
-      margin-bottom: 80px;
-    }
-    .terms-header {
-      margin-bottom: 32px;
-      border-bottom: 1px solid rgba(26, 26, 26, 0.06);
-      padding-bottom: 24px;
-    }
-    .terms-header h1 {
-      font-family: 'Fraunces', serif;
-      font-weight: 300;
-      font-size: 48px;
-      line-height: 1.1;
-      margin: 0 0 12px;
-    }
-    .terms-header p {
-      color: var(--ink-dim);
-      font-size: 15px;
-      margin: 0;
-    }
-    .terms-body h2 {
-      font-size: 20px;
-      font-weight: 600;
-      margin: 32px 0 12px;
-      color: var(--ink);
-    }
-    .terms-body p, .terms-body li {
-      font-size: 15px;
-      line-height: 1.6;
-      color: var(--ink-dim);
-      margin-bottom: 16px;
-    }
-    .terms-body ul {
-      margin-bottom: 24px;
-      padding-left: 20px;
-    }
-    .terms-body li {
-      margin-bottom: 8px;
-    }
-    .back-btn-wrapper {
-      margin-bottom: 24px;
-    }
-    .back-link {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      color: var(--ink-dim);
-      text-decoration: none;
-      font-size: 14px;
-      font-weight: 500;
-      transition: color 0.2s;
-    }
-    .back-link:hover {
-      color: var(--ink);
-    }
-    .back-link svg {
-      width: 16px;
-      height: 16px;
-      transition: transform 0.2s;
-    }
-    .back-link:hover svg {
-      transform: translateX(-2px);
-    }
-    @media (max-width: 640px) {
-      .terms-content-card {
-        padding: 24px 20px;
-        margin-top: 24px;
-      }
-      .terms-header h1 {
-        font-size: 32px;
-      }
-    }
-  </style>
 </head>
 
 <body>
@@ -109,18 +29,17 @@
           </svg>
           <span>Quill</span>
         </a>
-        <a href="index.html" class="back-link">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="19" y1="12" x2="5" y2="12"></line>
-            <polyline points="12 19 5 12 12 5"></polyline>
-          </svg>
-          <span>Back to Home</span>
-        </a>
+        <nav class="nav-links">
+          <a href="index.html#features">Features</a>
+          <a href="privacy.html">Privacy</a>
+          <a href="terms.html">Terms</a>
+        </nav>
+        <a href="index.html#waitlist" class="btn-pill-dark">Join the waitlist</a>
       </header>
     </div>
   </div>
 
-  <main class="container" style="padding-top: 120px;">
+  <main class="container subpage-container">
     <div class="back-btn-wrapper">
       <a href="index.html" class="back-link">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -131,13 +50,13 @@
       </a>
     </div>
 
-    <article class="privacy-content-card terms-content-card">
-      <header class="terms-header">
+    <article class="subpage-content-card">
+      <header class="subpage-header">
         <h1>Terms of Service</h1>
         <p>Last updated: August 11, 2026</p>
       </header>
 
-      <section class="privacy-body">
+      <section class="subpage-body">
         <p>Welcome to Quill. By using our website or downloading our application, you agree to comply with and be bound by the following Terms of Service. Please review them carefully.</p>
 
         <h2>1. Acceptance of Terms</h2>

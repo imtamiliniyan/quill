@@ -1674,6 +1674,103 @@ body {
   margin: 0;
 }
 
+/* Sub-page (Privacy / Terms) Shared Styling */
+.subpage-container {
+  padding-top: 120px;
+}
+
+.subpage-content-card {
+  background: var(--surface);
+  border: 1px solid rgba(26, 26, 26, 0.06);
+  border-radius: 24px;
+  padding: 48px;
+  box-shadow: var(--shadow-md);
+  margin-top: 40px;
+  margin-bottom: 80px;
+}
+
+.subpage-header {
+  margin-bottom: 32px;
+  border-bottom: 1px solid rgba(26, 26, 26, 0.06);
+  padding-bottom: 24px;
+}
+
+.subpage-header h1 {
+  font-family: 'Fraunces', serif;
+  font-weight: 300;
+  font-size: 48px;
+  line-height: 1.1;
+  margin: 0 0 12px;
+}
+
+.subpage-header p {
+  color: var(--ink-dim);
+  font-size: 15px;
+  margin: 0;
+}
+
+.subpage-body h2 {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 32px 0 12px;
+  color: var(--ink);
+}
+
+.subpage-body p, .subpage-body li {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--ink-dim);
+  margin-bottom: 16px;
+}
+
+.subpage-body ul {
+  margin-bottom: 24px;
+  padding-left: 20px;
+}
+
+.subpage-body li {
+  margin-bottom: 8px;
+}
+
+.back-btn-wrapper {
+  margin-bottom: 24px;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-dim);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.back-link:hover {
+  color: var(--ink);
+}
+
+.back-link svg {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.2s;
+}
+
+.back-link:hover svg {
+  transform: translateX(-2px);
+}
+
+@media (max-width: 640px) {
+  .subpage-content-card {
+    padding: 24px 20px;
+    margin-top: 24px;
+  }
+  .subpage-header h1 {
+    font-size: 32px;
+  }
+}
+
 /* Responsive breakdowns (collapses) */
 /* ─────────────────────────────────────────────────
    RESPONSIVE — 960px (large tablet / small desktop)
