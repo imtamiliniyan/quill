@@ -38,6 +38,12 @@ html {
   overflow-x: hidden;
 }
 
+#features,
+#privacy,
+#waitlist-section {
+  scroll-margin-top: 80px;
+}
+
 body {
   margin: 0;
   padding: 0;
@@ -1729,9 +1735,12 @@ body {
 
   /* Mockup window */
   .mockup-window {
-    height: auto;
-    min-height: 420px;
+    height: 460px;
     flex-direction: column;
+  }
+  .mockup-main {
+    min-height: 0;
+    flex-grow: 1;
   }
   .mockup-sidebar {
     width: 100%;
@@ -1848,11 +1857,14 @@ body {
     overflow-x: auto;
     justify-content: flex-start;
     padding-bottom: 4px;
-    padding-right: 24px;
+    margin-left: -16px;
+    margin-right: -16px;
+    padding-left: 16px;
+    padding-right: 16px;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
-    -webkit-mask-image: linear-gradient(to right, black 0%, black 88%, transparent 100%);
-    mask-image: linear-gradient(to right, black 0%, black 88%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 5%, black 85%, transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0%, black 5%, black 85%, transparent 100%);
   }
   .pill-chips::-webkit-scrollbar {
     display: none;
