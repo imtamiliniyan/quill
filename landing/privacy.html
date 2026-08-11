@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Privacy Policy - Quill</title>
+  <meta name="description" content="Quill's privacy model: on-device transcription, local-only processing, and user control." />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" type="image/svg+xml" href="assets/quill-mark.svg">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/icon-180.png">
+  <style>
+    .privacy-content-card {
+      background: var(--surface);
+      border: 1px solid rgba(26, 26, 26, 0.06);
+      border-radius: 24px;
+      padding: 48px;
+      box-shadow: var(--shadow-md);
+      margin-top: 40px;
+      margin-bottom: 80px;
+    }
+    .privacy-header {
+      margin-bottom: 32px;
+      border-bottom: 1px solid rgba(26, 26, 26, 0.06);
+      padding-bottom: 24px;
+    }
+    .privacy-header h1 {
+      font-family: 'Fraunces', serif;
+      font-weight: 300;
+      font-size: 48px;
+      line-height: 1.1;
+      margin: 0 0 12px;
+    }
+    .privacy-header p {
+      color: var(--ink-dim);
+      font-size: 15px;
+      margin: 0;
+    }
+    .privacy-body h2 {
+      font-size: 20px;
+      font-weight: 600;
+      margin: 32px 0 12px;
+      color: var(--ink);
+    }
+    .privacy-body p, .privacy-body li {
+      font-size: 15px;
+      line-height: 1.6;
+      color: var(--ink-dim);
+      margin-bottom: 16px;
+    }
+    .privacy-body ul {
+      margin-bottom: 24px;
+      padding-left: 20px;
+    }
+    .privacy-body li {
+      margin-bottom: 8px;
+    }
+    .back-btn-wrapper {
+      margin-bottom: 24px;
+    }
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--ink-dim);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    .back-link:hover {
+      color: var(--ink);
+    }
+    .back-link svg {
+      width: 16px;
+      height: 16px;
+      transition: transform 0.2s;
+    }
+    .back-link:hover svg {
+      transform: translateX(-2px);
+    }
+    @media (max-width: 640px) {
+      .privacy-content-card {
+        padding: 24px 20px;
+        margin-top: 24px;
+      }
+      .privacy-header h1 {
+        font-size: 32px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Inline SVG Symbols for Reusable Assets -->
+  <svg style="display:none" aria-hidden="true">
+    <symbol id="quill-mark" viewBox="0 0 512 512">
+      <path d="M0 0 C4.92094939 4.52195349 7.9648703 8.66999382 8.875 15.375 C8.73767115 18.53884548 8.30029354 19.68302349 6.1015625 22.00390625 C3.16678738 24.18515803 0.12633731 26.11240011 -3 28 C-4.4323806 28.89360751 -5.86330115 29.78955841 -7.29296875 30.6875 C-9.47719963 32.05869547 -11.66385115 33.42311414 -13.8671875 34.76342773 C-15.59367215 35.81722621 -17.29918816 36.90524909 -19 38 C-19 38.33 -19 38.66 -19 39 C-9.9238776 35.8412567 -0.88637863 32.66739436 8 29 C 8 35.27 8 41.54 8 48 C-21.43845558 62.43397144 -21.43845558 62.43397144 -33 65 C-21.53583457 63.88248471 -10.91122894 60.87701984 0.06738281 57.51904297 C2 57 2 57 4 57 C3.50721326 63.4062276 0.97460945 69.20627896 -3.734375 73.62890625 C-6.07681107 75.29494121 -8.45999299 76.65062127 -11 78 C-11.57234375 78.3079248 -12.1446875 78.61584961 -12.734375 78.93310547 C-28.73236069 87.39898168 -45.76245874 91.87858542 -63.60546875 94.45703125 C-66.85554066 94.80263338 -66.85554066 94.80263338 -69 96 C-51.68086042 95.50467944 -35.31397956 93.95068134 -18.72265625 88.76953125 C-16 88 -16 88 -13 88 C-14.28946596 106.48234549 -27.84956725 124.94426368 -40.98828125 137.30859375 C-49.98321013 144.87132036 -61.10204399 148.29975013 -72.00390625 152.24731445 C-74.03069825 152.97248539 -74.03069825 152.97248539 -76 154 C-75.06933716 153.81038696 -75.06933716 153.81038696 -74.11987305 153.61694336 C-71.31061643 153.04920162 -68.49915659 152.4932286 -65.6875 151.9375 C-64.71103516 151.73833984 -63.73457031 151.53917969 -62.72851562 151.33398438 C-61.79072266 151.15029297 -60.85292969 150.96660156 -59.88671875 150.77734375 C-58.59060669 150.51812134 -58.59060669 150.51812134 -57.26831055 150.25366211 C-55 150 -55 150 -52 151 C-62.47489283 156.71221732 -72.72884357 162.02194479 -84 166 C-78.06 165.67 -72.12 165.34 -66 165 C-73.68454607 176.5268191 -84.24053963 183.17563053 -96 190 C-96.64791504 190.3815625 -97.29583008 190.763125 -97.96337891 191.15625 C-134.24233402 212.29069061 -181.04872397 224.50613533 -223.04296875 223.9921875 C-224.04718369 223.98046509 -224.04718369 223.98046509 -225.07168579 223.96850586 C-227.79701308 223.93222645 -230.52193914 223.88999189 -233.24682617 223.82861328 C-242.25166301 223.63827235 -250.35340739 224.27594074 -259 227 C-257.57288696 226.97643433 -257.57288696 226.97643433 -256.11694336 226.95239258 C-252.51058781 226.89716381 -248.90426758 226.86332061 -245.29760742 226.83520508 C-243.75099355 226.8203261 -242.20442022 226.80001637 -240.65795898 226.77368164 C-229.96033499 226.59637296 -220.43411199 227.62629135 -210 230 C-190.46120438 233.50850795 -169.62574904 230.68238538 -150.125 228.36376953 C-145.75517254 227.8550943 -141.37924038 227.41882416 -137 227 C-141.46047874 236.56155816 -145.91340095 245.07491022 -153 253 C-153.67546875 253.81726563 -154.3509375 254.63453125 -155.046875 255.4765625 C-169.26432839 272.23655317 -187.63508373 279.83781059 -207.8112793 287.08935547 C-210.66992752 288.11867265 -213.52159857 289.16576997 -216.37304688 290.21484375 C-233.23601966 296.36220596 -249.85010785 301.14270664 -267.6875 303.3125 C-268.98494141 303.48072266 -270.28238281 303.64894531 -271.61914062 303.82226562 C-274.74486155 304.22595652 -277.87150476 304.61852354 -281 305 C-257.83622095 306.52224703 -238.43908456 305.55953746 -216.6171875 296.8203125 C-214 296 -214 296 -211 297 C-237.62010559 314.26816742 -264.85131991 330.6284553 -293.9375 343.4375 C-294.78707275 343.81422852 -295.63664551 344.19095703 -296.51196289 344.57910156 C-311.79415237 351.12675051 -327.25296507 355.17648546 -343.5625 358.1875 C-346.20309704 358.68214193 -348.84286135 359.18051372 -351.48143005 359.68586731 C-353.10082095 359.99536901 -354.72140721 360.29871574 -356.34339905 360.59428406 C-361.73863762 361.61635057 -366.83207261 363.14908631 -372 365 C-370.83210938 364.79503906 -369.66421875 364.59007812 -368.4609375 364.37890625 C-357.56225748 362.59254604 -346.98206696 361.83175955 -335.9375 361.6875 C-316.2962216 361.28588056 -300.85506134 355.41788771 -283.29541016 347.07714844 C-279.55773437 345.32319975 -275.77979485 343.66079339 -272 342 C-277.57691842 353.91159544 -296.19221322 362.67602122 -307.5 368.75 C-308.12656494 369.09023193 -308.75312988 369.43046387 -309.39868164 369.78100586 C-324.17634593 377.49907554 -340.24652444 382.04799781 -356.11987305 386.89550781 C-369.27458803 390.8092571 -369.27458803 390.8092571 -381.75390625 396.4140625 C-386.91823743 399.19859216 -390.94801927 399.75982525 -396.75 399.375 C-397.554375 399.34792969 -398.35875 399.32085937 -399.1875 399.29296875 C-401.1262235 399.22372863 -403.06352299 399.11618862 -405 399 C-398.74407671 385.3927583 -390.8174713 372.74910706 -383 360 C-382.36964844 358.9692334 -381.73929688 357.9384668 -381.08984375 356.87646484 C-372.14711799 342.28852676 -362.79514637 328.02947636 -353 314 C-352.52723633 313.32259766 -352.05447266 312.64519531 -351.56738281 311.94726562 C-338.07220412 292.68569066 -323.83622701 273.78114394 -308.5078125 255.94140625 C-306.14106999 253.1654606 -303.84617969 250.34436807 -301.5625 247.5 C-297.189514 242.12209082 -292.51390797 237.06630947 -287.78515625 232.00390625 C-285.57212586 229.63105822 -283.42397141 227.21419982 -281.3125 224.75 C-278.11699883 221.0491276 -274.66292675 217.64723802 -271.18359375 214.21484375 C-269.22025329 212.22340539 -267.37920331 210.18697422 -265.5625 208.0625 C-259.58353375 201.11471978 -253.01659299 194.78270263 -246.05078125 188.8359375 C-243.65757266 186.693446 -241.43205454 184.42257552 -239.1875 182.125 C-234.94901713 177.83467025 -230.48299142 174.03316542 -225.7734375 170.2734375 C-222.97882185 167.98263988 -220.3337443 165.58499837 -217.6875 163.125 C-212.00797004 157.91140036 -206.03730321 153.17312487 -199.92724609 148.48144531 C-197.92148803 146.93964902 -195.9234689 145.38817246 -193.92578125 143.8359375 C-184.14906308 136.26737782 -174.18579817 129.00798729 -164 122 C-163.38479492 121.57654297 -162.76958984 121.15308594 -162.13574219 120.71679688 C-154.37889727 115.40527312 -146.453307 110.41075151 -138.4375 105.5 C-130.63941104 100.71581962 -123.12896807 95.70130839 -115.76171875 90.28320312 C-112.45516845 87.87477347 -109.09778364 85.53807149 -105.75 83.1875 C-92.84565932 74.08620547 -80.03794451 64.91444025 -67.61401367 55.1628418 C-62.75229669 51.34863902 -57.83794448 47.61872125 -52.875 43.9375 C-44.71789967 37.86540747 -36.82694791 31.49019242 -29 25 C-28.41589355 24.51644043 -27.83178711 24.03288086 -27.22998047 23.53466797 C-20.14988173 17.65658198 -13.28539041 11.59206052 -6.55859375 5.3125 C-4.4408861 3.39848026 -2.31891452 1.65870591 0 0 Z M-40 66 C-36 67 -36 67 -36 67 Z " fill="currentColor" transform="translate(479,21)"/>
+    </symbol>
+  </svg>
+
+  <!-- Sticky Floating Nav Bar -->
+  <div class="topbar-wrapper">
+    <div class="container">
+      <header class="topbar">
+        <a href="index.html" class="brand">
+          <svg class="brand-icon" aria-hidden="true">
+            <use href="#quill-mark" />
+          </svg>
+          <span>Quill</span>
+        </a>
+        <a href="index.html" class="back-link">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+          <span>Back to Home</span>
+        </a>
+      </header>
+    </div>
+  </div>
+
+  <main class="container" style="padding-top: 120px;">
+    <div class="back-btn-wrapper">
+      <a href="index.html" class="back-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        <span>Back to Home</span>
+      </a>
+    </div>
+
+    <article class="privacy-content-card">
+      <header class="privacy-header">
+        <h1>Privacy Policy</h1>
+        <p>Last updated: August 11, 2026</p>
+      </header>
+
+      <section class="privacy-body">
+        <p>At Quill, we build tools that prioritize your privacy and respect your ownership of your data. This Privacy Policy describes how Quill operates, demonstrating our commitment to keeping your information strictly local and secure.</p>
+
+        <h2>1. On-Device, Offline Processing</h2>
+        <p>Quill is designed to run entirely on your local machine. All transcription, dictation processing, and speech-to-text conversion are executed locally on your Mac's Apple Silicon Neural Engine.</p>
+        <ul>
+          <li><strong>No Cloud Uploads:</strong> Your voice recordings, audio streams, and synthesized dictation text never leave your computer.</li>
+          <li><strong>Zero Accounts:</strong> Quill does not require you to create an account, register an email address, or sign up to use the core application.</li>
+          <li><strong>No Tracking:</strong> We do not track your dictation sessions, speed, or text outputs.</li>
+        </ul>
+
+        <h2>2. Third-Party Service Options (Opt-In Only)</h2>
+        <p>If you choose to use advanced tone rewriting features, you may optionally configure third-party API providers (such as OpenAI or Anthropic):</p>
+        <ul>
+          <li><strong>Direct API Keys:</strong> You provide your own developer API keys. These keys are stored securely on your local system and are only used to make direct, encrypted requests from your machine to the provider.</li>
+          <li><strong>No Middleman:</strong> Quill does not act as a proxy. Your API keys and text parameters are never sent to or stored by Quill servers.</li>
+        </ul>
+
+        <h2>3. Waitlist Information Collection</h2>
+        <p>When you explicitly sign up for our waitlist via our website:</p>
+        <ul>
+          <li><strong>Information Collected:</strong> We collect your email address and name.</li>
+          <li><strong>Purpose:</strong> We use this information solely to notify you when Quill is ready for download.</li>
+          <li><strong>Third-Party Processors:</strong> This signup data is stored securely using Firebase. It is not shared, sold, or rented to any third parties.</li>
+        </ul>
+
+        <h2>4. Contact Us</h2>
+        <p>If you have any questions regarding this Privacy Policy or Quill's local data security model, please reach out to us at <code>privacy@quill.chat</code>.</p>
+      </section>
+    </article>
+  </main>
+</body>
+
+</html>
