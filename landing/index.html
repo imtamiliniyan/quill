@@ -927,6 +927,42 @@
       });
     });
 
+    // --- PART 2.5: CUSTOM SMOOTH SCROLL FOR ANCHOR LINKS ---
+    // Intercept anchor link clicks to calculate custom responsive view offsets
+    const anchorLinks = document.querySelectorAll('a[href^="#"]');
+
+    anchorLinks.forEach(link => {
+      link.addEventListener('click', (e) => {
+        const targetId = link.getAttribute('href');
+        if (targetId === '#') return;
+
+        const targetElement = document.querySelector(targetId);
+        if (targetElement) {
+          e.preventDefault();
+
+          const elementRect = targetElement.getBoundingClientRect();
+          const absoluteElementTop = elementRect.top + window.pageYOffset;
+
+          // Custom offsets: center the waitlist form vertically, align sections below topbar
+          let offset = 90;
+          if (targetId === '#waitlist-section') {
+            // Attempt to center the form element in the middle of the screen
+            offset = Math.max(90, (window.innerHeight - targetElement.offsetHeight) / 2);
+          }
+
+          const targetScrollY = Math.max(0, absoluteElementTop - offset);
+
+          window.scrollTo({
+            top: targetScrollY,
+            behavior: 'smooth'
+          });
+
+          // Update URL hash without causing native browser jump-cut scrolling
+          history.pushState(null, null, targetId);
+        }
+      });
+    });
+
     // --- PART 3: WAITLIST FORM SUBMISSION ---
     // Posts to the /api/waitlist serverless function on Vercel.
     // No Firebase credentials are ever loaded in the browser.
