@@ -1,6 +1,8 @@
 {
   "rewrites": [
     { "source": "/api/:path*", "destination": "/api/:path*" },
+    { "source": "/privacy",    "destination": "/landing/privacy.html" },
+    { "source": "/terms",      "destination": "/landing/terms.html" },
     { "source": "/(.*)",       "destination": "/landing/$1"  }
   ]
 }
