@@ -1646,6 +1646,28 @@ body {
   color: var(--ink);
 }
 
+.footer-social {
+  display: flex;
+  gap: 16px;
+  margin-top: -4px;
+}
+
+.footer-social a {
+  color: var(--ink-dimmer);
+  transition: color 0.2s, transform 0.2s;
+  display: inline-flex;
+}
+
+.footer-social a:hover {
+  color: var(--ink);
+  transform: translateY(-1.5px);
+}
+
+.footer-social svg {
+  width: 18px;
+  height: 18px;
+}
+
 .copyright {
   font-size: 12px;
   color: var(--ink-dimmer);
