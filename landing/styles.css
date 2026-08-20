@@ -194,6 +194,66 @@ body {
 }
 
 /* Hero download + GitHub pills, replacing the earlier waitlist form. */
+/* Hero install command — the recommended path, ahead of the raw .dmg
+   below it. `width: fit-content` + `margin: 0 auto` centers it as a flex
+   box regardless of the parent's own text-align. */
+.hero-brew-cmd {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: fit-content;
+  max-width: 100%;
+  background: linear-gradient(135deg, #2D2D2D 10%, #000000 100%);
+  border-radius: 999px;
+  padding: 12px 12px 12px 22px;
+  margin: 0 auto 16px;
+  box-shadow: var(--shadow-sm);
+}
+
+.hero-brew-cmd code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13.5px;
+  color: #FFFFFF;
+  white-space: nowrap;
+  overflow-x: auto;
+}
+
+.hero-brew-cmd .copy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.85);
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.hero-brew-cmd .copy-btn svg {
+  width: 15px;
+  height: 15px;
+}
+
+.hero-brew-cmd .copy-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #FFFFFF;
+}
+
+.hero-brew-cmd .copy-btn.copied {
+  background: var(--quill-accent);
+  color: var(--ink);
+}
+
+.hero-note-link {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .hero-cta-group {
   display: flex;
   align-items: center;

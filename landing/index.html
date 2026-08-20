@@ -62,8 +62,24 @@
           AI that turns speech into clear, polished writing in every app. No subscription required.
         </p>
 
-        <!-- Download CTA (Hero) -->
-        <div class="hero-cta-group" id="waitlist-section">
+        <!-- Install command (Hero) — the recommended path: brew installs
+             cleanly with zero Gatekeeper warning, unlike the raw .dmg
+             below, since Quill isn't (and won't be) notarized. Layout
+             reference: FluidVoice's own hero command box (UI reference
+             only, no code or branding borrowed). -->
+        <div class="hero-brew-cmd" id="waitlist-section">
+          <code>$ brew install --cask imtamiliniyan/quill/quill</code>
+          <button type="button" class="copy-btn" data-copy="brew install --cask imtamiliniyan/quill/quill"
+            aria-label="Copy install command">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round" aria-hidden="true">
+              <rect x="9" y="9" width="13" height="13" rx="2" />
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+            </svg>
+          </button>
+        </div>
+
+        <div class="hero-cta-group">
           <a href="/api/download"
             class="btn-pill-dark hero-cta-btn">
             <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -83,7 +99,10 @@
             Star
           </a>
         </div>
-        <p class="hero-note">Free, for macOS on Apple Silicon.</p>
+        <p class="hero-note">
+          Free, for macOS on Apple Silicon. Downloading the .dmg directly?
+          <a href="#faq" class="hero-note-link">Gatekeeper will warn you first, here's the fix.</a>
+        </p>
 
         <!-- Works in every app caption + icons -->
         <div class="works-with-row">
@@ -685,7 +704,7 @@
     </section>
 
     <!-- FAQ Accordion Section -->
-    <section class="section-padding">
+    <section class="section-padding" id="faq">
       <div class="container faq-section">
         <h2 class="section-title">Frequently Asked Questions</h2>
         <div class="faq-list">
@@ -791,6 +810,27 @@
                 Wispr Flow and Gladio utilize cloud servers to process audio and require paid monthly or annual
                 subscriptions. Quill is local-first, runs offline on your own GPU/Neural Engine, records no telemetry,
                 and is completely free.
+              </div>
+            </div>
+          </div>
+
+          <!-- Q7 -->
+          <div class="faq-item">
+            <button class="faq-trigger">
+              <span>Why does my Mac warn me when I open Quill.app?</span>
+              <svg class="faq-chevron" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"
+                stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </button>
+            <div class="faq-content">
+              <div class="faq-content-inner">
+                Quill is open source and free, and doesn't go through Apple's paid notarization program (that's
+                $99/year we'd rather not charge you for). Because of that, a directly downloaded .dmg triggers
+                Gatekeeper's "could not verify" warning on first open. Two ways around it: install with
+                <code>brew install --cask imtamiliniyan/quill/quill</code> instead (no warning at all), or after
+                downloading the .dmg, go to System Settings &rarr; Privacy &amp; Security, scroll down, and click
+                "Open Anyway" next to Quill.app.
               </div>
             </div>
           </div>
@@ -1097,6 +1137,19 @@
           status.textContent = 'Network error. Please check your connection and try again.';
           status.classList.add('error');
           button.disabled = false;
+        }
+      });
+    });
+
+    // --- PART 4: COPY INSTALL COMMAND ---
+    document.querySelectorAll('.copy-btn[data-copy]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(btn.dataset.copy);
+          btn.classList.add('copied');
+          setTimeout(() => btn.classList.remove('copied'), 1500);
+        } catch (err) {
+          console.error('[copy] clipboard write failed:', err);
         }
       });
     });
