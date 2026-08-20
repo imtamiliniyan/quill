@@ -19,6 +19,11 @@ final class MainWindow: NSObject, NSWindowDelegate {
     let downloadState = ModelDownloadState()
     private let appState = AppViewState()
     private let menuBar: MenuBarController
+    /// Phase 5c: lets Settings' "Getting Started" tab re-show the
+    /// onboarding flow on request. Set by whoever constructs the
+    /// onboarding window in the first place (Quill.swift) — MainWindow
+    /// doesn't own onboarding itself, just forwards the request to it.
+    var onRunOnboardingAgain: (() -> Void)?
 
     init(menuBar: MenuBarController) {
         self.menuBar = menuBar
@@ -33,7 +38,22 @@ final class MainWindow: NSObject, NSWindowDelegate {
     /// download flow's completed state both land here.
     func showMain() {
         if mainAppWindow == nil {
-            let hosting = NSHostingView(rootView: MainView(state: appState, menuBar: menuBar))
+            let hosting = NSHostingView(rootView: MainView(
+                state: appState,
+                menuBar: menuBar,
+                onRunOnboardingAgain: { [weak self] in self?.onRunOnboardingAgain?() }
+            ))
+            // NSHostingView's default `sizingOptions` includes
+            // `.intrinsicContentSize`, which lets the window auto-resize
+            // to match its SwiftUI content's ideal size on every layout
+            // pass. Harmless for tabs whose content is shorter than the
+            // window, but Enhancement Engine's 5 expandable provider
+            // cards are tall enough to exceed it — switching to that tab
+            // was silently growing/shrinking the window out from under
+            // whatever size the user had set. This window is plain
+            // frame-managed (`win.setFrame`/user resize), never meant to
+            // track content size, so disable that behavior outright.
+            hosting.sizingOptions = []
             let win = NSWindow(
                 contentRect: NSRect(x: 0, y: 0, width: 940, height: 620),
                 styleMask: [.titled, .closable, .miniaturizable, .resizable],

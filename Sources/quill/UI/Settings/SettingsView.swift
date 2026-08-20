@@ -70,6 +70,10 @@ private struct GeneralSettingsView: View {
     let menuBar: MenuBarController
     @State private var firstName = QuillProfile.firstName
     @State private var lastName = QuillProfile.lastName
+    @State private var activationMode = QuillSettings.activationMode
+    @State private var lowercaseFirstLetter = QuillSettings.lowercaseFirstLetter
+    @State private var spaceBetweenDictations = QuillSettings.spaceBetweenDictations
+    @State private var smartCapitalization = QuillSettings.smartCapitalization
 
     var body: some View {
         ScrollView {
@@ -91,125 +95,85 @@ private struct GeneralSettingsView: View {
 
                 Divider().opacity(0.15)
 
-                ModelsSettingsView(menuBar: menuBar)
-            }
-        }
-    }
-}
-
-/// Radio-button model picker plus a per-model delete (trash icon), so
-/// switching or freeing up disk space never requires the terminal —
-/// mirrors exactly what the menu bar's "Switch Model" submenu already does,
-/// through the same `MenuBarController.selectModel` entry point.
-private struct ModelsSettingsView: View {
-    let menuBar: MenuBarController
-    @State private var currentModelID: String
-    @State private var confirmingDelete: TranscriptionModel?
-    @State private var deleteError: String?
-
-    init(menuBar: MenuBarController) {
-        self.menuBar = menuBar
-        _currentModelID = State(initialValue: menuBar.modelID)
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Models").font(.system(size: 13, weight: .semibold))
-            Text("Choose which model transcribes your dictation. Downloaded models can be removed here to free up space.")
-                .font(.system(size: 11))
-                .foregroundColor(Theme.textSecondary)
-
-            VStack(spacing: 8) {
-                ForEach(ModelRegistry.shared, id: \.id) { model in
-                    modelRow(model)
-                }
-            }
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .quillModelChanged)) { _ in
-            currentModelID = menuBar.modelID
-        }
-        .confirmationDialog(
-            "Delete \(confirmingDelete?.displayName ?? "")? You'll need to download it again to use it.",
-            isPresented: Binding(
-                get: { confirmingDelete != nil },
-                set: { if !$0 { confirmingDelete = nil } }
-            ),
-            titleVisibility: .visible
-        ) {
-            Button("Delete Model", role: .destructive) {
-                if let model = confirmingDelete { delete(model) }
-                confirmingDelete = nil
-            }
-            Button("Cancel", role: .cancel) { confirmingDelete = nil }
-        }
-        .alert(
-            "Couldn't delete model",
-            isPresented: Binding(
-                get: { deleteError != nil },
-                set: { if !$0 { deleteError = nil } }
-            )
-        ) {
-            Button("OK") { deleteError = nil }
-        } message: {
-            Text(deleteError ?? "")
-        }
-    }
-
-    private func modelRow(_ model: TranscriptionModel) -> some View {
-        let selected = model.id == currentModelID
-        let downloaded = ModelAvailability.isDownloaded(model)
-        return HStack(spacing: 10) {
-            Button {
-                guard !selected else { return }
-                menuBar.selectModel(model)
-                currentModelID = menuBar.modelID
-            } label: {
-                HStack(spacing: 10) {
-                    Image(systemName: selected ? "largecircle.fill.circle" : "circle")
-                        .foregroundColor(selected ? Theme.accent : Theme.textTertiary)
-                    VStack(alignment: .leading, spacing: 2) {
-                        HStack(spacing: 6) {
-                            Text(model.displayName)
-                                .font(.system(size: 12, weight: .medium))
-                                .foregroundColor(Theme.textPrimary)
-                            if model.recommended {
-                                Text("RECOMMENDED")
-                                    .font(.system(size: 8, weight: .bold))
-                                    .foregroundColor(Theme.accent)
-                            }
-                        }
-                        Text(downloaded ? "\(model.sizeMB) MB · downloaded" : "\(model.sizeMB) MB · not downloaded")
-                            .font(.system(size: 10))
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Primary Dictation Shortcut").font(.system(size: 13, weight: .semibold))
+                    HStack {
+                        Text("fn (Globe key)")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(Theme.textPrimary)
+                        Spacer()
+                        Text("Fixed for now")
+                            .font(.system(size: 9.5, weight: .bold))
                             .foregroundColor(Theme.textTertiary)
                     }
-                    Spacer()
-                }
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
+                    .padding(10)
+                    .background(Theme.textQuaternary)
+                    .cornerRadius(8)
+                    Text("Custom key remapping isn't available yet — every install listens on fn.")
+                        .font(.system(size: 11))
+                        .foregroundColor(Theme.textSecondary)
 
-            if downloaded && !selected {
-                Button {
-                    confirmingDelete = model
-                } label: {
-                    Image(systemName: "trash")
-                        .font(.system(size: 12))
-                        .foregroundColor(Theme.textTertiary)
+                    Picker("", selection: $activationMode) {
+                        ForEach(ActivationMode.allCases) { mode in
+                            Text(mode.rawValue).tag(mode)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .labelsHidden()
+                    .padding(.top, 4)
+                    .onChange(of: activationMode) { _, new in
+                        QuillSettings.activationMode = new
+                    }
+                    Text(activationMode.detail)
+                        .font(.system(size: 11))
+                        .foregroundColor(Theme.textSecondary)
                 }
-                .buttonStyle(.plain)
-                .help("Delete downloaded model")
-            }
-        }
-        .padding(10)
-        .background(selected ? Theme.fillHover : Theme.textQuaternary)
-        .cornerRadius(8)
-    }
 
-    private func delete(_ model: TranscriptionModel) {
-        do {
-            try ModelAvailability.deleteFiles(for: model)
-        } catch {
-            deleteError = error.localizedDescription
+                Divider().opacity(0.15)
+
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Text Formatting").font(.system(size: 13, weight: .semibold))
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Toggle("Lowercase First Letter", isOn: $lowercaseFirstLetter)
+                            .toggleStyle(.switch)
+                            .tint(Theme.accent)
+                            .font(.system(size: 12, weight: .medium))
+                            .onChange(of: lowercaseFirstLetter) { _, new in
+                                QuillSettings.lowercaseFirstLetter = new
+                            }
+                        Text("Start each transcription with a lowercase letter.")
+                            .font(.system(size: 10.5))
+                            .foregroundColor(Theme.textSecondary)
+                    }
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Toggle("Space Between Dictations", isOn: $spaceBetweenDictations)
+                            .toggleStyle(.switch)
+                            .tint(Theme.accent)
+                            .font(.system(size: 12, weight: .medium))
+                            .onChange(of: spaceBetweenDictations) { _, new in
+                                QuillSettings.spaceBetweenDictations = new
+                            }
+                        Text("Add a leading space when the cursor isn't already after whitespace.")
+                            .font(.system(size: 10.5))
+                            .foregroundColor(Theme.textSecondary)
+                    }
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Toggle("Smart Capitalization", isOn: $smartCapitalization)
+                            .toggleStyle(.switch)
+                            .tint(Theme.accent)
+                            .font(.system(size: 12, weight: .medium))
+                            .onChange(of: smartCapitalization) { _, new in
+                                QuillSettings.smartCapitalization = new
+                            }
+                        Text("Use text before the cursor to choose uppercase or lowercase.")
+                            .font(.system(size: 10.5))
+                            .foregroundColor(Theme.textSecondary)
+                    }
+                }
+            }
         }
     }
 }

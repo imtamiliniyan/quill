@@ -25,19 +25,29 @@ final class ModelDownloadState: ObservableObject {
         progress = 0
         error = nil
         done = false
+        // Mirrors into the global DownloadActivity signal too — this
+        // window is user-closable while the Task below keeps running, so
+        // without this a closed window leaves the download genuinely
+        // invisible even though it's still happening (Phase 5a).
+        DownloadActivity.shared.begin(label: "Downloading \(model.displayName)")
 
         let transcriber = TranscriberFactory.make(for: model)
         Task {
             do {
                 try await transcriber.warmUp(progress: { [weak self] fraction in
-                    Task { @MainActor in self?.progress = fraction }
+                    Task { @MainActor in
+                        self?.progress = fraction
+                        DownloadActivity.shared.update(progress: fraction)
+                    }
                 })
                 box.switchTo(transcriber, modelID: model.id)
                 progress = 1
                 done = true
+                DownloadActivity.shared.finish()
                 onSwitched?()
             } catch {
                 self.error = "\(error)"
+                DownloadActivity.shared.finish()
             }
         }
     }

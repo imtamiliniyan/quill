@@ -21,18 +21,33 @@ enum TranscriptSanitizer {
         return out.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    /// Multi-word filler phrases — always covered when `removeFillerWords`
+    /// is on, not exposed as editable chips in Voice Engine (FluidVoice's
+    /// own reference list is single-word interjections only; these need
+    /// actual phrase matching, not chip-editing, to stay correct).
+    private static let phraseFillers = [
+        #"\byou know\b"#, #"\blike,\s"#, #"\bi mean,?\s"#, #"\bsort of\b"#, #"\bkind of\b"#,
+    ]
+
     /// Rule-based filler-word cleanup — no network, no model call, no API
     /// key required. This is Style's "Clean Up" tone; every other tone
     /// (Formal/Casual/Concise) goes through StyleRewriter's BYOK cloud
-    /// path instead. Kept deliberately simple (a fixed word list, not an
-    /// NLP pass) so it's obviously safe to run on anything, always.
+    /// path instead. Kept deliberately simple (a word list, not an NLP
+    /// pass) so it's obviously safe to run on anything, always.
+    ///
+    /// The single-word half of the list is `QuillSettings.fillerWords`
+    /// (Voice Engine, user-editable); the master `removeFillerWords`
+    /// toggle gates the whole pass, phrases included.
     static func cleanUpFillers(_ text: String) -> String {
-        let fillers = [
-            #"\bum+\b"#, #"\buh+\b"#, #"\byou know\b"#,
-            #"\blike,\s"#, #"\bi mean,?\s"#, #"\bsort of\b"#, #"\bkind of\b"#,
-        ]
+        guard QuillSettings.removeFillerWords else { return text }
         var out = text
-        for pattern in fillers {
+        for word in QuillSettings.fillerWords {
+            let escaped = NSRegularExpression.escapedPattern(for: word)
+            out = out.replacingOccurrences(
+                of: "\\b\(escaped)+\\b", with: "", options: [.regularExpression, .caseInsensitive]
+            )
+        }
+        for pattern in phraseFillers {
             out = out.replacingOccurrences(of: pattern, with: "", options: [.regularExpression, .caseInsensitive])
         }
         out = out.replacingOccurrences(of: #"\s+"#, with: " ", options: .regularExpression)

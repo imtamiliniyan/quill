@@ -8,6 +8,7 @@ import SwiftUI
 struct StreakCalendarView: View {
     let entries: [DictationEntry]
     let currentStreak: Int
+    let longestStreak: Int
 
     private let weekCount = 18
     private let cellSize: CGFloat = 18
@@ -37,23 +38,6 @@ struct StreakCalendarView: View {
                 return Day(date: date, count: counts[cal.startOfDay(for: date)] ?? 0)
             }
         }
-    }
-
-    private var longestStreak: Int {
-        let cal = Calendar.current
-        let days = Set(entries.map { cal.startOfDay(for: $0.timestamp) }).sorted()
-        guard !days.isEmpty else { return 0 }
-        var longest = 1
-        var current = 1
-        for i in 1..<days.count {
-            if cal.dateComponents([.day], from: days[i - 1], to: days[i]).day == 1 {
-                current += 1
-                longest = max(longest, current)
-            } else {
-                current = 1
-            }
-        }
-        return longest
     }
 
     var body: some View {

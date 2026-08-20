@@ -5,10 +5,27 @@ struct StyleView: View {
     @State private var autoCleanupLevel: AutoCleanupLevel = QuillSettings.autoCleanupLevel
     @State private var autoCleanupTone: StyleTone = QuillSettings.autoCleanupTone
 
+    // Local AI's download/delete management now lives in Enhancement
+    // Engine (top of its provider list) alongside OpenAI/Anthropic/
+    // Google/OpenRouter — one place to manage every AI backend Style can
+    // use. This view only needs to know whether the model is already on
+    // disk, for the row's "READY"/"NOT DOWNLOADED" badge — re-read fresh
+    // on every (re)construction, same reasoning as `provider` below:
+    // StyleView is fully torn down when the sidebar selection leaves
+    // Style, so this naturally picks up a download that happened while
+    // this tab wasn't visible.
+    @State private var localAIDownloaded = LocalEnhancer.isDownloaded()
+
+    // Key connection itself now lives in the Enhancement Engine sidebar
+    // tab (`EnhancementEngineView.swift`) — this view still needs to know
+    // *whether* a key is connected (Medium's badge, the Rewrite card's
+    // disabled state) and *which provider* Enhancement Engine last saved a
+    // key for, since that's the provider Rewrite/Medium actually calls.
+    // Re-read fresh from QuillSettings/APIKeyStore every time this view is
+    // (re)constructed — StyleView is fully torn down when the sidebar
+    // selection leaves Style and rebuilt when it comes back, same pattern
+    // ModelsSettingsView already relies on for `currentModelID`.
     @State private var provider: StyleProvider = QuillSettings.styleProvider
-    @State private var apiKeyField: String = ""
-    @State private var openAIConnected = APIKeyStore.hasKey(for: .openAI)
-    @State private var anthropicConnected = APIKeyStore.hasKey(for: .anthropic)
 
     @State private var tone: StyleTone = .cleanUp
     @State private var inputText: String = ""
@@ -17,8 +34,12 @@ struct StyleView: View {
     @State private var errorMessage: String?
     @State private var copied = false
 
+    // Whichever provider Enhancement Engine last connected a key for —
+    // this is the one Medium/Rewrite actually use, so only that one needs
+    // checking here (was a 2-way ternary before Google/OpenRouter existed;
+    // that broke silently for any provider past the first two).
     private var hasKey: Bool {
-        provider == .openAI ? openAIConnected : anthropicConnected
+        APIKeyStore.hasKey(for: provider)
     }
 
     var body: some View {
@@ -33,7 +54,6 @@ struct StyleView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     autoCleanupCard
-                    apiKeyCard
                     rewriteCard
                 }
                 .padding(.horizontal, Theme.pagePadding)
@@ -146,6 +166,11 @@ struct StyleView: View {
         .buttonStyle(.plain)
     }
 
+    /// Selecting Local AI here never blocks on a download — same as
+    /// Medium, which is always selectable even with no key connected
+    /// (`AutoCleanup.apply` falls back to Light for either level until
+    /// its backend is actually ready). Downloading/deleting the model
+    /// itself is Enhancement Engine's job now, not this row's.
     private func autoCleanupRow(_ level: AutoCleanupLevel) -> some View {
         let selected = autoCleanupLevel == level
         return Button {
@@ -165,10 +190,20 @@ struct StyleView: View {
                                 .font(.system(size: 9, weight: .bold))
                                 .foregroundColor(hasKey ? Theme.accent : Theme.textTertiary)
                         }
+                        if level == .localAI {
+                            Text(localAIDownloaded ? "READY" : "NOT DOWNLOADED · USES LIGHT")
+                                .font(.system(size: 9, weight: .bold))
+                                .foregroundColor(localAIDownloaded ? Theme.accent : Theme.textTertiary)
+                        }
                     }
                     Text(level.summary)
                         .font(.system(size: 11))
                         .foregroundColor(Theme.textSecondary)
+                    if level == .localAI && !localAIDownloaded {
+                        Text("Download the model in Enhancement Engine.")
+                            .font(.system(size: 10))
+                            .foregroundColor(Theme.textTertiary)
+                    }
                 }
                 Spacer()
             }
@@ -179,74 +214,11 @@ struct StyleView: View {
         .buttonStyle(.plain)
     }
 
-    // MARK: - API key
-
-    private var apiKeyCard: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack {
-                Text("Connect an API key")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(Theme.textPrimary)
-                Spacer()
-                if hasKey {
-                    Label("Connected", systemImage: "checkmark.circle.fill")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(Theme.accent)
-                }
-            }
-
-            Picker("", selection: $provider) {
-                ForEach(StyleProvider.allCases) { p in
-                    Text(p.rawValue).tag(p)
-                }
-            }
-            .pickerStyle(.segmented)
-            .labelsHidden()
-            .onChange(of: provider) { _, new in
-                QuillSettings.styleProvider = new
-                apiKeyField = ""
-            }
-
-            HStack(spacing: 8) {
-                SecureField(
-                    hasKey ? "Key saved, paste a new one to replace it" : "Paste your \(provider.rawValue) API key",
-                    text: $apiKeyField
-                )
-                .textFieldStyle(.roundedBorder)
-
-                Button("Save") {
-                    APIKeyStore.setKey(apiKeyField, for: provider)
-                    updateConnected()
-                    apiKeyField = ""
-                }
-                .disabled(apiKeyField.isEmpty)
-
-                if hasKey {
-                    Button("Remove", role: .destructive) {
-                        APIKeyStore.clearKey(for: provider)
-                        updateConnected()
-                    }
-                }
-            }
-
-            Text("""
-            Stored in the macOS Keychain on this Mac only, never written to disk in plain text, \
-            never committed to a repo, never sent anywhere except directly to \(provider.rawValue) \
-            itself, and only at the moment you press Rewrite below.
-            """)
-            .font(.system(size: 11))
-            .foregroundColor(Theme.textTertiary)
-        }
-        .padding(18)
-        .quillCard()
-    }
-
-    private func updateConnected() {
-        openAIConnected = APIKeyStore.hasKey(for: .openAI)
-        anthropicConnected = APIKeyStore.hasKey(for: .anthropic)
-    }
-
     // MARK: - Rewrite
+
+    // API key connection now lives entirely in EnhancementEngineView.swift
+    // — no in-place editor here anymore, just the `hasKey`/`provider`
+    // reads above, used to gate Medium's badge and the Rewrite card below.
 
     private var rewriteCard: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -270,7 +242,7 @@ struct StyleView: View {
                     .font(.system(size: 11))
                     .foregroundColor(Theme.textTertiary)
             } else if !hasKey {
-                Text("Add an API key above to use \(tone.rawValue). Clean Up works offline without one.")
+                Text("Connect an API key in Enhancement Engine to use \(tone.rawValue). Clean Up works offline without one.")
                     .font(.system(size: 11))
                     .foregroundColor(Theme.textSecondary)
             }

@@ -7,6 +7,14 @@ enum OnboardingStep {
     case permissions
     case modelPicker
     case downloading
+    /// Local AI (Phase 5e): offered once, right after the transcription
+    /// model finishes downloading — mirrors FluidVoice's "one more thing"
+    /// placement, but for Quill's own MLX-backed AutoCleanupLevel.localAI
+    /// rather than their Fluid Intelligence. First-run only for now; a
+    /// returning user who already completed onboarding before this step
+    /// existed won't see it here — that's what Phase 5c's "Run Onboarding
+    /// Again" is for, not yet built.
+    case localAI
     case done
 }
 
@@ -21,6 +29,8 @@ final class OnboardingState: ObservableObject {
     @Published var selectedModel: TranscriptionModel?
     @Published var downloadProgress: Double?
     @Published var downloadError: String?
+    @Published var localAIDownloadProgress: Double?
+    @Published var localAIDownloadError: String?
 
     /// Set once `beginDownload` finishes — Run.run() reuses this instead of
     /// constructing (and re-warming) a second transcriber for the same model.
@@ -48,6 +58,17 @@ final class OnboardingState: ObservableObject {
 
     var isReady: Bool {
         micGranted && accessibilityGranted && selectedModel != nil && QuillSettings.onboardingCompleted
+    }
+
+    /// "Run Onboarding Again" (Phase 5c) — a deliberate, user-requested
+    /// replay of the whole flow from the top, regardless of current
+    /// permission/model state. Distinct from `init()`'s own recovery
+    /// logic, which only jumps back to `.permissions` if something's
+    /// actually missing; this always starts there, even when everything
+    /// is already granted and set up, because the point is reviewing the
+    /// flow again, not fixing something broken.
+    func restart() {
+        step = .permissions
     }
 
     func startPolling() {
@@ -110,10 +131,44 @@ final class OnboardingState: ObservableObject {
                 warmedTranscriber = transcriber
                 downloadProgress = 1
                 QuillSettings.onboardingCompleted = true
-                step = .done
+                step = .localAI
             } catch {
                 downloadError = "\(error)"
             }
         }
+    }
+
+    /// Downloads the Local AI model (~1.8 GB) and turns Auto Cleanup on
+    /// at the `.localAI` level once it lands — the "Download & Enable"
+    /// path on the Local AI onboarding step.
+    func beginLocalAIDownload() {
+        localAIDownloadProgress = 0
+        localAIDownloadError = nil
+        Task {
+            do {
+                try await LocalEnhancer.shared.download { [weak self] fraction in
+                    Task { @MainActor in self?.localAIDownloadProgress = fraction }
+                }
+                QuillSettings.autoCleanupLevel = .localAI
+                step = .done
+            } catch {
+                localAIDownloadError = "\(error)"
+            }
+        }
+    }
+
+    /// "I'll use my own AI key instead" — sets Auto Cleanup to the BYOK
+    /// tier without downloading anything here; the actual key still gets
+    /// entered later in Settings > Style, same as anyone who turns Medium
+    /// on manually. No local model download triggered.
+    func useOwnAIKeyInstead() {
+        QuillSettings.autoCleanupLevel = .medium
+        step = .done
+    }
+
+    /// Neither now — Auto Cleanup stays at its `.none` default. Nothing
+    /// downloaded, nothing enabled; can be turned on later from Settings.
+    func skipLocalAI() {
+        step = .done
     }
 }

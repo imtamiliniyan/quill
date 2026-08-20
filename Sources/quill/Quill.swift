@@ -166,6 +166,14 @@ struct Run: ParsableCommand {
         let onboarding = MainActor.assumeIsolated { OnboardingWindow(state: state) }
         let mainWindow = MainActor.assumeIsolated { MainWindow(menuBar: menuBar) }
         MainActor.assumeIsolated { menuBar.onOpenMain = { mainWindow.showMain() } }
+        // Phase 5c: Settings' Getting Started tab reaches back to the same
+        // onboarding window through this, via MainWindow → MainView.
+        MainActor.assumeIsolated {
+            mainWindow.onRunOnboardingAgain = {
+                state.restart()
+                onboarding.show()
+            }
+        }
         SingleInstance.observeOpenMainRequests {
             MainActor.assumeIsolated { mainWindow.showMain() }
         }
@@ -212,8 +220,18 @@ struct Run: ParsableCommand {
         }
 
         MainActor.assumeIsolated {
+            // `box == nil` guards against a real bug, not a hypothetical
+            // one: HotkeyMonitor.start() creates a brand-new CGEventTap on
+            // every call rather than replacing the previous one (checked
+            // directly — it never invalidates an existing tap first), so
+            // calling startDictation again on a Phase 5c "Run Onboarding
+            // Again" replay would double-process every hotkey press, the
+            // same failure mode Quill.swift's own SingleInstance guard
+            // exists to prevent for two separate processes. The first,
+            // real setup still needs to run exactly once, which this
+            // still does.
             onboarding.onFinished = {
-                guard let model = state.selectedModel, let t = state.warmedTranscriber else { return }
+                guard box == nil, let model = state.selectedModel, let t = state.warmedTranscriber else { return }
                 startDictation(model: model, transcriber: t)
             }
         }
@@ -265,86 +283,169 @@ private func attachDictationHandlers(
     box: TranscriberBox,
     dumpWav: Bool
 ) throws {
-    try monitor.start { event in
-        switch event {
-        case .pressed:
+    // Phase 5f: whether a hotkey press starts+finishes a dictation across
+    // two taps (`.toggle`) or the original hold-and-release (`.hold`) is
+    // just a matter of which of these two the .pressed/.released events
+    // below call, and when — the recording/transcribing logic itself
+    // doesn't change between the two modes.
+    func beginRecording() {
+        do {
+            try capture.start()
+            FileHandle.standardError.write(Data("● recording\n".utf8))
+            MainActor.assumeIsolated {
+                overlay?.show(.recording)
+                menuBar.setRecording(true)
+            }
+        } catch {
+            FileHandle.standardError.write(Data("capture failed: \(error)\n".utf8))
+        }
+    }
+
+    func finishRecording() {
+        let samples = capture.stop()
+        MainActor.assumeIsolated {
+            overlay?.show(.transcribing)
+            menuBar.setTranscribing()
+        }
+        let seconds = Double(samples.count) / AudioCapture.targetSampleRate
+        let rms = computeRMS(samples)
+        FileHandle.standardError.write(Data(
+            String(format: "○ captured %.2fs · rms %.3f\n", seconds, rms).utf8
+        ))
+        if dumpWav, !samples.isEmpty {
+            let path = "/tmp/quill-last.wav"
             do {
-                try capture.start()
-                FileHandle.standardError.write(Data("● recording\n".utf8))
-                MainActor.assumeIsolated {
-                    overlay?.show(.recording)
-                    menuBar.setRecording(true)
+                try WAVWriter.write(samples: samples, sampleRate: 16_000, to: path)
+                FileHandle.standardError.write(Data("  wrote \(path)\n".utf8))
+            } catch {
+                FileHandle.standardError.write(Data("  wav write failed: \(error)\n".utf8))
+            }
+        }
+        guard !samples.isEmpty else {
+            MainActor.assumeIsolated {
+                overlay?.hide()
+                menuBar.setRecording(false)
+            }
+            return
+        }
+        Task {
+            let started = Date()
+            let (transcriberNow, modelIDNow) = await MainActor.run { (box.current, box.modelID) }
+            do {
+                let rawText = try await transcriberNow.transcribe(samples)
+                let elapsed = Date().timeIntervalSince(started)
+                FileHandle.standardError.write(Data(
+                    String(format: "→ %.2fs · %@\n", elapsed, rawText).utf8
+                ))
+
+                // Auto Cleanup runs on every dictation automatically —
+                // that's the point (a one-time setting in Style, not a
+                // per-dictation decision). Light is local/instant;
+                // Medium calls out to the user's own Style API key, so
+                // show a "polishing…" beat instead of looking stuck.
+                let level = QuillSettings.autoCleanupLevel
+                if level != .none {
+                    await MainActor.run {
+                        overlay?.show(.polishing)
+                        menuBar.setPolishing()
+                    }
+                }
+                let finalText = await AutoCleanup.apply(rawText, level: level)
+
+                await MainActor.run {
+                    // Text Formatting runs last, after Auto Cleanup, and
+                    // reads the focused app's actual cursor context — has
+                    // to happen right here, immediately before injection,
+                    // not earlier in the pipeline where focus could in
+                    // theory have moved on.
+                    let injectedText = TextFormatting.apply(finalText)
+                    TextInjector.inject(injectedText)
+                    overlay?.hide()
+                    menuBar.setRecording(false)
+                    DictationHistory.append(
+                        text: injectedText, rawText: rawText,
+                        model: modelIDNow, durationSeconds: seconds
+                    )
                 }
             } catch {
-                FileHandle.standardError.write(Data("capture failed: \(error)\n".utf8))
-            }
-        case .released:
-            let samples = capture.stop()
-            MainActor.assumeIsolated {
-                overlay?.show(.transcribing)
-                menuBar.setTranscribing()
-            }
-            let seconds = Double(samples.count) / AudioCapture.targetSampleRate
-            let rms = computeRMS(samples)
-            FileHandle.standardError.write(Data(
-                String(format: "○ captured %.2fs · rms %.3f\n", seconds, rms).utf8
-            ))
-            if dumpWav, !samples.isEmpty {
-                let path = "/tmp/quill-last.wav"
-                do {
-                    try WAVWriter.write(samples: samples, sampleRate: 16_000, to: path)
-                    FileHandle.standardError.write(Data("  wrote \(path)\n".utf8))
-                } catch {
-                    FileHandle.standardError.write(Data("  wav write failed: \(error)\n".utf8))
-                }
-            }
-            guard !samples.isEmpty else {
-                MainActor.assumeIsolated {
+                FileHandle.standardError.write(Data("transcription failed: \(error)\n".utf8))
+                await MainActor.run {
                     overlay?.hide()
                     menuBar.setRecording(false)
                 }
-                return
             }
-            Task {
-                let started = Date()
-                let (transcriberNow, modelIDNow) = await MainActor.run { (box.current, box.modelID) }
-                do {
-                    let rawText = try await transcriberNow.transcribe(samples)
-                    let elapsed = Date().timeIntervalSince(started)
-                    FileHandle.standardError.write(Data(
-                        String(format: "→ %.2fs · %@\n", elapsed, rawText).utf8
-                    ))
+        }
+    }
 
-                    // Auto Cleanup runs on every dictation automatically —
-                    // that's the point (a one-time setting in Style, not a
-                    // per-dictation decision). Light is local/instant;
-                    // Medium calls out to the user's own Style API key, so
-                    // show a "polishing…" beat instead of looking stuck.
-                    let level = QuillSettings.autoCleanupLevel
-                    if level != .none {
-                        await MainActor.run {
-                            overlay?.show(.polishing)
-                            menuBar.setPolishing()
-                        }
-                    }
-                    let finalText = await AutoCleanup.apply(rawText, level: level)
+    // Toggle mode's own recording flag — separate from AudioCapture's
+    // internal state, since this only needs to answer "did the last press
+    // start a recording or stop one," which .hold mode never needs to ask
+    // (press and release are already unambiguous there).
+    var isTogglingRecording = false
 
-                    await MainActor.run {
-                        TextInjector.inject(finalText)
-                        overlay?.hide()
-                        menuBar.setRecording(false)
-                        DictationHistory.append(
-                            text: finalText, rawText: rawText,
-                            model: modelIDNow, durationSeconds: seconds
-                        )
-                    }
-                } catch {
-                    FileHandle.standardError.write(Data("transcription failed: \(error)\n".utf8))
-                    await MainActor.run {
-                        overlay?.hide()
-                        menuBar.setRecording(false)
-                    }
+    // .automatic's state: whether a recording is currently open, and — only
+    // while that recording is still waiting on its *own* first release —
+    // when it started. Once that first release has resolved the gesture
+    // (hold vs. tap), `pressStartedAt` goes back to nil and any further
+    // press is unambiguously "the second tap that stops a toggle."
+    var isAutoRecording = false
+    var autoPressStartedAt: Date?
+
+    try monitor.start { event in
+        switch QuillSettings.activationMode {
+        case .hold:
+            switch event {
+            case .pressed: beginRecording()
+            case .released: finishRecording()
+            }
+
+        case .toggle:
+            // Every press flips state; releases are ignored entirely —
+            // in a tap gesture the key comes back up almost immediately,
+            // and .hold's release-driven finish would end the recording
+            // before the user had a chance to actually speak.
+            guard event == .pressed else { return }
+            if isTogglingRecording {
+                isTogglingRecording = false
+                finishRecording()
+            } else {
+                isTogglingRecording = true
+                beginRecording()
+            }
+
+        case .automatic:
+            // Accepts both gestures on the same hotkey: a quick tap starts
+            // a recording that a second tap later stops (like .toggle); a
+            // press held past `automaticHoldThreshold` and then released
+            // stops on that release instead (like .hold, walkie-talkie
+            // style). The two can't be told apart at press time — only the
+            // release (or a second press, for the tap case) resolves it.
+            switch event {
+            case .pressed:
+                if !isAutoRecording {
+                    isAutoRecording = true
+                    autoPressStartedAt = Date()
+                    beginRecording()
+                } else if autoPressStartedAt == nil {
+                    // A toggle-started recording is already open and its
+                    // starting press was already resolved as a tap — this
+                    // press is the second tap that ends it.
+                    isAutoRecording = false
+                    finishRecording()
                 }
+                // else: still physically holding the very press that
+                // started this recording — nothing to do until release.
+            case .released:
+                guard let startedAt = autoPressStartedAt else { return }
+                autoPressStartedAt = nil
+                if Date().timeIntervalSince(startedAt) >= ActivationMode.automaticHoldThreshold {
+                    // Held long enough to read as a deliberate hold — stop
+                    // now, same as .hold's release.
+                    isAutoRecording = false
+                    finishRecording()
+                }
+                // else: that was a quick tap — leave the recording open,
+                // waiting for a second tap to stop it, same as .toggle.
             }
         }
     }

@@ -4,6 +4,8 @@ import Security
 enum StyleProvider: String, CaseIterable, Identifiable, Codable {
     case openAI = "OpenAI"
     case anthropic = "Anthropic"
+    case google = "Google"
+    case openRouter = "OpenRouter"
     var id: String { rawValue }
 }
 

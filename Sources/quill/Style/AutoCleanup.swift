@@ -3,6 +3,7 @@ import Foundation
 enum AutoCleanupLevel: String, CaseIterable, Identifiable {
     case none = "None"
     case light = "Light"
+    case localAI = "Local AI"
     case medium = "Medium"
 
     var id: String { rawValue }
@@ -13,6 +14,8 @@ enum AutoCleanupLevel: String, CaseIterable, Identifiable {
             return "Types exactly what you said, including filler words."
         case .light:
             return "Removes filler words and fixes basic punctuation: local, instant, no key needed."
+        case .localAI:
+            return "Full tone rewrite using a small on-device AI model: no key, no cloud, nothing leaves your Mac. First use downloads the model (~1.8 GB)."
         case .medium:
             return "Rewrites using your chosen tone and Style API key. Adds a short delay while it processes."
         }
@@ -31,6 +34,22 @@ enum AutoCleanup {
 
         case .light:
             return localCleanup(text)
+
+        case .localAI:
+            guard LocalEnhancer.isDownloaded() else {
+                // Not downloaded yet and this is the hot dictation path —
+                // never block typing on a multi-GB fetch. Settings/onboarding
+                // own prompting the user to download it ahead of time.
+                return TranscriptSanitizer.cleanUpFillers(text)
+            }
+            do {
+                return try await LocalEnhancer.shared.rewrite(text, tone: QuillSettings.autoCleanupTone)
+            } catch {
+                FileHandle.standardError.write(Data(
+                    "auto cleanup (local AI) failed, falling back to local cleanup: \(error)\n".utf8
+                ))
+                return TranscriptSanitizer.cleanUpFillers(text)
+            }
 
         case .medium:
             let provider = QuillSettings.styleProvider

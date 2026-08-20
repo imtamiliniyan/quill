@@ -93,27 +93,34 @@ final class RecordingOverlay {
 /// Observable state for the SwiftUI pill.
 @MainActor
 final class OverlayModel: ObservableObject {
-    static let barCount = 6
-    /// Per-bar height multiplier — center bars peak higher than edge bars.
-    private static let envelope: [Float] = [0.55, 0.85, 1.0, 1.0, 0.85, 0.55]
-
     @Published var state: RecordingOverlay.State = .hidden
-    @Published var levels: [Float] = Array(repeating: 0, count: barCount)
+    @Published var levels: [Float] = Array(repeating: 0, count: LevelBars.count)
 
     func pushLevel(_ level: Float) {
-        let shaped = min(1.0, sqrt(max(0, level)) * 3.4)
-        var next = [Float]()
-        next.reserveCapacity(Self.barCount)
-        for i in 0..<Self.barCount {
-            // Small per-bar jitter so the bars don't all move in lockstep.
-            let jitter = Float.random(in: 0.78...1.0)
-            next.append(shaped * Self.envelope[i] * jitter)
-        }
-        levels = next
+        levels = LevelBars.shape(level)
     }
 
     func resetLevels() {
-        levels = Array(repeating: 0, count: Self.barCount)
+        levels = Array(repeating: 0, count: LevelBars.count)
+    }
+}
+
+/// Shared RMS→animated-bar shaping — the same visual language for "the mic
+/// is picking up sound" wherever it shows up: this recording pill, and
+/// (Phase 5b) the onboarding Microphone row's live preview in
+/// `MicLevelMeter.swift`.
+enum LevelBars {
+    static let count = 6
+    /// Per-bar height multiplier — center bars peak higher than edge bars.
+    private static let envelope: [Float] = [0.55, 0.85, 1.0, 1.0, 0.85, 0.55]
+
+    static func shape(_ level: Float) -> [Float] {
+        let shaped = min(1.0, sqrt(max(0, level)) * 3.4)
+        return (0..<count).map { i in
+            // Small per-bar jitter so the bars don't all move in lockstep.
+            let jitter = Float.random(in: 0.78...1.0)
+            return shaped * envelope[i] * jitter
+        }
     }
 }
 
@@ -150,7 +157,9 @@ private struct OverlayPill: View {
     }
 }
 
-private struct Waveform: View {
+/// Not `private` — Phase 5b's onboarding mic preview (`MicLevelMeter.swift`)
+/// reuses this same rendering, not just the RMS shaping above.
+struct Waveform: View {
     let levels: [Float]
     private let color = Color(red: 181/255.0, green: 209/255.0, blue: 255/255.0)
 

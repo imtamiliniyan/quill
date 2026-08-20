@@ -43,6 +43,8 @@ This builds `dist/Quill.app` and packages `dist/Quill.dmg` (drag-to-Applications
 
 The build is signed with a stable local identity rather than left ad-hoc, so macOS doesn't re-prompt for Accessibility/Keychain access on every rebuild. See the comments at the top of [scripts/build-app.sh](scripts/build-app.sh) for the one-time certificate setup if you're building it yourself.
 
+The `.dmg` itself is packaged with [dmgbuild](https://dmgbuild.readthedocs.io/) (`pip3 install dmgbuild`) rather than a live Finder/AppleScript session — Finder's background-picture setting doesn't reliably survive `hdiutil convert`, dmgbuild writes it directly. Layout settings live in [scripts/dmg_settings.py](scripts/dmg_settings.py).
+
 For quick local iteration without packaging a `.dmg`:
 
 ```sh

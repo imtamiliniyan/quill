@@ -8,7 +8,7 @@ enum ModelAvailability {
     static func isDownloaded(_ model: TranscriptionModel) -> Bool {
         switch model.engine {
         case .parakeet:
-            return AsrModels.modelsExist(at: AsrModels.defaultCacheDirectory(for: .v3))
+            return AsrModels.modelsExist(at: AsrModels.defaultCacheDirectory(for: model.asrModelVersion))
         case .whisperKit:
             guard let whisperKitID = model.whisperKitID else { return false }
             // Empirically observed WhisperKit/Hub cache layout — there's no
@@ -34,7 +34,7 @@ enum ModelAvailability {
         let fm = FileManager.default
         switch model.engine {
         case .parakeet:
-            let dir = AsrModels.defaultCacheDirectory(for: .v3)
+            let dir = AsrModels.defaultCacheDirectory(for: model.asrModelVersion)
             if fm.fileExists(atPath: dir.path) {
                 try fm.removeItem(at: dir)
             }

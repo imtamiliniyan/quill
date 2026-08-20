@@ -23,8 +23,13 @@ final class OnboardingWindow {
                 self?.onFinished?()
             })
             let hosting = NSHostingView(rootView: content)
+            // 620, not 580: OnboardingView's own .frame() height (grew to
+            // fit the Local AI step added in Phase 5e) and this fixed
+            // contentRect drifted apart — NSHostingView doesn't resize its
+            // parent NSWindow on its own, so the mismatch clipped the
+            // bottom of that step until caught here.
             let win = NSWindow(
-                contentRect: NSRect(x: 0, y: 0, width: 480, height: 580),
+                contentRect: NSRect(x: 0, y: 0, width: 480, height: 620),
                 styleMask: [.titled, .closable],
                 backing: .buffered,
                 defer: false

@@ -4,6 +4,11 @@ enum SidebarItem: String, CaseIterable, Identifiable {
     case dictation = "Dictation"
     case insights = "Insights"
     case style = "Style"
+    case voiceEngine = "Voice Engine"
+    case enhancementEngine = "Enhancement Engine"
+    case gettingStarted = "Getting Started"
+    case changeLog = "Change Log"
+    case feedback = "Feedback"
 
     var id: String { rawValue }
 
@@ -12,6 +17,11 @@ enum SidebarItem: String, CaseIterable, Identifiable {
         case .dictation: return "mic"
         case .insights: return "chart.bar"
         case .style: return "wand.and.stars"
+        case .voiceEngine: return "waveform"
+        case .enhancementEngine: return "brain"
+        case .gettingStarted: return "checkmark.circle"
+        case .changeLog: return "doc.text.magnifyingglass"
+        case .feedback: return "envelope"
         }
     }
 }
@@ -27,25 +37,70 @@ final class AppViewState: ObservableObject {
 struct MainView: View {
     @ObservedObject var state: AppViewState
     let menuBar: MenuBarController
+    let onRunOnboardingAgain: () -> Void
+    // Phase 5a: a persistent bar, visible above every sidebar tab, for
+    // any model download in progress (transcription or Local AI) —
+    // regardless of which view actually started it, or whether that
+    // view is even still on screen. See DownloadActivity.swift.
+    @ObservedObject private var downloadActivity = DownloadActivity.shared
 
     var body: some View {
-        // A plain HStack, not NavigationSplitView — NavigationSplitView
-        // auto-adds a sidebar show/hide toggle that turned out to be part
-        // of the view itself, not a real NSToolbarItem, so
-        // `.toolbar(removing: .sidebarToggle)` had nothing to act on in
-        // this AppKit-hosted NSWindow (no SwiftUI Scene/toolbar behind it).
-        // A plain HStack has no such built-in chrome to fight — the
-        // sidebar here is never meant to collapse anyway.
-        HStack(spacing: 0) {
-            sidebar
-            Divider().opacity(0.08)
-            detail
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Theme.background)
+        VStack(spacing: 0) {
+            if let item = downloadActivity.current {
+                downloadBanner(item)
+            }
+
+            // A plain HStack, not NavigationSplitView — NavigationSplitView
+            // auto-adds a sidebar show/hide toggle that turned out to be part
+            // of the view itself, not a real NSToolbarItem, so
+            // `.toolbar(removing: .sidebarToggle)` had nothing to act on in
+            // this AppKit-hosted NSWindow (no SwiftUI Scene/toolbar behind it).
+            // A plain HStack has no such built-in chrome to fight — the
+            // sidebar here is never meant to collapse anyway.
+            HStack(spacing: 0) {
+                sidebar
+                Divider().opacity(0.08)
+                detail
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Theme.background)
+            }
         }
         .sheet(isPresented: $state.showSettings) {
             SettingsView(menuBar: menuBar)
         }
+    }
+
+    private func downloadBanner(_ item: DownloadActivity.Item) -> some View {
+        HStack(spacing: 10) {
+            ProgressView()
+                .controlSize(.small)
+            Text(item.label)
+                .font(.system(size: 11, weight: .medium))
+                .foregroundColor(Theme.textPrimary)
+            if let progress = item.progress {
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        RoundedRectangle(cornerRadius: 2)
+                            .fill(Theme.fillHover)
+                        RoundedRectangle(cornerRadius: 2)
+                            .fill(Theme.accent)
+                            .frame(width: geo.size.width * max(min(progress, 1), 0))
+                    }
+                }
+                .frame(height: 4)
+                Text("\(Int(progress * 100))%")
+                    .font(.system(size: 10))
+                    .foregroundColor(Theme.textTertiary)
+                    .frame(width: 32, alignment: .trailing)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 7)
+        .background(Theme.accent.opacity(0.1))
+        .overlay(Divider().opacity(0.15), alignment: .bottom)
+        .transition(.move(edge: .top).combined(with: .opacity))
+        .animation(.easeInOut(duration: 0.2), value: downloadActivity.current != nil)
     }
 
     private var sidebar: some View {
@@ -107,6 +162,11 @@ struct MainView: View {
         case .dictation: DictationView()
         case .insights: InsightsView()
         case .style: StyleView()
+        case .voiceEngine: VoiceEngineView(menuBar: menuBar)
+        case .enhancementEngine: EnhancementEngineView()
+        case .gettingStarted: GettingStartedView(onRunOnboardingAgain: onRunOnboardingAgain)
+        case .changeLog: ChangeLogView()
+        case .feedback: FeedbackView()
         case nil: EmptyView()
         }
     }

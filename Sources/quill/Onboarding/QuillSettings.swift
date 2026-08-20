@@ -23,7 +23,26 @@ enum QuillSettings {
         static let autoCleanupLevel = "autoCleanupLevel"
         static let autoCleanupTone = "autoCleanupTone"
         static let darkModeEnabled = "darkModeEnabled"
+        static let assumedTypingWPM = "assumedTypingWPM"
+        static let activationMode = "activationMode"
+        static let lowercaseFirstLetter = "lowercaseFirstLetter"
+        static let spaceBetweenDictations = "spaceBetweenDictations"
+        static let smartCapitalization = "smartCapitalization"
+        static let removeFillerWords = "removeFillerWords"
+        static let fillerWords = "fillerWords"
+        static let openRouterModel = "openRouterModel"
     }
+
+    /// The single-word interjections `TranscriptSanitizer.cleanUpFillers`
+    /// strips by default — the common list of English filler sounds, not
+    /// specific to any one app (any dictation tool's default list looks
+    /// close to this). User-editable in Voice Engine; this is only the
+    /// starting point `fillerWords` falls back to before it's ever been
+    /// customized or after a Reset to Default.
+    static let defaultFillerWords = [
+        "um", "uh", "er", "ah", "eh", "umm", "uhh", "err",
+        "ahh", "ehh", "hmm", "hm", "mm", "mmm", "erm", "urm", "ugh",
+    ]
 
     static var selectedModelID: String? {
         get { defaults.string(forKey: Key.selectedModelID) }
@@ -80,6 +99,79 @@ enum QuillSettings {
             defaults.set(newValue, forKey: Key.darkModeEnabled)
             applyAppearance()
         }
+    }
+
+    /// Assumed typing speed for Insights' "Time Saved" stat — editable so
+    /// the number reflects the user's own typing, not a guess. Defaults
+    /// to 40 (same default FluidVoice uses), shown next to the number
+    /// itself in Insights so the assumption is never hidden.
+    /// `UserDefaults.integer` returns 0 for an unset key, which is what
+    /// tells first-run apart from "the user actually set it to 0."
+    static var assumedTypingWPM: Int {
+        get {
+            let stored = defaults.integer(forKey: Key.assumedTypingWPM)
+            return stored > 0 ? stored : 40
+        }
+        set { defaults.set(newValue, forKey: Key.assumedTypingWPM) }
+    }
+
+    /// Hold-to-record (default) vs. click-to-toggle — read directly by
+    /// `attachDictationHandlers` in `Quill.swift` on every hotkey press,
+    /// same pattern already used there for `autoCleanupLevel`.
+    static var activationMode: ActivationMode {
+        get { ActivationMode(rawValue: defaults.string(forKey: Key.activationMode) ?? "") ?? .hold }
+        set { defaults.set(newValue.rawValue, forKey: Key.activationMode) }
+    }
+
+    /// Text Formatting toggles (Phase 5g, FluidVoice-inspired) — off by
+    /// default, same "opt in" posture as Auto Cleanup. Read by
+    /// `TextFormatting.apply` right before injection, after Auto Cleanup
+    /// has already run. `smartCapitalization` takes priority over
+    /// `lowercaseFirstLetter` when both are on, since it's the more
+    /// specific of the two — see `TextFormatting.swift`.
+    static var lowercaseFirstLetter: Bool {
+        get { defaults.bool(forKey: Key.lowercaseFirstLetter) }
+        set { defaults.set(newValue, forKey: Key.lowercaseFirstLetter) }
+    }
+
+    static var spaceBetweenDictations: Bool {
+        get { defaults.bool(forKey: Key.spaceBetweenDictations) }
+        set { defaults.set(newValue, forKey: Key.spaceBetweenDictations) }
+    }
+
+    static var smartCapitalization: Bool {
+        get { defaults.bool(forKey: Key.smartCapitalization) }
+        set { defaults.set(newValue, forKey: Key.smartCapitalization) }
+    }
+
+    /// Master on/off for `TranscriptSanitizer.cleanUpFillers` — defaults
+    /// true, matching the behavior every existing user already has today
+    /// (that pass has always run unconditionally as part of Auto
+    /// Cleanup's Light tier and as the Local AI/Medium fallback; this
+    /// just makes it switchable rather than always-on).
+    static var removeFillerWords: Bool {
+        get { defaults.object(forKey: Key.removeFillerWords) as? Bool ?? true }
+        set { defaults.set(newValue, forKey: Key.removeFillerWords) }
+    }
+
+    /// User-editable filler word list (Voice Engine). `UserDefaults`
+    /// returns nil, not an empty array, for a key that was never set —
+    /// that's what tells "never customized, use the default list" apart
+    /// from "customized down to zero words," which stays a legitimate
+    /// (if unusual) choice once made.
+    static var fillerWords: [String] {
+        get { defaults.array(forKey: Key.fillerWords) as? [String] ?? defaultFillerWords }
+        set { defaults.set(newValue, forKey: Key.fillerWords) }
+    }
+
+    /// OpenRouter's chosen model (Enhancement Engine) — the one provider
+    /// with a real picker, since it fronts hundreds of models through one
+    /// key. Defaults to the same "openai/gpt-4o-mini" the other providers'
+    /// fixed choices lean on, so an unconfigured OpenRouter key still
+    /// calls something sane.
+    static var openRouterModel: String {
+        get { defaults.string(forKey: Key.openRouterModel) ?? "openai/gpt-4o-mini" }
+        set { defaults.set(newValue, forKey: Key.openRouterModel) }
     }
 
     /// Pushes `darkModeEnabled` onto NSApp — call once at each app-launch

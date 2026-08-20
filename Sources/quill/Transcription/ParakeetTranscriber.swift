@@ -19,7 +19,7 @@ actor ParakeetTranscriber: Transcriber {
         if manager != nil { return }
         FileHandle.standardError.write(Data("loading \(model.id)...\n".utf8))
         let models = try await AsrModels.downloadAndLoad(
-            version: .v3,
+            version: model.asrModelVersion,
             progressHandler: progress.map { cb in { @Sendable p in cb(p.fractionCompleted) } }
         )
         manager = AsrManager(config: .default, models: models)

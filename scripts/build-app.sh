@@ -43,6 +43,21 @@ cp .build/release/quill "$APP/Contents/MacOS/quill"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
 cp Resources/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
 
+# Enhancement Engine's provider logos, as loose files under
+# Contents/Resources/ — loaded via Bundle.main at runtime
+# (ProviderLogos.swift), not SPM's generated Bundle.module/resource-bundle
+# mechanism. Tried that first: SPM's generated accessor expects
+# `quill_quill.bundle` sitting as a sibling of Contents/ (confirmed by
+# reading the generated accessor directly), which `codesign --deep`
+# rejects outright ("unsealed contents present in the bundle root",
+# non-zero exit, whole script aborts under `set -e`). Contents/Resources/
+# is where signed content is already expected to live — AppIcon.icns
+# above proves that path works — so that's what ProviderLogos.swift
+# actually reads from in the shipped app; the Package.swift `resources:`
+# declaration stays only for a bare `swift run`, a path this script
+# doesn't use.
+cp -R Sources/quill/Resources/ProviderLogos "$APP/Contents/Resources/ProviderLogos"
+
 echo "→ signing ${APP}..."
 codesign --force --deep -s "$SIGN_IDENTITY" "$APP"
 
@@ -57,69 +72,38 @@ echo "→ verifying..."
 "$APP/Contents/MacOS/quill" doctor || true
 
 echo "→ building .dmg..."
-DMG_STAGING=$(mktemp -d)
-trap 'rm -rf "$DMG_STAGING"' EXIT
-cp -R "$APP" "$DMG_STAGING/"
-ln -s /Applications "$DMG_STAGING/Applications"
-mkdir -p "$DMG_STAGING/.background"
-cp Resources/dmg_background.png "$DMG_STAGING/.background/background.png"
+# Built with dmgbuild (pip3 install dmgbuild), not a live Finder/AppleScript
+# session + `hdiutil convert`. That was the original approach here, and it
+# had a real, confirmed bug: Finder's "background picture" is backed by a
+# classic Alias Manager record tied to the writable image's own volume
+# identity, which `hdiutil convert` doesn't preserve — so the background
+# silently failed to render on the distributed .dmg while every file
+# (including .DS_Store and the background image itself) was still sitting
+# right there on disk, correctly copied. Icon *positions* survived because
+# they're plain stored coordinates, not aliases — which is exactly why
+# that bug looked like "half-working" instead of "broken." dmgbuild writes
+# the .DS_Store's background/position records directly into the image it
+# builds, sidestepping that resolution step entirely. Settings for window
+# size, icon size/positions, and background live in scripts/dmg_settings.py.
+if ! python3 -c "import dmgbuild" 2>/dev/null; then
+    echo "dmgbuild not installed — run: pip3 install dmgbuild" >&2
+    exit 1
+fi
 
 rm -f "${DIST}/${APP_NAME}.dmg"
-RW_DMG=$(mktemp -u).dmg
-hdiutil create -volname "$APP_NAME" -srcfolder "$DMG_STAGING" -ov -format UDRW -fs HFS+ "$RW_DMG"
-
-MOUNT_DIR="/Volumes/${APP_NAME}"
 # No custom -mountpoint: Finder shows a volume by its actual label only
-# when it's mounted at the default /Volumes/<name> location — pass a
-# custom mountpoint and Finder's `disk` list shows the mountpoint folder's
-# name instead, which breaks `tell disk "Quill"` below. Confirmed
-# empirically (Finder listed a random tmp.XXXX name instead of "Quill").
-if [ -d "$MOUNT_DIR" ]; then
-    hdiutil detach "$MOUNT_DIR" -force -quiet || true
+# when it's mounted at the default /Volumes/<name> location. A leftover
+# manual mount (e.g. from testing this background by hand) would collide
+# with dmgbuild's own internal mount, so clear it first.
+if [ -d "/Volumes/${APP_NAME}" ]; then
+    hdiutil detach "/Volumes/${APP_NAME}" -force -quiet || true
 fi
-hdiutil attach "$RW_DMG" -quiet
-sleep 2
 
-# Lay out the Finder window: background image, icon size, and the two icon
-# positions that line up with the arrow drawn into the background — same
-# "drag app to Applications" convention most macOS installers use.
-osascript <<OSA
-tell application "Finder"
-    tell disk "${APP_NAME}"
-        open
-        set current view of container window to icon view
-        set toolbar visible of container window to false
-        set statusbar visible of container window to false
-        set the bounds of container window to {200, 120, 860, 520}
-        set viewOptions to the icon view options of container window
-        set arrangement of viewOptions to not arranged
-        set icon size of viewOptions to 96
-        -- NOTE: this alias reliably sets the background picture on THIS
-        -- (writable) mount, but the reference doesn't survive
-        -- `hdiutil convert` to the final compressed .dmg — icon positions
-        -- do survive (plain stored coordinates), but Finder shows a plain
-        -- background once distributed. Known finicky Finder/hdiutil
-        -- scripting quirk; not worth more engineering time against right
-        -- now. Positioned, correctly-labeled icons still ship either way.
-        set background picture of viewOptions to file ".background:background.png"
-        set position of item "${APP_NAME}.app" of container window to {170, 220}
-        set position of item "Applications" of container window to {490, 220}
-        update without registering applications
-        delay 2
-        close
-    end tell
-end tell
-OSA
-
-# Give Finder time to actually flush .DS_Store (the background-picture
-# alias in particular needs a moment to resolve and write, and detaching
-# too soon captures icon positions but silently drops the background).
-sleep 2
-sync
-hdiutil detach "$MOUNT_DIR" -quiet
-
-hdiutil convert "$RW_DMG" -format UDZO -o "${DIST}/${APP_NAME}.dmg"
-rm -f "$RW_DMG"
+python3 -m dmgbuild \
+    -s scripts/dmg_settings.py \
+    -D app="$(pwd)/${APP}" \
+    -D background="$(pwd)/Resources/dmg_background.png" \
+    "${APP_NAME}" "${DIST}/${APP_NAME}.dmg"
 
 echo "✓ built:"
 echo "  ${APP}"

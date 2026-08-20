@@ -76,6 +76,24 @@ enum StyleRewriteError: Error, LocalizedError {
 /// "Clean Up" (StyleView's default tone) never reaches this file at all —
 /// it's handled entirely locally by TranscriptSanitizer.cleanUpFillers.
 enum StyleRewriter {
+    /// The model each provider calls. Fixed for OpenAI/Anthropic/Google —
+    /// no per-provider picker there, by explicit design (Enhancement
+    /// Engine only manages keys for those three). OpenRouter is the one
+    /// exception: its whole point is access to hundreds of models through
+    /// one key, so it gets a real picker (`QuillSettings.openRouterModel`,
+    /// set in Enhancement Engine) instead of a hardcoded default. Either
+    /// way, this is the single source of truth both the rewrite calls
+    /// below and `EnhancementEngineView`'s display read from, so the two
+    /// can never drift apart.
+    static func modelName(for provider: StyleProvider) -> String {
+        switch provider {
+        case .openAI: return "gpt-4o-mini"
+        case .anthropic: return "claude-haiku-4-5-20251001"
+        case .google: return "gemini-2.0-flash"
+        case .openRouter: return QuillSettings.openRouterModel
+        }
+    }
+
     static func rewrite(_ text: String, tone: StyleTone, provider: StyleProvider) async throws -> String {
         guard let key = APIKeyStore.key(for: provider), !key.isEmpty else {
             throw StyleRewriteError.noAPIKey
@@ -83,6 +101,8 @@ enum StyleRewriter {
         switch provider {
         case .openAI: return try await rewriteOpenAI(text, tone: tone, key: key)
         case .anthropic: return try await rewriteAnthropic(text, tone: tone, key: key)
+        case .google: return try await rewriteGoogle(text, tone: tone, key: key)
+        case .openRouter: return try await rewriteOpenRouter(text, tone: tone, key: key)
         }
     }
 
@@ -92,7 +112,7 @@ enum StyleRewriter {
         request.setValue("Bearer \(key)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         let body: [String: Any] = [
-            "model": "gpt-4o-mini",
+            "model": modelName(for: .openAI),
             "messages": [
                 ["role": "system", "content": "You rewrite dictated text. \(tone.instruction) Reply with only the rewritten text, nothing else — no preamble, no quotes."],
                 ["role": "user", "content": text],
@@ -120,7 +140,7 @@ enum StyleRewriter {
         request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         let body: [String: Any] = [
-            "model": "claude-haiku-4-5-20251001",
+            "model": modelName(for: .anthropic),
             "max_tokens": 1024,
             "system": "You rewrite dictated text. \(tone.instruction) Reply with only the rewritten text, nothing else — no preamble, no quotes.",
             "messages": [
@@ -138,6 +158,74 @@ enum StyleRewriter {
             let resultText = content.first?["text"] as? String
         else { throw StyleRewriteError.badResponse }
         return resultText.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    /// Gemini's REST API takes the key as a URL query param, not a header
+    /// — that's the standard auth shape for `generativelanguage.googleapis.com`,
+    /// unlike every other provider here.
+    private static func rewriteGoogle(_ text: String, tone: StyleTone, key: String) async throws -> String {
+        var components = URLComponents(
+            string: "https://generativelanguage.googleapis.com/v1beta/models/\(modelName(for: .google)):generateContent"
+        )!
+        components.queryItems = [URLQueryItem(name: "key", value: key)]
+        var request = URLRequest(url: components.url!)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        let body: [String: Any] = [
+            "system_instruction": [
+                "parts": [["text": "You rewrite dictated text. \(tone.instruction) Reply with only the rewritten text, nothing else — no preamble, no quotes."]],
+            ],
+            "contents": [
+                ["parts": [["text": text]]],
+            ],
+            "generationConfig": ["temperature": 0.3],
+        ]
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try checkHTTP(response, data: data)
+
+        guard
+            let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+            let candidates = json["candidates"] as? [[String: Any]],
+            let content = candidates.first?["content"] as? [String: Any],
+            let parts = content["parts"] as? [[String: Any]],
+            let resultText = parts.first?["text"] as? String
+        else { throw StyleRewriteError.badResponse }
+        return resultText.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    /// OpenRouter is an OpenAI-compatible gateway in front of many
+    /// providers/models — same request/response shape as `rewriteOpenAI`,
+    /// just a different host and a provider-prefixed model id. Fixed to
+    /// one default model rather than exposing a picker, per the same
+    /// "no model selection in this tab" scope as every other provider
+    /// here (Enhancement Engine only manages keys).
+    private static func rewriteOpenRouter(_ text: String, tone: StyleTone, key: String) async throws -> String {
+        var request = URLRequest(url: URL(string: "https://openrouter.ai/api/v1/chat/completions")!)
+        request.httpMethod = "POST"
+        request.setValue("Bearer \(key)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        let body: [String: Any] = [
+            "model": modelName(for: .openRouter),
+            "messages": [
+                ["role": "system", "content": "You rewrite dictated text. \(tone.instruction) Reply with only the rewritten text, nothing else — no preamble, no quotes."],
+                ["role": "user", "content": text],
+            ],
+            "temperature": 0.3,
+        ]
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try checkHTTP(response, data: data)
+
+        guard
+            let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+            let choices = json["choices"] as? [[String: Any]],
+            let message = choices.first?["message"] as? [String: Any],
+            let content = message["content"] as? String
+        else { throw StyleRewriteError.badResponse }
+        return content.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     private static func checkHTTP(_ response: URLResponse, data: Data) throws {
