@@ -121,7 +121,7 @@ struct FeedbackView: View {
                     Text("Include debug info")
                         .font(.system(size: 12, weight: .medium))
                         .foregroundColor(Theme.textPrimary)
-                    Text("macOS version and current model/provider — no dictation content.")
+                    Text("macOS version and current model/provider, no dictation content.")
                         .font(.system(size: 10.5))
                         .foregroundColor(Theme.textTertiary)
                 }
@@ -141,7 +141,7 @@ struct FeedbackView: View {
                 .disabled(feedbackText.isEmpty)
             }
 
-            Text("Opens a pre-filled email to \(Self.contactEmail) in your Mac's default mail app — Quill has no server of its own to send this to.")
+            Text("Opens a pre-filled email to \(Self.contactEmail) in your Mac's default mail app. Quill has no server of its own to send this to.")
                 .font(.system(size: 10.5))
                 .foregroundColor(Theme.textTertiary)
         }

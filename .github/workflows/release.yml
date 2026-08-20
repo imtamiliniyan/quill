@@ -59,3 +59,13 @@ jobs:
             dist/quill-macos-arm64.tar.gz.sha256
           generate_release_notes: true
           fail_on_unmatched_files: true
+          # Builds still run automatically on every tag push, but the
+          # release itself lands as a draft: not visible, not "latest,"
+          # not downloadable by anyone until a human clicks "Publish
+          # release" on GitHub. This tag push -> unattended public
+          # release pipeline had no approval gate before (confirmed: it
+          # fired 3 times unattended while this repo was still private,
+          # each time silently attaching an unsigned CLI-only tarball,
+          # not the actual signed .app/.dmg users should get) - this is
+          # the fix for that.
+          draft: true

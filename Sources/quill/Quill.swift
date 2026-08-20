@@ -50,7 +50,7 @@ struct Run: ParsableCommand {
                 SingleInstance.requestOpenMain()
             }
             FileHandle.standardError.write(Data(
-                "quill is already running — opening its window instead of starting a second instance.\n".utf8
+                "quill is already running. Opening its window instead of starting a second instance.\n".utf8
             ))
             return
         }

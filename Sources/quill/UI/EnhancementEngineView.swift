@@ -71,7 +71,7 @@ struct EnhancementEngineView: View {
                 .padding(.horizontal, Theme.pagePadding)
                 .padding(.top, Theme.pagePadding)
                 .padding(.bottom, 4)
-            Text("Local AI runs fully on this Mac, no key needed. Or connect your own OpenAI, Anthropic, Google, or OpenRouter key — either powers Style's Medium tier and Auto Cleanup.")
+            Text("Local AI runs fully on this Mac, no key needed. Or connect your own OpenAI, Anthropic, Google, or OpenRouter key: either powers Style's Medium tier and Auto Cleanup.")
                 .font(.system(size: 11))
                 .foregroundColor(Theme.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -140,10 +140,23 @@ struct EnhancementEngineView: View {
                         Image(systemName: "cpu")
                             .font(.system(size: 10))
                             .foregroundColor(Theme.textTertiary)
-                        Text("A small on-device model for full tone rewrites — no key, no cloud, nothing leaves this Mac. One-time download (~1.8 GB), then runs offline.")
+                        Text("A small on-device model for full tone rewrites: no key, no cloud, nothing leaves this Mac. One-time download (~1.8 GB), then runs offline.")
                             .font(.system(size: 10.5))
                             .foregroundColor(Theme.textSecondary)
                             .fixedSize(horizontal: false, vertical: true)
+                    }
+
+                    // Same "which model, exactly" transparency the cloud
+                    // provider rows already give (their "Uses gpt-4o-mini"
+                    // caption below) — this card was the one place in
+                    // Enhancement Engine that didn't name its model at all.
+                    HStack(spacing: 6) {
+                        Image(systemName: "shippingbox")
+                            .font(.system(size: 10))
+                            .foregroundColor(Theme.textTertiary)
+                        Text("Model: \(LocalEnhancer.displayName)")
+                            .font(.system(size: 10.5))
+                            .foregroundColor(Theme.textSecondary)
                     }
 
                     if let localAIDownloadProgress {
@@ -208,7 +221,7 @@ struct EnhancementEngineView: View {
             Button("Download (~1.8 GB)") { beginLocalAIDownload() }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("Downloaded once, then runs entirely on this Mac — no key, no cloud, no per-dictation network call.")
+            Text("Downloaded once, then runs entirely on this Mac. No key, no cloud, no per-dictation network call.")
         }
         .confirmationDialog(
             "Delete the Local AI model?",
@@ -334,7 +347,7 @@ struct EnhancementEngineView: View {
                             Image(systemName: "cpu")
                                 .font(.system(size: 10))
                                 .foregroundColor(Theme.textTertiary)
-                            Text("Uses \(StyleRewriter.modelName(for: provider)) — fixed, not user-selectable yet.")
+                            Text("Uses \(StyleRewriter.modelName(for: provider)): fixed, not user-selectable yet.")
                                 .font(.system(size: 10.5))
                                 .foregroundColor(Theme.textSecondary)
                         }
@@ -482,7 +495,7 @@ struct EnhancementEngineView: View {
                                 .buttonStyle(.plain)
                             }
                             if filteredOpenRouterModels.count > 50 {
-                                Text("\(filteredOpenRouterModels.count - 50) more — refine your search")
+                                Text("\(filteredOpenRouterModels.count - 50) more, refine your search")
                                     .font(.system(size: 10))
                                     .foregroundColor(Theme.textTertiary)
                                     .padding(8)
@@ -526,7 +539,7 @@ struct EnhancementEngineView: View {
             do {
                 openRouterModels = try await OpenRouterModels.fetch()
             } catch {
-                openRouterModelsError = "Couldn't load the model list — still using \(openRouterModel)."
+                openRouterModelsError = "Couldn't load the model list. Still using \(openRouterModel)."
             }
             openRouterModelsLoading = false
         }

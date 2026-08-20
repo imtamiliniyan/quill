@@ -48,7 +48,7 @@ struct ChangeLogView: View {
             HStack(spacing: 6) {
                 Image(systemName: "checkmark.seal")
                     .font(.system(size: 10))
-                Text(loadError ?? "Synced with GitHub Releases — github.com/imtamiliniyan/quill")
+                Text(loadError ?? "Synced with GitHub Releases: github.com/imtamiliniyan/quill")
                     .font(.system(size: 10.5))
             }
             .foregroundColor(loadError == nil ? Theme.textTertiary : .orange)
@@ -83,7 +83,7 @@ struct ChangeLogView: View {
                 // Keep whatever's already showing (local fallback, or a
                 // previous successful fetch) rather than clearing it —
                 // a failed refresh shouldn't blank out real content.
-                loadError = "Couldn't reach GitHub — showing the last known changelog."
+                loadError = "Couldn't reach GitHub. Showing the last known changelog."
                 isLoading = false
             }
         }

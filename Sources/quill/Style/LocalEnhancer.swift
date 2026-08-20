@@ -23,6 +23,11 @@ actor LocalEnhancer {
     /// touching call sites if a smaller/better option turns up.
     static let modelID = "mlx-community/Llama-3.2-3B-Instruct-4bit"
 
+    /// Human-friendly name for display in Enhancement Engine — kept next
+    /// to `modelID` so the two can't drift apart, same reasoning as
+    /// `StyleRewriter.modelName(for:)` for the cloud providers.
+    static let displayName = "Llama 3.2 3B Instruct (4-bit)"
+
     private var container: ModelContainer?
     private var loadTask: Task<ModelContainer, Error>?
 
@@ -35,7 +40,7 @@ actor LocalEnhancer {
         let messages: [[String: String]] = [
             [
                 "role": "system",
-                "content": "You rewrite dictated text. \(tone.instruction) Reply with only the rewritten text, nothing else — no preamble, no quotes.",
+                "content": "You rewrite dictated text. \(tone.instruction) Reply with only the rewritten text, nothing else. No preamble, no quotes.",
             ],
             ["role": "user", "content": text],
         ]

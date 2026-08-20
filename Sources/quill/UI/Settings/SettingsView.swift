@@ -109,7 +109,7 @@ private struct GeneralSettingsView: View {
                     .padding(10)
                     .background(Theme.textQuaternary)
                     .cornerRadius(8)
-                    Text("Custom key remapping isn't available yet — every install listens on fn.")
+                    Text("Custom key remapping isn't available yet. Every install listens on fn.")
                         .font(.system(size: 11))
                         .foregroundColor(Theme.textSecondary)
 

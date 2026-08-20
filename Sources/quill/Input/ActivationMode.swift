@@ -29,7 +29,7 @@ enum ActivationMode: String, CaseIterable, Identifiable {
         case .toggle:
             return "Press once to start, press again to stop. Nothing to hold down."
         case .automatic:
-            return "Tap to toggle, or hold and release like a walkie-talkie — both work."
+            return "Tap to toggle, or hold and release like a walkie-talkie. Both work."
         }
     }
 }

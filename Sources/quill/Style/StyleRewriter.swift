@@ -20,7 +20,7 @@ enum StyleTone: String, CaseIterable, Identifiable {
         case .concise:
             return "Rewrite to be shorter and more direct, cutting unnecessary words. Keep the same meaning."
         case .veryCasual:
-            return "Rewrite in a very relaxed, informal tone — lowercase, minimal punctuation, like a quick text to a close friend. Fix only major grammar issues. Keep the same meaning."
+            return "Rewrite in a very relaxed, informal tone: lowercase, minimal punctuation, like a quick text to a close friend. Fix only major grammar issues. Keep the same meaning."
         }
     }
 
@@ -114,7 +114,7 @@ enum StyleRewriter {
         let body: [String: Any] = [
             "model": modelName(for: .openAI),
             "messages": [
-                ["role": "system", "content": "You rewrite dictated text. \(tone.instruction) Reply with only the rewritten text, nothing else — no preamble, no quotes."],
+                ["role": "system", "content": "You rewrite dictated text. \(tone.instruction) Reply with only the rewritten text, nothing else. No preamble, no quotes."],
                 ["role": "user", "content": text],
             ],
             "temperature": 0.3,
@@ -142,7 +142,7 @@ enum StyleRewriter {
         let body: [String: Any] = [
             "model": modelName(for: .anthropic),
             "max_tokens": 1024,
-            "system": "You rewrite dictated text. \(tone.instruction) Reply with only the rewritten text, nothing else — no preamble, no quotes.",
+            "system": "You rewrite dictated text. \(tone.instruction) Reply with only the rewritten text, nothing else. No preamble, no quotes.",
             "messages": [
                 ["role": "user", "content": text],
             ],
@@ -173,7 +173,7 @@ enum StyleRewriter {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         let body: [String: Any] = [
             "system_instruction": [
-                "parts": [["text": "You rewrite dictated text. \(tone.instruction) Reply with only the rewritten text, nothing else — no preamble, no quotes."]],
+                "parts": [["text": "You rewrite dictated text. \(tone.instruction) Reply with only the rewritten text, nothing else. No preamble, no quotes."]],
             ],
             "contents": [
                 ["parts": [["text": text]]],
@@ -209,7 +209,7 @@ enum StyleRewriter {
         let body: [String: Any] = [
             "model": modelName(for: .openRouter),
             "messages": [
-                ["role": "system", "content": "You rewrite dictated text. \(tone.instruction) Reply with only the rewritten text, nothing else — no preamble, no quotes."],
+                ["role": "system", "content": "You rewrite dictated text. \(tone.instruction) Reply with only the rewritten text, nothing else. No preamble, no quotes."],
                 ["role": "user", "content": text],
             ],
             "temperature": 0.3,

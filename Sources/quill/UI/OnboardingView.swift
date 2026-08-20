@@ -46,7 +46,7 @@ struct OnboardingView: View {
         case .permissions: return "A couple of permissions, then you're set."
         case .modelPicker: return "Pick a transcription model."
         case .downloading: return "Downloading your model…"
-        case .localAI: return "One more thing — optional."
+        case .localAI: return "One more thing (optional)."
         case .done: return "All set."
         }
     }
@@ -137,7 +137,7 @@ private struct PermissionRow: View {
                 .foregroundColor(locked ? Theme.textTertiary : Theme.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
             if showLiveMeter && granted {
-                Text("Speak to test — the bars respond to your voice in real time.")
+                Text("Speak to test: the bars respond to your voice in real time.")
                     .font(.system(size: 10.5))
                     .foregroundColor(Theme.textTertiary)
             }

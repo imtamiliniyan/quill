@@ -54,7 +54,7 @@ final class HotkeyMonitor {
         }
         if !trusted {
             FileHandle.standardError.write(Data(
-                "accessibility not granted — grant it in System Settings > Privacy & Security > Accessibility, then restart quill.\n".utf8
+                "accessibility not granted. Grant it in System Settings > Privacy & Security > Accessibility, then restart quill.\n".utf8
             ))
             throw HotkeyError.tapCreateFailed
         }

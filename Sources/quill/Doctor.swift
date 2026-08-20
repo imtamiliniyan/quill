@@ -32,7 +32,7 @@ enum DoctorReport {
         case .notDetermined:
             return Check(
                 name: "microphone",
-                status: .warn("not yet requested — will prompt on first recording"),
+                status: .warn("not yet requested: will prompt on first recording"),
                 remediation: "run quill and hold Fn once; macOS will prompt"
             )
         case .denied, .restricted:
@@ -65,7 +65,7 @@ enum DoctorReport {
         guard let raw, let value = Int(raw) else {
             return Check(
                 name: "fn key mapping",
-                status: .warn("unset — system default may intercept Fn"),
+                status: .warn("unset: system default may intercept Fn"),
                 remediation: "System Settings → Keyboard → Press 🌐 key to → Do Nothing"
             )
         }

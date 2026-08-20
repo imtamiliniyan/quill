@@ -25,10 +25,10 @@ enum ChangeLog {
             label: "Enhancement Engine, more models, and fixes",
             date: "Aug 20, 2026",
             changes: [
-                "New Enhancement Engine tab: connect OpenAI, Anthropic, Google, or OpenRouter — or run fully on-device with Local AI, no key needed. One clear \"Active\" badge shows which backend Rewrite and Auto Cleanup actually use.",
+                "New Enhancement Engine tab: connect OpenAI, Anthropic, Google, or OpenRouter, or run fully on-device with Local AI, no key needed. One clear \"Active\" badge shows which backend Rewrite and Auto Cleanup actually use.",
                 "OpenRouter support, with a searchable picker over its full model catalog.",
-                "Voice Engine's model list grew from 4 to 9 — three more Whisper sizes and two more Parakeet variants, including a smaller, faster 110M model.",
-                "Auto Cleanup's filler-word list is now editable — add or remove words, or reset to the defaults.",
+                "Voice Engine's model list grew from 4 to 9: three more Whisper sizes and two more Parakeet variants, including a smaller, faster 110M model.",
+                "Auto Cleanup's filler-word list is now editable: add or remove words, or reset to the defaults.",
                 "Fixed: Insights' \"Fixes Made by Quill\" card stayed locked for anyone using Google or OpenRouter instead of OpenAI/Anthropic.",
                 "Fixed: opening Enhancement Engine could resize the main window unexpectedly.",
                 "Fixed: onboarding's Continue button could be cropped off-screen once the model list grew past a handful of options.",
@@ -42,7 +42,7 @@ enum ChangeLog {
                 "Choose how dictation starts: Hold, Toggle, or Automatic.",
                 "Text Formatting: lowercase first letter, space between dictations, smart capitalization.",
                 "Light and dark theme.",
-                "Manage downloaded transcription models — switch or delete them — right from Settings.",
+                "Manage downloaded transcription models: switch or delete them right from Settings.",
             ]
         ),
         ChangeLogEntry(
