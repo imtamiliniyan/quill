@@ -33,35 +33,65 @@ enum GitHubReleases {
             throw URLError(.badServerResponse)
         }
         let releases = try JSONDecoder().decode([GitHubRelease].self, from: data)
-        return releases.map(toEntry)
+
+        // GitHub's release-creation API has no way to backdate
+        // `published_at` — it's always stamped at the moment `gh release
+        // create` actually runs, regardless of which historical commit
+        // the tag points to. v0.1.0 (the real Aug 10 build, tagged
+        // retroactively once this repo had releases at all) would
+        // otherwise show today's date and sort ahead of v0.5.0 just
+        // because it was *published* to GitHub more recently. Each
+        // release's notes carry a `Released: yyyy-MM-dd` line as the
+        // real source of truth for both the displayed date and the
+        // sort order; `published_at` is only a fallback for releases
+        // that don't include one.
+        let dated: [(entry: ChangeLogEntry, date: Date)] = releases.map { release in
+            let (releasedAt, changes) = parseBody(release.body ?? "")
+            let resolvedDate = releasedAt ?? isoDate(release.publishedAt) ?? .distantPast
+            let label = (release.name?.isEmpty == false) ? release.name! : release.tagName
+            let entry = ChangeLogEntry(
+                id: release.tagName,
+                label: label,
+                date: displayDate(resolvedDate),
+                changes: changes
+            )
+            return (entry, resolvedDate)
+        }
+        return dated.sorted { $0.date > $1.date }.map(\.entry)
     }
 
-    private static func toEntry(_ release: GitHubRelease) -> ChangeLogEntry {
-        let label = (release.name?.isEmpty == false) ? release.name! : release.tagName
-        return ChangeLogEntry(
-            id: release.tagName,
-            label: label,
-            date: formattedDate(release.publishedAt),
-            changes: bulletPoints(from: release.body ?? "")
-        )
+    /// Pulls the `Released: yyyy-MM-dd` line and the `- ` bullet lines
+    /// out of a release body's Markdown — the same flat `[String]`
+    /// shape `ChangeLogEntry.changes` already expects, whether the
+    /// content came from GitHub or the local fallback array.
+    private static func parseBody(_ body: String) -> (releasedAt: Date?, changes: [String]) {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        dateFormatter.timeZone = TimeZone(identifier: "UTC")
+
+        var releasedAt: Date?
+        var changes: [String] = []
+        for rawLine in body.components(separatedBy: .newlines) {
+            let line = rawLine.trimmingCharacters(in: .whitespaces)
+            if line.hasPrefix("Released:") {
+                let dateString = line.dropFirst("Released:".count).trimmingCharacters(in: .whitespaces)
+                releasedAt = dateFormatter.date(from: dateString)
+            } else if line.hasPrefix("- ") {
+                changes.append(String(line.dropFirst(2)))
+            }
+        }
+        return (releasedAt, changes)
     }
 
-    private static func formattedDate(_ iso: String?) -> String {
-        guard let iso, let date = ISO8601DateFormatter().date(from: iso) else { return "" }
+    private static func isoDate(_ iso: String?) -> Date? {
+        guard let iso else { return nil }
+        return ISO8601DateFormatter().date(from: iso)
+    }
+
+    private static func displayDate(_ date: Date) -> String {
+        guard date != .distantPast else { return "" }
         let formatter = DateFormatter()
         formatter.dateFormat = "MMM d, yyyy"
         return formatter.string(from: date)
-    }
-
-    /// Pulls just the `- ` bullet lines out of the release body's
-    /// Markdown, dropping headings and blank lines — the same flat
-    /// `[String]` shape `ChangeLogEntry.changes` already expects,
-    /// whether the content came from GitHub or the local fallback array.
-    private static func bulletPoints(from body: String) -> [String] {
-        body
-            .components(separatedBy: .newlines)
-            .map { $0.trimmingCharacters(in: .whitespaces) }
-            .filter { $0.hasPrefix("- ") }
-            .map { String($0.dropFirst(2)) }
     }
 }
