@@ -40,7 +40,7 @@ actor LocalEnhancer {
         let messages: [[String: String]] = [
             [
                 "role": "system",
-                "content": "You rewrite dictated text. \(tone.instruction) Reply with only the rewritten text, nothing else. No preamble, no quotes.",
+                "content": DictationCleanupPrompt.full(tone: tone),
             ],
             ["role": "user", "content": text],
         ]
