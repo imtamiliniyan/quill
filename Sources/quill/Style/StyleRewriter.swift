@@ -114,7 +114,7 @@ enum StyleRewriter {
         let body: [String: Any] = [
             "model": modelName(for: .openAI),
             "messages": [
-                ["role": "system", "content": "You rewrite dictated text. \(tone.instruction) Reply with only the rewritten text, nothing else. No preamble, no quotes."],
+                ["role": "system", "content": DictationCleanupPrompt.full(tone: tone)],
                 ["role": "user", "content": text],
             ],
             "temperature": 0.3,
@@ -142,7 +142,7 @@ enum StyleRewriter {
         let body: [String: Any] = [
             "model": modelName(for: .anthropic),
             "max_tokens": 1024,
-            "system": "You rewrite dictated text. \(tone.instruction) Reply with only the rewritten text, nothing else. No preamble, no quotes.",
+            "system": DictationCleanupPrompt.full(tone: tone),
             "messages": [
                 ["role": "user", "content": text],
             ],
@@ -173,7 +173,7 @@ enum StyleRewriter {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         let body: [String: Any] = [
             "system_instruction": [
-                "parts": [["text": "You rewrite dictated text. \(tone.instruction) Reply with only the rewritten text, nothing else. No preamble, no quotes."]],
+                "parts": [["text": DictationCleanupPrompt.full(tone: tone)]],
             ],
             "contents": [
                 ["parts": [["text": text]]],
@@ -209,7 +209,7 @@ enum StyleRewriter {
         let body: [String: Any] = [
             "model": modelName(for: .openRouter),
             "messages": [
-                ["role": "system", "content": "You rewrite dictated text. \(tone.instruction) Reply with only the rewritten text, nothing else. No preamble, no quotes."],
+                ["role": "system", "content": DictationCleanupPrompt.full(tone: tone)],
                 ["role": "user", "content": text],
             ],
             "temperature": 0.3,

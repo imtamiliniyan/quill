@@ -1,7 +1,12 @@
 # Quill
 
+[![GitHub Stars](https://img.shields.io/github/stars/imtamiliniyan/quill?style=flat&label=Stars)](https://github.com/imtamiliniyan/quill/stargazers)
+[![Sponsor](https://img.shields.io/badge/%E2%99%A1-Sponsor-ff69b4)](https://github.com/sponsors/imtamiliniyan)
 [![Latest release](https://img.shields.io/github/v/release/imtamiliniyan/quill?label=latest)](https://github.com/imtamiliniyan/quill/releases/latest)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-iniyanai-0A66C2?logo=linkedin&logoColor=white)](https://linkedin.com/in/iniyanai)
+
+[![Models](https://img.shields.io/badge/Models-Whisper%20%7C%20Parakeet%20v3%20%26%20v2%20%7C%20Parakeet%20110M-informational)](#supported-models)
 
 A free, on-device replacement for paid dictation tools like Wispr Flow and Gladia. Hold a hotkey, speak, release. Quill transcribes locally on the Apple Neural Engine and types the result directly into whatever's focused. No subscription, no account required, and no audio or dictation history ever leaves your Mac unless you explicitly connect your own cloud API key.
 
