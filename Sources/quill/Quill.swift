@@ -112,6 +112,7 @@ struct Run: ParsableCommand {
         let app = NSApplication.shared
         app.setActivationPolicy(.accessory)
         QuillSettings.applyAppearance()
+        MainActor.assumeIsolated { _ = AppUpdater.shared }
 
         // Never prompt from this path — see HotkeyMonitor's promptForAccessibility doc.
         let monitor = HotkeyMonitor(debug: debugHotkey, promptForAccessibility: false)
@@ -132,7 +133,7 @@ struct Run: ParsableCommand {
             }
             menuBar.onOpenMain = { mainWindow.showMain() }
             menuBar.onOpenSettings = { mainWindow.showSettings() }
-            menuBar.onCheckForUpdates = { mainWindow.showUpdateCheck() }
+            menuBar.onCheckForUpdates = { AppUpdater.shared.checkForUpdates() }
         }
         SingleInstance.observeOpenMainRequests {
             MainActor.assumeIsolated { mainWindow.showMain() }
@@ -160,6 +161,7 @@ struct Run: ParsableCommand {
         let app = NSApplication.shared
         app.setActivationPolicy(.accessory)
         QuillSettings.applyAppearance()
+        MainActor.assumeIsolated { _ = AppUpdater.shared }
 
         let state = MainActor.assumeIsolated { OnboardingState() }
         let menuBar = MainActor.assumeIsolated {
@@ -170,7 +172,7 @@ struct Run: ParsableCommand {
         MainActor.assumeIsolated {
             menuBar.onOpenMain = { mainWindow.showMain() }
             menuBar.onOpenSettings = { mainWindow.showSettings() }
-            menuBar.onCheckForUpdates = { mainWindow.showUpdateCheck() }
+            menuBar.onCheckForUpdates = { AppUpdater.shared.checkForUpdates() }
         }
         // Phase 5c: Settings' Getting Started tab reaches back to the same
         // onboarding window through this, via MainWindow → MainView.

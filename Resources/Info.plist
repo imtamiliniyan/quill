@@ -15,9 +15,9 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.7.0</string>
+	<string>0.8.0</string>
 	<key>CFBundleVersion</key>
-	<string>4</string>
+	<string>5</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>LSMinimumSystemVersion</key>
@@ -32,5 +32,13 @@
 	<string>Quill needs microphone access to transcribe what you dictate while holding the hotkey.</string>
 	<key>NSAppleEventsUsageDescription</key>
 	<string>Quill needs this permission to type dictated text into whatever app you're focused on.</string>
+	<key>SUFeedURL</key>
+	<string>https://raw.githubusercontent.com/imtamiliniyan/quill/master/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>+DMZsFEOjM5ffE2DNr3vk37rOmPfKKZ7QsbwOyIDA1g=</string>
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
+	<key>SUScheduledCheckInterval</key>
+	<integer>86400</integer>
 </dict>
 </plist>

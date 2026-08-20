@@ -24,6 +24,12 @@ let package = Package(
         // resolved 0.31.6 against code built for 0.21.x, wouldn't compile).
         .package(url: "https://github.com/ml-explore/mlx-swift-examples", exact: "2.21.2"),
         .package(url: "https://github.com/ml-explore/mlx-swift", .upToNextMinor(from: "0.21.2")),
+        // Auto-update: background checks, native "update available" alert,
+        // download + install, EdDSA signature verification against
+        // SUPublicEDKey in Info.plist. The de facto standard for
+        // non-App-Store Mac apps; replaces the hand-rolled GitHub-API
+        // update checker (UpdateCheckView/GitHubReleases.latest()).
+        .package(url: "https://github.com/sparkle-project/Sparkle", from: "2.6.0"),
     ],
     targets: [
         .executableTarget(
@@ -34,6 +40,7 @@ let package = Package(
                 .product(name: "FluidAudio", package: "FluidAudio"),
                 .product(name: "MLXLLM", package: "mlx-swift-examples"),
                 .product(name: "MLXLMCommon", package: "mlx-swift-examples"),
+                .product(name: "Sparkle", package: "Sparkle"),
             ],
             // Official provider logos (Enhancement Engine) — SPM resources
             // must live inside the target's own source tree, unlike the

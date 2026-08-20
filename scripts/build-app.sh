@@ -2,7 +2,7 @@
 # Builds Quill.app and packages it into a distributable .dmg.
 #
 # Usage: scripts/build-app.sh
-# Output: dist/Quill.app, dist/Quill.dmg
+# Output: dist/Quill.app, dist/Quill OSS <version>.dmg
 #
 # Notes:
 # - Signed with a stable local identity (no Apple Developer account
@@ -33,15 +33,34 @@ APP="${DIST}/${APP_NAME}.app"
 echo "→ building release binary..."
 swift build -c release
 
+# Sparkle ships as a framework (SPM binary target), not a plain dylib —
+# the executable needs a real rpath to find it inside the app bundle.
+# SPM's own default rpaths (`@loader_path`, the Swift toolchain dirs — see
+# `otool -l`) don't include the standard app-bundle convention, so without
+# this the app would build and sign fine but crash on launch with
+# "Library not loaded: @rpath/Sparkle.framework/...". Added before the
+# first codesign below since install_name_tool invalidates any existing
+# signature.
+echo "→ adding Frameworks rpath for Sparkle..."
+install_name_tool -add_rpath "@executable_path/../Frameworks" .build/release/quill
+
 echo "→ re-signing build output (works around swift build's occasionally-invalid auto signature)..."
 codesign --force -s "$SIGN_IDENTITY" .build/release/quill
 
 echo "→ assembling ${APP}..."
 rm -rf "$APP"
-mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
+mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources" "$APP/Contents/Frameworks"
 cp .build/release/quill "$APP/Contents/MacOS/quill"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
 cp Resources/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
+
+# Sparkle.framework itself — the rpath above only tells the executable
+# where to look, it still needs the actual framework physically present
+# in the bundle. `.build/release` is a symlink to the current arch's
+# build dir (e.g. arm64-apple-macosx/release), where SPM already copies
+# the framework as part of its own build (`swift build`'s "Copying
+# Sparkle.framework" step).
+cp -R .build/release/Sparkle.framework "$APP/Contents/Frameworks/Sparkle.framework"
 
 # Enhancement Engine's provider logos, as loose files under
 # Contents/Resources/ — loaded via Bundle.main at runtime
@@ -90,7 +109,13 @@ if ! python3 -c "import dmgbuild" 2>/dev/null; then
     exit 1
 fi
 
-rm -f "${DIST}/${APP_NAME}.dmg"
+# Distributed filename is "Quill OSS <version>.dmg" — the mounted volume
+# label stays plain "Quill" (that's what shows in the Finder sidebar/DMG
+# window, unrelated to the downloaded filename).
+VERSION=$(defaults read "$(pwd)/Resources/Info.plist" CFBundleShortVersionString)
+DMG_NAME="${APP_NAME} OSS ${VERSION}.dmg"
+
+rm -f "${DIST}/${DMG_NAME}"
 # No custom -mountpoint: Finder shows a volume by its actual label only
 # when it's mounted at the default /Volumes/<name> location. A leftover
 # manual mount (e.g. from testing this background by hand) would collide
@@ -103,8 +128,8 @@ python3 -m dmgbuild \
     -s scripts/dmg_settings.py \
     -D app="$(pwd)/${APP}" \
     -D background="$(pwd)/Resources/dmg_background.png" \
-    "${APP_NAME}" "${DIST}/${APP_NAME}.dmg"
+    "${APP_NAME}" "${DIST}/${DMG_NAME}"
 
 echo "✓ built:"
 echo "  ${APP}"
-echo "  ${DIST}/${APP_NAME}.dmg"
+echo "  ${DIST}/${DMG_NAME}"

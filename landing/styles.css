@@ -143,7 +143,9 @@ body {
 
 /* Button & Pill styles */
 .btn-pill-dark {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   background: linear-gradient(135deg, #2D2D2D 10%, #000000 100%);
   color: #FFFFFF;
   border: none;
@@ -169,7 +171,9 @@ body {
 }
 
 .btn-pill-outline {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   background: transparent;
   color: var(--ink);
   border: 1px solid rgba(26, 26, 26, 0.25);
@@ -181,6 +185,33 @@ body {
   cursor: pointer;
   white-space: nowrap;
   transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.btn-icon {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
+/* Hero download + GitHub pills, replacing the earlier waitlist form. */
+.hero-cta-group {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 0 auto 24px;
+}
+
+.hero-cta-btn {
+  padding: 14px 26px;
+  font-size: 15px;
+  box-shadow: var(--shadow-sm);
+}
+
+.hero-cta-btn .btn-icon {
+  width: 17px;
+  height: 17px;
 }
 
 .btn-pill-outline:hover {
@@ -1533,6 +1564,21 @@ body {
 .final-cta-form-wrapper {
   max-width: 440px;
   margin: 0 auto 24px;
+}
+
+/* White-on-dark, matching the contrast the old waitlist button had against
+   this card's dark surface — the default .btn-pill-dark (near-black) would
+   nearly disappear here. */
+.final-cta-btn {
+  background: #FFFFFF;
+  color: var(--ink);
+  box-shadow: none;
+  padding: 14px 28px;
+  font-size: 15px;
+}
+
+.final-cta-btn:hover {
+  background: rgba(255, 255, 255, 0.9);
 }
 
 .final-cta-form-wrapper .waitlist-form input {
