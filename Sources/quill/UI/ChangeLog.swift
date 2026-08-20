@@ -8,15 +8,16 @@ struct ChangeLogEntry: Identifiable {
     let changes: [String]
 }
 
-/// Hand-maintained, not generated from git — Quill doesn't have real
-/// release/version-number infrastructure yet (no `CFBundleShortVersionString`,
-/// no tagged builds), so entries are grouped by date and milestone name
-/// instead of a fabricated semver history. Dates below are real: pulled
-/// from `git log` for the two days everything through Phase 4 was
-/// committed, and today's date for the large uncommitted Phase 5-7 batch
-/// that's shipped in-app since. Same "real number, not a guess" posture
-/// as `ModelRegistry`'s sizes and dot ratings — nothing here is invented
-/// to look more precise or more frequent than what actually happened.
+/// Offline fallback only — as of v0.1.0, the Change Log tab's primary
+/// source is GitHub's real Releases (`GitHubReleases.swift`, fetched
+/// live from the now-public `imtamiliniyan/quill` repo). This array is
+/// what shows before that fetch lands, and what stays showing if it
+/// fails (offline, rate-limited). Content is real, not invented: two
+/// entries pulled from `git log`'s actual commit dates for the days
+/// everything through Phase 4 was committed, one for the large batch
+/// that shipped in-app across later sessions before this repo had any
+/// tags — same "real number, not a guess" posture as `ModelRegistry`'s
+/// sizes and dot ratings.
 enum ChangeLog {
     static let entries: [ChangeLogEntry] = [
         ChangeLogEntry(

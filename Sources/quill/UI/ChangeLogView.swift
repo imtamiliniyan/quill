@@ -10,6 +10,14 @@ import SwiftUI
 /// dates — see that file's doc comment for why there's no fabricated
 /// version-number scheme.
 struct ChangeLogView: View {
+    // Starts from the local fallback so there's real content on screen
+    // immediately, then swaps in GitHub's actual releases once the fetch
+    // lands — same "show something real now, refine when the network
+    // answers" shape as OpenRouter's model list.
+    @State private var entries: [ChangeLogEntry] = ChangeLog.entries
+    @State private var isLoading = true
+    @State private var loadError: String?
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 8) {
@@ -19,14 +27,37 @@ struct ChangeLogView: View {
                 Text("Change Log")
                     .font(.system(size: 20, weight: .bold))
                     .foregroundColor(Theme.textPrimary)
+                Spacer()
+                if isLoading {
+                    ProgressView().controlSize(.small)
+                } else {
+                    Button {
+                        Task { await load() }
+                    } label: {
+                        Image(systemName: "arrow.clockwise")
+                            .font(.system(size: 12))
+                            .foregroundColor(Theme.textTertiary)
+                    }
+                    .buttonStyle(.plain)
+                }
             }
             .padding(.horizontal, Theme.pagePadding)
             .padding(.top, Theme.pagePadding)
-            .padding(.bottom, 16)
+            .padding(.bottom, 4)
+
+            HStack(spacing: 6) {
+                Image(systemName: "checkmark.seal")
+                    .font(.system(size: 10))
+                Text(loadError ?? "Synced with GitHub Releases — github.com/imtamiliniyan/quill")
+                    .font(.system(size: 10.5))
+            }
+            .foregroundColor(loadError == nil ? Theme.textTertiary : .orange)
+            .padding(.horizontal, Theme.pagePadding)
+            .padding(.bottom, 12)
 
             ScrollView {
                 VStack(spacing: 12) {
-                    ForEach(Array(ChangeLog.entries.enumerated()), id: \.element.id) { index, entry in
+                    ForEach(Array(entries.enumerated()), id: \.element.id) { index, entry in
                         entryCard(entry, isLatest: index == 0)
                     }
                 }
@@ -35,6 +66,27 @@ struct ChangeLogView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .task { await load() }
+    }
+
+    private func load() async {
+        await MainActor.run { isLoading = true }
+        do {
+            let fetched = try await GitHubReleases.fetch()
+            await MainActor.run {
+                if !fetched.isEmpty { entries = fetched }
+                loadError = nil
+                isLoading = false
+            }
+        } catch {
+            await MainActor.run {
+                // Keep whatever's already showing (local fallback, or a
+                // previous successful fetch) rather than clearing it —
+                // a failed refresh shouldn't blank out real content.
+                loadError = "Couldn't reach GitHub — showing the last known changelog."
+                isLoading = false
+            }
+        }
     }
 
     private func entryCard(_ entry: ChangeLogEntry, isLatest: Bool) -> some View {
@@ -65,7 +117,12 @@ struct ChangeLogView: View {
                             .fill(Theme.accent)
                             .frame(width: 4, height: 4)
                             .padding(.top, 6)
-                        Text(change)
+                        // GitHub release notes use **bold** for the lead
+                        // phrase of each bullet — `LocalizedStringKey`
+                        // gets SwiftUI's built-in Markdown rendering for
+                        // that, no manual parsing needed. Harmless no-op
+                        // for the local fallback array's plain strings.
+                        Text(LocalizedStringKey(change))
                             .font(.system(size: 12))
                             .foregroundColor(Theme.textSecondary)
                             .fixedSize(horizontal: false, vertical: true)
