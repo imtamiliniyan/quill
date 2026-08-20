@@ -60,6 +60,33 @@ enum GitHubReleases {
         return dated.sorted { $0.date > $1.date }.map(\.entry)
     }
 
+    /// The single newest release by real date — same sort `fetch()`
+    /// already applies, just the first element. Used by "Check for
+    /// Updates" in the menu bar.
+    static func latest() async throws -> ChangeLogEntry? {
+        try await fetch().first
+    }
+
+    /// Numeric semver comparison between a release tag (e.g. "v0.6.0")
+    /// and the running app's `CFBundleShortVersionString` (e.g.
+    /// "0.6.0") — not a string comparison, which would wrongly sort
+    /// "0.10.0" before "0.9.0". Missing/non-numeric components read as
+    /// 0, so "0.6" vs "0.6.0" compares equal rather than erroring.
+    static func isNewer(tag: String, than currentVersion: String) -> Bool {
+        func parts(_ s: String) -> [Int] {
+            let stripped = s.hasPrefix("v") ? String(s.dropFirst()) : s
+            return stripped.split(separator: ".").map { Int($0) ?? 0 }
+        }
+        let latest = parts(tag)
+        let current = parts(currentVersion)
+        for i in 0..<max(latest.count, current.count) {
+            let l = i < latest.count ? latest[i] : 0
+            let c = i < current.count ? current[i] : 0
+            if l != c { return l > c }
+        }
+        return false
+    }
+
     /// Pulls the `Released: yyyy-MM-dd` line and the `- ` bullet lines
     /// out of a release body's Markdown — the same flat `[String]`
     /// shape `ChangeLogEntry.changes` already expects, whether the

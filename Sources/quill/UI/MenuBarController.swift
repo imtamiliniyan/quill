@@ -24,6 +24,13 @@ final class MenuBarController {
     /// the request.
     var onOpenMain: (() -> Void)?
 
+    /// "Settings…" — same main window, opened straight to the Settings
+    /// sheet. Quill.swift owns the actual window.
+    var onOpenSettings: (() -> Void)?
+
+    /// "Check for Updates…" — Quill.swift owns the actual window.
+    var onCheckForUpdates: (() -> Void)?
+
     init(modelID: String) {
         self.modelID = modelID
         self.statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -44,6 +51,14 @@ final class MenuBarController {
         modelItem.submenu = modelSubmenu
         menu.addItem(modelItem)
 
+        let copyLastTranscript = NSMenuItem(
+            title: "Copy Last Transcript",
+            action: #selector(copyLastTranscriptClicked),
+            keyEquivalent: ""
+        )
+        copyLastTranscript.target = self
+        menu.addItem(copyLastTranscript)
+
         menu.addItem(.separator())
 
         let openMain = NSMenuItem(
@@ -53,6 +68,22 @@ final class MenuBarController {
         )
         openMain.target = self
         menu.addItem(openMain)
+
+        let settings = NSMenuItem(
+            title: "Settings…",
+            action: #selector(openSettingsClicked),
+            keyEquivalent: ","
+        )
+        settings.target = self
+        menu.addItem(settings)
+
+        let checkForUpdates = NSMenuItem(
+            title: "Check for Updates…",
+            action: #selector(checkForUpdatesClicked),
+            keyEquivalent: ""
+        )
+        checkForUpdates.target = self
+        menu.addItem(checkForUpdates)
 
         menu.addItem(.separator())
 
@@ -196,6 +227,25 @@ final class MenuBarController {
 
     @objc private func openMainClicked() {
         onOpenMain?()
+    }
+
+    @objc private func openSettingsClicked() {
+        onOpenSettings?()
+    }
+
+    @objc private func checkForUpdatesClicked() {
+        onCheckForUpdates?()
+    }
+
+    /// Self-contained — unlike Open Quill/Settings/Check for Updates,
+    /// this never needs a window, so it doesn't go through a callback
+    /// Quill.swift has to wire up. Newest entry first per
+    /// `DictationHistory.loadAll()`'s own ordering.
+    @objc private func copyLastTranscriptClicked() {
+        guard let latest = DictationHistory.loadAll().first else { return }
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.setString(latest.text, forType: .string)
     }
 
     @objc private func quitClicked() {

@@ -131,6 +131,8 @@ struct Run: ParsableCommand {
                 }
             }
             menuBar.onOpenMain = { mainWindow.showMain() }
+            menuBar.onOpenSettings = { mainWindow.showSettings() }
+            menuBar.onCheckForUpdates = { mainWindow.showUpdateCheck() }
         }
         SingleInstance.observeOpenMainRequests {
             MainActor.assumeIsolated { mainWindow.showMain() }
@@ -165,7 +167,11 @@ struct Run: ParsableCommand {
         }
         let onboarding = MainActor.assumeIsolated { OnboardingWindow(state: state) }
         let mainWindow = MainActor.assumeIsolated { MainWindow(menuBar: menuBar) }
-        MainActor.assumeIsolated { menuBar.onOpenMain = { mainWindow.showMain() } }
+        MainActor.assumeIsolated {
+            menuBar.onOpenMain = { mainWindow.showMain() }
+            menuBar.onOpenSettings = { mainWindow.showSettings() }
+            menuBar.onCheckForUpdates = { mainWindow.showUpdateCheck() }
+        }
         // Phase 5c: Settings' Getting Started tab reaches back to the same
         // onboarding window through this, via MainWindow → MainView.
         MainActor.assumeIsolated {

@@ -16,6 +16,7 @@ import SwiftUI
 final class MainWindow: NSObject, NSWindowDelegate {
     private var downloadWindow: NSWindow?
     private var mainAppWindow: NSWindow?
+    private var updateCheckWindow: NSWindow?
     let downloadState = ModelDownloadState()
     private let appState = AppViewState()
     private let menuBar: MenuBarController
@@ -74,6 +75,44 @@ final class MainWindow: NSObject, NSWindowDelegate {
         // the rest of the time.
         NSApp.setActivationPolicy(.regular)
         mainAppWindow?.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+    }
+
+    /// "Settings…" from the menu bar — same window "Open Quill" uses,
+    /// just with the Settings sheet already up rather than making the
+    /// user click the sidebar's gear icon after it opens.
+    func showSettings() {
+        showMain()
+        appState.showSettings = true
+    }
+
+    /// "Check for Updates…" from the menu bar. Always builds a fresh
+    /// window rather than reusing one — `UpdateCheckView`'s fetch runs
+    /// once in `.task` on first appear, so reusing the same hosting view
+    /// across repeat checks would just keep showing the first check's
+    /// stale result.
+    func showUpdateCheck() {
+        let win = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 320, height: 280),
+            styleMask: [.titled, .closable],
+            backing: .buffered,
+            defer: false
+        )
+        win.title = "Check for Updates"
+        win.isReleasedWhenClosed = false
+        let hosting = NSHostingView(rootView: UpdateCheckView(
+            onDismiss: { [weak win] in win?.orderOut(nil) },
+            onShowFullChangeLog: { [weak self, weak win] in
+                win?.orderOut(nil)
+                self?.appState.selection = .changeLog
+                self?.showMain()
+            }
+        ))
+        hosting.sizingOptions = []
+        win.contentView = hosting
+        win.center()
+        updateCheckWindow = win
+        win.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
     }
 
