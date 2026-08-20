@@ -56,7 +56,28 @@ enum APIKeyStore {
         SecItemDelete(query as CFDictionary)
     }
 
+    /// Existence-only check — deliberately does NOT go through `key(for:)`.
+    /// `key(for:)` sets `kSecReturnData: true`, which asks the OS to hand
+    /// back the actual secret and triggers a real "Quill wants to access
+    /// key… in your keychain" authorization prompt on every single call.
+    /// Views that just need a "connected?" badge (Style, Enhancement
+    /// Engine, Insights, Settings) call this once per provider on every
+    /// render — with `key(for:)` underneath, that's a fresh password
+    /// prompt per provider that already has a key stored, every time the
+    /// screen appears. Matching against `kSecReturnAttributes` instead
+    /// answers "does an item matching this query exist" without ever
+    /// touching the protected data, which the OS doesn't gate behind
+    /// authorization at all.
     static func hasKey(for provider: StyleProvider) -> Bool {
-        (key(for: provider) ?? "").isEmpty == false
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: provider.rawValue,
+            kSecReturnAttributes as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne,
+        ]
+        var result: AnyObject?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+        return status == errSecSuccess
     }
 }
