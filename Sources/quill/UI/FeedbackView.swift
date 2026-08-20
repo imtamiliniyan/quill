@@ -18,7 +18,9 @@ struct FeedbackView: View {
     @State private var includeDebugInfo = false
 
     private static let contactEmail = "tamil@iniyan.pro"
-    private static let githubURL = URL(string: "https://github.com/imtamiliniyan/quill")!
+    // Sponsors enrollment is approved and live — points here now instead
+    // of the bare repo URL.
+    private static let githubURL = URL(string: "https://github.com/sponsors/imtamiliniyan")!
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
