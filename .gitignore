@@ -26,3 +26,7 @@ node_modules/
 
 # Firebase Credentials
 quill-stt-firebase-adminsdk-fbsvc-5fef275926.json
+
+# Internal roadmap — was tracked and publicly visible on GitHub; kept
+# locally for planning, no longer synced to the public repo.
+ROADMAP.md
