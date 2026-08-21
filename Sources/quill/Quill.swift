@@ -116,6 +116,7 @@ struct Run: ParsableCommand {
 
         let app = NSApplication.shared
         app.setActivationPolicy(.accessory)
+        MainActor.assumeIsolated { StandardMenu.install() }
         QuillSettings.applyAppearance()
         MainActor.assumeIsolated { _ = AppUpdater.shared }
 
@@ -165,6 +166,7 @@ struct Run: ParsableCommand {
     private func runWithOnboarding() throws {
         let app = NSApplication.shared
         app.setActivationPolicy(.accessory)
+        MainActor.assumeIsolated { StandardMenu.install() }
         QuillSettings.applyAppearance()
         MainActor.assumeIsolated { _ = AppUpdater.shared }
 
