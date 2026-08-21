@@ -98,12 +98,17 @@ enum StyleRewriter {
         guard let key = APIKeyStore.key(for: provider), !key.isEmpty else {
             throw StyleRewriteError.noAPIKey
         }
+        let raw: String
         switch provider {
-        case .openAI: return try await rewriteOpenAI(text, tone: tone, key: key)
-        case .anthropic: return try await rewriteAnthropic(text, tone: tone, key: key)
-        case .google: return try await rewriteGoogle(text, tone: tone, key: key)
-        case .openRouter: return try await rewriteOpenRouter(text, tone: tone, key: key)
+        case .openAI: raw = try await rewriteOpenAI(text, tone: tone, key: key)
+        case .anthropic: raw = try await rewriteAnthropic(text, tone: tone, key: key)
+        case .google: raw = try await rewriteGoogle(text, tone: tone, key: key)
+        case .openRouter: raw = try await rewriteOpenRouter(text, tone: tone, key: key)
         }
+        // Same backstop as LocalEnhancer.rewrite — see
+        // DictationCleanupPrompt.sanitizeOutput's doc comment. One funnel
+        // point for all four providers, so this only needs writing once.
+        return DictationCleanupPrompt.sanitizeOutput(raw, originalInput: text)
     }
 
     private static func rewriteOpenAI(_ text: String, tone: StyleTone, key: String) async throws -> String {
@@ -115,9 +120,9 @@ enum StyleRewriter {
             "model": modelName(for: .openAI),
             "messages": [
                 ["role": "system", "content": DictationCleanupPrompt.full(tone: tone)],
-                ["role": "user", "content": text],
+                ["role": "user", "content": DictationCleanupPrompt.userMessage(for: text)],
             ],
-            "temperature": 0.3,
+            "temperature": 0.2,
         ]
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
@@ -142,9 +147,17 @@ enum StyleRewriter {
         let body: [String: Any] = [
             "model": modelName(for: .anthropic),
             "max_tokens": 1024,
+            // Was missing entirely before — Anthropic's API defaults to
+            // temperature 1.0 with no explicit value, real creative-writing
+            // variance for what should be a near-deterministic cleanup task,
+            // and every other provider here was already pinning this
+            // explicitly. Almost certainly the most exposed provider to the
+            // exact "model drifts into restructuring/chatting" failure this
+            // whole prompt rework addresses.
+            "temperature": 0.2,
             "system": DictationCleanupPrompt.full(tone: tone),
             "messages": [
-                ["role": "user", "content": text],
+                ["role": "user", "content": DictationCleanupPrompt.userMessage(for: text)],
             ],
         ]
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
@@ -176,9 +189,9 @@ enum StyleRewriter {
                 "parts": [["text": DictationCleanupPrompt.full(tone: tone)]],
             ],
             "contents": [
-                ["parts": [["text": text]]],
+                ["parts": [["text": DictationCleanupPrompt.userMessage(for: text)]]],
             ],
-            "generationConfig": ["temperature": 0.3],
+            "generationConfig": ["temperature": 0.2],
         ]
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
@@ -210,9 +223,9 @@ enum StyleRewriter {
             "model": modelName(for: .openRouter),
             "messages": [
                 ["role": "system", "content": DictationCleanupPrompt.full(tone: tone)],
-                ["role": "user", "content": text],
+                ["role": "user", "content": DictationCleanupPrompt.userMessage(for: text)],
             ],
-            "temperature": 0.3,
+            "temperature": 0.2,
         ]
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 

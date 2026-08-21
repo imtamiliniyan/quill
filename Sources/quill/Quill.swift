@@ -540,8 +540,12 @@ struct LocalAI: ParsableCommand {
         @Argument(help: "Model id to test (defaults to the current Local AI setting).")
         var id: String?
 
+        @Option(name: .long, help: "Text to rewrite (defaults to a canned sample).")
+        var text: String?
+
         func run() throws {
             let modelID = id ?? QuillSettings.localAIModelID
+            let inputText = text ?? "so i think we should meet at five thirty pm tomorrow and go over the numbers"
             print("testing local AI model: \(modelID)")
             fflush(stdout)
 
@@ -563,7 +567,7 @@ struct LocalAI: ParsableCommand {
                     print("model loaded, running a real rewrite…")
                     fflush(stdout)
                     let out = try await LocalEnhancer.shared.rewrite(
-                        "so i think we should meet at five thirty pm tomorrow and go over the numbers",
+                        inputText,
                         tone: .cleanUp,
                         modelID: modelID
                     )

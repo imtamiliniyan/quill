@@ -62,15 +62,19 @@ actor LocalEnhancer {
                 "role": "system",
                 "content": DictationCleanupPrompt.full(tone: tone),
             ],
-            ["role": "user", "content": text],
+            ["role": "user", "content": DictationCleanupPrompt.userMessage(for: text)],
         ]
         let input = UserInput(messages: messages)
 
         let result = try await container.perform { context in
             let lmInput = try await context.processor.prepare(input: input)
+            if ProcessInfo.processInfo.environment["QUILL_DEBUG_PROMPT"] != nil {
+                let decoded = context.tokenizer.decode(tokenIds: lmInput.text.tokens.asArray(Int.self), skipSpecialTokens: false)
+                FileHandle.standardError.write(Data("=== RENDERED PROMPT ===\n\(decoded)\n=== END ===\n".utf8))
+            }
             return try generate(
                 input: lmInput,
-                parameters: GenerateParameters(temperature: 0.3),
+                parameters: GenerateParameters(temperature: 0.2),
                 context: context
             ) { tokens in
                 // A rewritten dictation is never anywhere near this long —
@@ -78,7 +82,11 @@ actor LocalEnhancer {
                 tokens.count >= 512 ? .stop : .more
             }
         }
-        return result.output.trimmingCharacters(in: .whitespacesAndNewlines)
+        let cleaned = result.output.trimmingCharacters(in: .whitespacesAndNewlines)
+        if ProcessInfo.processInfo.environment["QUILL_DEBUG_RAW"] != nil {
+            FileHandle.standardError.write(Data("=== RAW OUTPUT ===\n\(cleaned)\n=== END RAW ===\n".utf8))
+        }
+        return DictationCleanupPrompt.sanitizeOutput(cleaned, originalInput: text)
     }
 
     /// `HubCache`'s own repo-directory naming convention
