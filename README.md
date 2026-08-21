@@ -25,16 +25,16 @@ That's the whole interface: no record button, no stop button, no "send." First l
 
 ## Features
 
-- **Live dictation history** — every dictation, with per-entry copy/delete, so nothing's lost even if focus moved before it landed.
-- **Insights** — words-per-minute gauge, streak calendar, personal records, and milestones, all computed locally from your own history.
-- **Voice Engine** — 9 on-device transcription models across two engines (Whisper, Parakeet); switch anytime with real download progress for anything not yet on disk. See the table below.
-- **Enhancement Engine** — clean up and rewrite dictation automatically or on demand:
+- **Live dictation history** - every dictation, with per-entry copy/delete, so nothing's lost even if focus moved before it landed.
+- **Insights** - words-per-minute gauge, streak calendar, personal records, and milestones, all computed locally from your own history.
+- **Voice Engine** - 9 on-device transcription models across two engines (Whisper, Parakeet); switch anytime with real download progress for anything not yet on disk. See the table below.
+- **Enhancement Engine** - clean up and rewrite dictation automatically or on demand:
   - **Local AI**: a small on-device model, no key, no cloud, nothing leaves your Mac.
   - **Bring your own key**: OpenAI, Anthropic, Google, or OpenRouter (with a searchable model picker over OpenRouter's full catalog). This is the only path in Quill that ever sends dictation text over the network, and only when you've explicitly connected a key and turned it on.
-- **Activation modes** — Hold, Toggle, or Automatic (a hybrid of both).
-- **Text Formatting** — lowercase first letter, space between dictations, smart capitalization, and an editable filler-word list.
-- **Change Log** — synced live from this repo's own GitHub Releases, right in the app.
-- **Settings** — profile, launch-at-login, and a Data & Privacy pane that plainly states what stays local vs. the BYOK exception above, plus one-click history clearing.
+- **Activation modes** - Hold, Toggle, or Automatic (a hybrid of both).
+- **Text Formatting** - lowercase first letter, space between dictations, smart capitalization, and an editable filler-word list.
+- **Change Log** - synced live from this repo's own GitHub Releases, right in the app.
+- **Settings** - profile, launch-at-login, and a Data & Privacy pane that plainly states what stays local vs. the BYOK exception above, plus one-click history clearing.
 
 ## Supported models
 
@@ -81,14 +81,14 @@ Everything runs locally by default: transcription, history, and Insights never t
 
 ## Stack
 
-- **Swift + SwiftUI** — single SPM executable target, full app window over an `NSStatusItem` menu bar presence
-- **WhisperKit** and **FluidAudio (Parakeet)** — on-device transcription via CoreML, ANE-accelerated, switchable at runtime
-- **MLX** — Local AI's on-device rewrite model
-- **AVAudioEngine** — mic capture
-- **CGEventTap** — global hotkey
-- **CGEvent** — text injection at cursor (falls back to clipboard-paste for apps like Electron that drop synthetic keystrokes)
-- **Security framework (Keychain Services)** — BYOK API key storage
-- **NSWindow** (borderless, click-through) — recording-indicator pill
+- **Swift + SwiftUI** - single SPM executable target, full app window over an `NSStatusItem` menu bar presence
+- **WhisperKit** and **FluidAudio (Parakeet)** - on-device transcription via CoreML, ANE-accelerated, switchable at runtime
+- **MLX** - Local AI's on-device rewrite model
+- **AVAudioEngine** - mic capture
+- **CGEventTap** - global hotkey
+- **CGEvent** - text injection at cursor (falls back to clipboard-paste for apps like Electron that drop synthetic keystrokes)
+- **Security framework (Keychain Services)** - BYOK API key storage
+- **NSWindow** (borderless, click-through) - recording-indicator pill
 
 See [docs/architecture.md](docs/architecture.md) for design notes.
 
