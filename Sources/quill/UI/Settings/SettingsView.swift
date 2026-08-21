@@ -251,7 +251,7 @@ private struct PrivacySettingsView: View {
                 Image(systemName: "wand.and.stars")
                     .font(.system(size: 11))
                     .foregroundColor(autoCleanupLevel == .medium ? Theme.accent : Theme.textTertiary)
-                Text("Auto Cleanup is set to \(autoCleanupLevel.rawValue).")
+                Text("Auto Cleanup is set to \(autoCleanupLevel.displayName).")
                     .font(.system(size: 12))
                     .foregroundColor(Theme.textSecondary)
             }

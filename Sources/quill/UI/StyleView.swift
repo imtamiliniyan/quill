@@ -184,7 +184,7 @@ struct StyleView: View {
                     .foregroundColor(selected ? Theme.accent : Theme.textTertiary)
                 VStack(alignment: .leading, spacing: 3) {
                     HStack(spacing: 6) {
-                        Text(level.rawValue)
+                        Text(level.displayName)
                             .font(.system(size: 13, weight: .medium))
                             .foregroundColor(Theme.textPrimary)
                         if level == .medium {

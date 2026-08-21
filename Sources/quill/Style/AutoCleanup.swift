@@ -7,6 +7,26 @@ enum AutoCleanupLevel: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
+    /// User-facing label — kept separate from `rawValue` on purpose.
+    /// `rawValue` is what's persisted to `UserDefaults`
+    /// (`QuillSettings.autoCleanupLevel`), so renaming it would silently
+    /// reset anyone with this level already selected back to `.none` on
+    /// their next launch (`AutoCleanupLevel(rawValue:)` failing to match
+    /// falls back to `.none`). `displayName` can change freely; `rawValue`
+    /// never should once shipped. "Medium" itself is a leftover from a
+    /// retired Light/Medium/Full latency ladder (Light was cut, Full
+    /// became "Local AI") and never got renamed alongside it — it doesn't
+    /// tell anyone this tier is the cloud/BYOK one, which is the whole
+    /// reason it has a delay and needs a key.
+    var displayName: String {
+        switch self {
+        case .none, .localAI:
+            return rawValue
+        case .medium:
+            return "Cloud Model"
+        }
+    }
+
     var summary: String {
         switch self {
         case .none:

@@ -203,6 +203,7 @@ enum DictationCleanupPrompt {
                 .split(whereSeparator: { !$0.isLetter && !$0.isNumber })
                 .map(String.init)
                 .filter { $0.count >= 3 }
+                .map(canonicalWord)
         )
         if !inputSignificantWords.isEmpty {
             let lines = result.components(separatedBy: "\n")
@@ -216,6 +217,7 @@ enum DictationCleanupPrompt {
                         firstLine.lowercased()
                             .split(whereSeparator: { !$0.isLetter && !$0.isNumber })
                             .map(String.init)
+                            .map(canonicalWord)
                     )
                     let firstLineOverlap = inputSignificantWords.filter { firstLineWords.contains($0) }.count
                     if firstLineOverlap == 0 {
@@ -254,7 +256,7 @@ enum DictationCleanupPrompt {
         let outputWordCount = result.split(whereSeparator: { $0.isWhitespace }).count
         let maxReasonableWordCount = max(Int(Double(inputWordCount) * 1.8), inputWordCount + 6)
         if outputWordCount > maxReasonableWordCount {
-            return stripDanglingListConjunctions(promoteSpokenEnumeration(TranscriptSanitizer.cleanUpFillers(originalInput)))
+            return finalize(TranscriptSanitizer.cleanUpFillers(originalInput))
         }
 
         // Content-loss backstop — the opposite failure, and the one the
@@ -280,15 +282,81 @@ enum DictationCleanupPrompt {
                 result.lowercased()
                     .split(whereSeparator: { !$0.isLetter && !$0.isNumber })
                     .map(String.init)
+                    .map(canonicalWord)
             )
             let survivingCount = inputSignificantWords.filter { outputWordsLower.contains($0) }.count
             let overlapRatio = Double(survivingCount) / Double(inputSignificantWords.count)
             if overlapRatio < 0.5 {
-                return stripDanglingListConjunctions(promoteSpokenEnumeration(TranscriptSanitizer.cleanUpFillers(originalInput)))
+                return finalize(TranscriptSanitizer.cleanUpFillers(originalInput))
             }
         }
 
-        return stripDanglingListConjunctions(promoteSpokenEnumeration(result))
+        return finalize(result)
+    }
+
+    /// Runs every deterministic post-process backstop, in a fixed order,
+    /// on whichever text a caller is about to return. Kept as one named
+    /// step (rather than each caller chaining the individual functions)
+    /// so a new backstop only needs to be added here once to cover the
+    /// LLM's own output and both fallback-to-deterministic-cleanup paths
+    /// alike.
+    static func finalize(_ text: String) -> String {
+        stripDanglingListConjunctions(promoteSpokenEnumeration(convertSpokenDigitRuns(text)))
+    }
+
+    /// Deterministic conversion of a spoken run of individual digit words
+    /// ("five five five one two three four") into actual digits ("5 5 5
+    /// 1 2 3 4"). Confirmed via repeated real-model runs: the prompt's
+    /// own "CONVERT NUMBERS" rule doesn't reliably fire — on several
+    /// short inputs the model echoed the transcript back nearly verbatim
+    /// with essentially none of its formatting rules applied, digit
+    /// conversion included. Scoped tight to avoid false-triggering on
+    /// ordinary prose: only a run of 2 or more *consecutive* single-digit
+    /// number words (zero-nine) gets converted. A lone "one" is left as a
+    /// word, since on its own it's also an ordinary pronoun/article ("the
+    /// one who called", "I agree with that one") and converting every
+    /// occurrence unconditionally would be wrong far more often than it's
+    /// right — the same reasoning `promoteSpokenEnumeration` already
+    /// applies to bare ordinal words above.
+    static func convertSpokenDigitRuns(_ text: String) -> String {
+        let digitWordAlternation = digitWords.keys.joined(separator: "|")
+        let pattern = "(?i)\\b(?:\(digitWordAlternation))\\b(?:[ ,]+\\b(?:\(digitWordAlternation))\\b)+"
+        guard let regex = try? NSRegularExpression(pattern: pattern) else { return text }
+
+        let nsText = text as NSString
+        let matches = regex.matches(in: text, range: NSRange(location: 0, length: nsText.length))
+        guard !matches.isEmpty else { return text }
+
+        var result = nsText
+        for match in matches.reversed() {
+            let matched = result.substring(with: match.range)
+            let words = matched.components(separatedBy: CharacterSet(charactersIn: " ,")).filter { !$0.isEmpty }
+            let digits = words.map { digitWords[$0.lowercased()] ?? $0 }.joined(separator: " ")
+            result = result.replacingCharacters(in: match.range, with: digits) as NSString
+        }
+        return result as String
+    }
+
+    /// Shared with `canonicalWord` below — a single-digit number word and
+    /// its digit form must count as the same word for both the digit-run
+    /// conversion above and the content-loss overlap check further up in
+    /// `sanitizeOutput`.
+    static let digitWords: [String: String] = [
+        "zero": "0", "one": "1", "two": "2", "three": "3", "four": "4",
+        "five": "5", "six": "6", "seven": "7", "eight": "8", "nine": "9",
+    ]
+
+    /// Maps a spelled-out single-digit number word to its digit form,
+    /// leaving every other word unchanged. Used to normalize both sides
+    /// of the content-loss overlap check in `sanitizeOutput` — without
+    /// this, a correctly-converted "five" -> "5" reads as if the word
+    /// "five" vanished entirely, which is exactly backwards: confirmed
+    /// via a real run where the model got digit conversion right on its
+    /// own ("1. 2. 3. 4") and the overlap floor discarded that correct
+    /// output anyway, because "1" and "one" don't share a single
+    /// character under a naive lowercased-word comparison.
+    static func canonicalWord(_ word: String) -> String {
+        digitWords[word] ?? word
     }
 
     /// Strips a dangling trailing "and"/"or" left on a list-item line.
