@@ -5,37 +5,39 @@ import MLXLMCommon
 /// A no-key, no-cloud tone/grammar rewrite path — the direct answer to what
 /// FluidVoice calls "Fluid Intelligence": a small on-device language model
 /// runs the exact same tone rewrite Medium/BYOK does, entirely on this Mac,
-/// with zero network call and no API key required. Sits between Light
-/// (rules-only `TranscriptSanitizer`, instant) and Medium (BYOK, highest
-/// quality) as `AutoCleanupLevel.localAI`.
+/// with zero network call and no API key required. Sits next to Medium
+/// (BYOK, highest quality) as `AutoCleanupLevel.localAI` — the offline
+/// option for real tone/grammar rewrites, versus `AutoCleanupLevel.none`'s
+/// verbatim typing on the other end.
 ///
 /// Backed by Apple's MLX (https://github.com/ml-explore/mlx-swift-examples) —
 /// the same on-device inference approach Apple's own tooling uses, distinct
 /// from FluidVoice's private "Fluid Intelligence" runtime. This is Quill's
-/// own integration against a model Hugging Face already hosts publicly, not
+/// own integration against models Hugging Face already hosts publicly, not
 /// borrowed code.
+///
+/// Supports more than one model (`LocalLLMModel.all`) rather than a single
+/// hardcoded one — every entry point below takes a `modelID`, defaulting to
+/// whichever one `QuillSettings.localAIModelID` currently selects, and each
+/// model gets its own cached `ModelContainer` so switching between two
+/// already-downloaded models doesn't discard either one's loaded state.
 actor LocalEnhancer {
     static let shared = LocalEnhancer()
 
-    /// mlx-community's 4-bit quantized Llama 3.2 3B Instruct: small enough
-    /// for a background download (~1.8 GB) on Apple Silicon, capable enough
-    /// to follow a tone instruction reliably. Swappable later without
-    /// touching call sites if a smaller/better option turns up.
-    static let modelID = "mlx-community/Llama-3.2-3B-Instruct-4bit"
+    private var containers: [String: ModelContainer] = [:]
+    private var loadTasks: [String: Task<ModelContainer, Error>] = [:]
 
-    /// Human-friendly name for display in Enhancement Engine — kept next
-    /// to `modelID` so the two can't drift apart, same reasoning as
-    /// `StyleRewriter.modelName(for:)` for the cloud providers.
-    static let displayName = "Llama 3.2 3B Instruct (4-bit)"
-
-    private var container: ModelContainer?
-    private var loadTask: Task<ModelContainer, Error>?
-
-    /// Rewrites `text` per `tone`, entirely on-device. First call for a
-    /// fresh process pays the model-load cost (and, the very first time
-    /// ever, the download); subsequent calls reuse the loaded container.
-    func rewrite(_ text: String, tone: StyleTone) async throws -> String {
-        let container = try await loadedContainer()
+    /// Rewrites `text` per `tone`, entirely on-device, using `modelID`
+    /// (default: the user's currently-selected model). First call for a
+    /// fresh process/model pays the model-load cost (and, the very first
+    /// time ever, the download); subsequent calls reuse the loaded
+    /// container.
+    func rewrite(
+        _ text: String,
+        tone: StyleTone,
+        modelID: String = QuillSettings.localAIModelID
+    ) async throws -> String {
+        let container = try await loadedContainer(modelID: modelID)
 
         let messages: [[String: String]] = [
             [
@@ -61,10 +63,10 @@ actor LocalEnhancer {
         return result.output.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    /// True once the model files are on disk, without triggering a load —
-    /// lets Settings/onboarding show download state without paying the
-    /// (slow) model-load cost just to check.
-    static func isDownloaded() -> Bool {
+    /// True once `modelID`'s files are on disk, without triggering a load —
+    /// lets Settings/onboarding show download state per model without
+    /// paying the (slow) model-load cost just to check.
+    static func isDownloaded(modelID: String = QuillSettings.localAIModelID) -> Bool {
         let configuration = ModelConfiguration(id: modelID)
         let dir = configuration.modelDirectory()
         guard let contents = try? FileManager.default.contentsOfDirectory(atPath: dir.path) else {
@@ -76,7 +78,7 @@ actor LocalEnhancer {
         return !contents.isEmpty
     }
 
-    static func deleteFiles() throws {
+    static func deleteFiles(modelID: String = QuillSettings.localAIModelID) throws {
         let configuration = ModelConfiguration(id: modelID)
         let dir = configuration.modelDirectory()
         if FileManager.default.fileExists(atPath: dir.path) {
@@ -84,34 +86,46 @@ actor LocalEnhancer {
         }
     }
 
-    /// Downloads (if needed) and loads the model, reporting progress via
+    /// Downloads (if needed) and loads `modelID`, reporting progress via
     /// `onProgress` (0...1) — mirrors `ModelDownloadState`'s existing shape
     /// so the same download UI can drive this without a parallel design.
-    func download(onProgress: @escaping @Sendable (Double) -> Void) async throws {
-        _ = try await loadedContainer(onProgress: onProgress)
+    func download(
+        modelID: String = QuillSettings.localAIModelID,
+        onProgress: @escaping @Sendable (Double) -> Void
+    ) async throws {
+        _ = try await loadedContainer(modelID: modelID, onProgress: onProgress)
+    }
+
+    /// Drops `modelID`'s in-memory container (if any) — called after
+    /// deleting its files so a stale loaded container can't keep serving
+    /// rewrites against weights that no longer exist on disk.
+    func unload(modelID: String) {
+        containers[modelID] = nil
+        loadTasks[modelID] = nil
     }
 
     private func loadedContainer(
+        modelID: String,
         onProgress: @escaping @Sendable (Double) -> Void = { _ in }
     ) async throws -> ModelContainer {
-        if let container { return container }
-        if let loadTask {
-            return try await loadTask.value
+        if let container = containers[modelID] { return container }
+        if let existingTask = loadTasks[modelID] {
+            return try await existingTask.value
         }
         let task = Task<ModelContainer, Error> {
-            let configuration = ModelConfiguration(id: Self.modelID)
+            let configuration = ModelConfiguration(id: modelID)
             return try await LLMModelFactory.shared.loadContainer(configuration: configuration) { progress in
                 onProgress(progress.fractionCompleted)
             }
         }
-        loadTask = task
+        loadTasks[modelID] = task
         do {
             let loaded = try await task.value
-            container = loaded
-            loadTask = nil
+            containers[modelID] = loaded
+            loadTasks[modelID] = nil
             return loaded
         } catch {
-            loadTask = nil
+            loadTasks[modelID] = nil
             throw error
         }
     }

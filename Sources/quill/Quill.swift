@@ -55,6 +55,11 @@ struct Run: ParsableCommand {
             return
         }
 
+        // Start capturing debug output as early as possible — before
+        // model loading, hotkey registration, or anything else that might
+        // log a failure worth seeing later in Send Feedback.
+        Task { await QuillLog.shared.start() }
+
         // --skip-doctor means "I already know what I'm doing" — this is what
         // the LaunchAgent (and any scripted/CLI use) passes. That path keeps
         // today's exact behavior: hard-fail and exit on missing permissions,
@@ -342,15 +347,21 @@ private func attachDictationHandlers(
             do {
                 let rawText = try await transcriberNow.transcribe(samples)
                 let elapsed = Date().timeIntervalSince(started)
+                // Word count only, never the transcript itself — this line
+                // now feeds QuillLog's captured debug log, which a user can
+                // attach to feedback (Send Feedback tab), so it has to hold
+                // to the same "no dictation content" promise made there.
+                let wordCount = rawText.split(whereSeparator: { $0.isWhitespace }).count
                 FileHandle.standardError.write(Data(
-                    String(format: "→ %.2fs · %@\n", elapsed, rawText).utf8
+                    String(format: "→ %.2fs · %d words\n", elapsed, wordCount).utf8
                 ))
 
                 // Auto Cleanup runs on every dictation automatically —
                 // that's the point (a one-time setting in Style, not a
-                // per-dictation decision). Light is local/instant;
-                // Medium calls out to the user's own Style API key, so
-                // show a "polishing…" beat instead of looking stuck.
+                // per-dictation decision). Local AI runs on-device but
+                // still takes a real model-inference beat, and Medium
+                // calls out to the user's own Style API key — show a
+                // "polishing…" beat for either instead of looking stuck.
                 let level = QuillSettings.autoCleanupLevel
                 if level != .none {
                     await MainActor.run {

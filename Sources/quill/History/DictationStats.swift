@@ -15,7 +15,7 @@ struct DictationStats {
     /// Count of entries where Auto Cleanup actually changed something —
     /// `rawText` is only ever stored when it differs from the final typed
     /// text (see DictationHistory.append), so `rawText != nil` is exactly
-    /// "this dictation was modified." Covers both Light and Medium fixes.
+    /// "this dictation was modified." Covers Local AI and Medium fixes.
     let fixesCount: Int
 
     // Phase 7 Tier 1 — all pure reductions over `entries`, nothing new

@@ -37,19 +37,30 @@ struct EnhancementEngineView: View {
     )
     @State private var activeProvider: StyleProvider = QuillSettings.styleProvider
 
-    // Local AI (Phase 4a/5e) — moved here from Style so every AI backend
-    // Style can use (on-device or BYOK cloud) is managed from one place,
-    // Local AI first since it needs no key. Style's Auto Cleanup card
-    // still owns *selecting* it as the active auto-cleanup tier (same
-    // split as Medium: the key/model lives here, which tier runs stays a
-    // Style choice) — this state is this view's own copy of that same
-    // download/selection status, not a duplicate source of truth.
+    // Local AI (Phase 4a/5e, model picker added later) — moved here from
+    // Style so every AI backend Style can use (on-device or BYOK cloud) is
+    // managed from one place, Local AI first since it needs no key.
+    // Style's Auto Cleanup card still owns *selecting* it as the active
+    // auto-cleanup tier (same split as Medium: the key/model lives here,
+    // which tier runs stays a Style choice) — this state is this view's
+    // own copy of that same download/selection status, not a duplicate
+    // source of truth.
+    //
+    // Per-model rather than singular now that `LocalLLMModel.all` has more
+    // than one entry: each dictionary is keyed by `LocalLLMModel.id`, and
+    // `localAIModelID` tracks which one is the currently *selected* model
+    // (persisted separately as `QuillSettings.localAIModelID` — download
+    // state and selection are different questions, same as Voice Engine's
+    // transcription models).
     @State private var localAIExpanded = false
-    @State private var localAIDownloaded = LocalEnhancer.isDownloaded()
-    @State private var localAIDownloadProgress: Double?
+    @State private var localAIModelID = QuillSettings.localAIModelID
+    @State private var localAIDownloaded: [String: Bool] = Dictionary(
+        uniqueKeysWithValues: LocalLLMModel.all.map { ($0.id, LocalEnhancer.isDownloaded(modelID: $0.id)) }
+    )
+    @State private var localAIDownloadProgress: [String: Double] = [:]
     @State private var localAIDownloadError: String?
-    @State private var confirmingLocalAIDownload = false
-    @State private var confirmingLocalAIDelete = false
+    @State private var confirmingLocalAIDownload: LocalLLMModel?
+    @State private var confirmingLocalAIDelete: LocalLLMModel?
     @State private var autoCleanupLevel: AutoCleanupLevel = QuillSettings.autoCleanupLevel
 
     // OpenRouter's model picker (fronts hundreds of models through one
@@ -95,10 +106,22 @@ struct EnhancementEngineView: View {
 
     // MARK: - Local AI
 
-    private var localAICard: some View {
-        let isActive = localAIDownloaded && autoCleanupLevel == .localAI
+    /// True only for the model that's both downloaded and the one Auto
+    /// Cleanup is actually configured to use — matches how the cloud
+    /// provider rows define "Active" (connected *and* the selected
+    /// provider), just with an extra "selected among local models" axis.
+    private func isLocalModelActive(_ model: LocalLLMModel) -> Bool {
+        autoCleanupLevel == .localAI
+            && localAIModelID == model.id
+            && (localAIDownloaded[model.id] ?? false)
+    }
 
-        return VStack(alignment: .leading, spacing: 0) {
+    private var anyLocalModelActive: Bool {
+        LocalLLMModel.all.contains { isLocalModelActive($0) }
+    }
+
+    private var localAICard: some View {
+        VStack(alignment: .leading, spacing: 0) {
             Button {
                 withAnimation(.easeInOut(duration: 0.15)) {
                     localAIExpanded.toggle()
@@ -109,16 +132,12 @@ struct EnhancementEngineView: View {
                     Text("Local AI")
                         .font(.system(size: 13, weight: .medium))
                         .foregroundColor(Theme.textPrimary)
-                    if isActive {
+                    if anyLocalModelActive {
                         Label("Active", systemImage: "checkmark.circle.fill")
                             .font(.system(size: 10, weight: .bold))
                             .foregroundColor(Theme.accent)
-                    } else if localAIDownloaded {
-                        Text("Downloaded")
-                            .font(.system(size: 10))
-                            .foregroundColor(Theme.textTertiary)
                     } else {
-                        Text("Not downloaded")
+                        Text("\(LocalLLMModel.all.filter { localAIDownloaded[$0.id] ?? false }.count) of \(LocalLLMModel.all.count) downloaded")
                             .font(.system(size: 10))
                             .foregroundColor(Theme.textTertiary)
                     }
@@ -140,67 +159,21 @@ struct EnhancementEngineView: View {
                         Image(systemName: "cpu")
                             .font(.system(size: 10))
                             .foregroundColor(Theme.textTertiary)
-                        Text("A small on-device model for full tone rewrites: no key, no cloud, nothing leaves this Mac. One-time download (~1.8 GB), then runs offline.")
+                        Text("Small on-device models for full tone rewrites: no key, no cloud, nothing leaves this Mac. Pick one below — one-time download per model, then it runs offline.")
                             .font(.system(size: 10.5))
                             .foregroundColor(Theme.textSecondary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
 
-                    // Same "which model, exactly" transparency the cloud
-                    // provider rows already give (their "Uses gpt-4o-mini"
-                    // caption below) — this card was the one place in
-                    // Enhancement Engine that didn't name its model at all.
-                    HStack(spacing: 6) {
-                        Image(systemName: "shippingbox")
-                            .font(.system(size: 10))
-                            .foregroundColor(Theme.textTertiary)
-                        Text("Model: \(LocalEnhancer.displayName)")
-                            .font(.system(size: 10.5))
-                            .foregroundColor(Theme.textSecondary)
-                    }
-
-                    if let localAIDownloadProgress {
-                        HStack(spacing: 8) {
-                            ProgressView(value: localAIDownloadProgress)
-                                .tint(Theme.accent)
-                            Text("\(Int(localAIDownloadProgress * 100))%")
-                                .font(.system(size: 10))
-                                .foregroundColor(Theme.textTertiary)
-                        }
-                    }
                     if let localAIDownloadError {
                         Text(localAIDownloadError)
                             .font(.system(size: 10))
                             .foregroundColor(.red)
                     }
 
-                    if localAIDownloaded && !isActive {
-                        Button {
-                            QuillSettings.autoCleanupLevel = .localAI
-                            autoCleanupLevel = .localAI
-                        } label: {
-                            Label("Use for Auto Cleanup", systemImage: "checkmark.circle")
-                                .font(.system(size: 11, weight: .medium))
-                        }
-                        .buttonStyle(.bordered)
-                    } else if isActive {
-                        Label("Currently used for Auto Cleanup.", systemImage: "checkmark.circle.fill")
-                            .font(.system(size: 10.5, weight: .medium))
-                            .foregroundColor(Theme.accent)
-                    }
-
-                    HStack(spacing: 8) {
-                        Spacer()
-                        if localAIDownloaded {
-                            Button("Delete", role: .destructive) {
-                                confirmingLocalAIDelete = true
-                            }
-                        } else if localAIDownloadProgress == nil {
-                            Button("Download (~1.8 GB)") {
-                                confirmingLocalAIDownload = true
-                            }
-                            .buttonStyle(.borderedProminent)
-                            .tint(Theme.accent)
+                    VStack(spacing: 8) {
+                        ForEach(LocalLLMModel.all) { model in
+                            localAIModelRow(model)
                         }
                     }
                 }
@@ -211,28 +184,114 @@ struct EnhancementEngineView: View {
         .quillCard()
         .overlay(
             RoundedRectangle(cornerRadius: 10)
-                .stroke(isActive ? Theme.accent.opacity(0.5) : Color.clear, lineWidth: 1.5)
+                .stroke(anyLocalModelActive ? Theme.accent.opacity(0.5) : Color.clear, lineWidth: 1.5)
         )
         .confirmationDialog(
-            "Download the Local AI model?",
-            isPresented: $confirmingLocalAIDownload,
+            "Download \(confirmingLocalAIDownload?.displayName ?? "this model")?",
+            isPresented: Binding(
+                get: { confirmingLocalAIDownload != nil },
+                set: { if !$0 { confirmingLocalAIDownload = nil } }
+            ),
             titleVisibility: .visible
         ) {
-            Button("Download (~1.8 GB)") { beginLocalAIDownload() }
+            if let model = confirmingLocalAIDownload {
+                Button("Download (\(model.sizeLabel))") { beginLocalAIDownload(model) }
+            }
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("Downloaded once, then runs entirely on this Mac. No key, no cloud, no per-dictation network call.")
         }
         .confirmationDialog(
-            "Delete the Local AI model?",
-            isPresented: $confirmingLocalAIDelete,
+            "Delete \(confirmingLocalAIDelete?.displayName ?? "this model")?",
+            isPresented: Binding(
+                get: { confirmingLocalAIDelete != nil },
+                set: { if !$0 { confirmingLocalAIDelete = nil } }
+            ),
             titleVisibility: .visible
         ) {
-            Button("Delete", role: .destructive) { deleteLocalAI() }
+            if let model = confirmingLocalAIDelete {
+                Button("Delete", role: .destructive) { deleteLocalAI(model) }
+            }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("Frees ~1.8 GB. Auto Cleanup falls back to Light until it's downloaded again.")
+            Text("Frees \(confirmingLocalAIDelete?.sizeLabel ?? "disk space"). Auto Cleanup resets to None if this was the active model.")
         }
+    }
+
+    private func localAIModelRow(_ model: LocalLLMModel) -> some View {
+        let isDownloaded = localAIDownloaded[model.id] ?? false
+        let isSelected = localAIModelID == model.id
+        let isActive = isLocalModelActive(model)
+        let progress = localAIDownloadProgress[model.id]
+
+        return VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 6) {
+                Image(systemName: "shippingbox")
+                    .font(.system(size: 10))
+                    .foregroundColor(Theme.textTertiary)
+                Text(model.displayName)
+                    .font(.system(size: 11.5, weight: .medium))
+                    .foregroundColor(Theme.textPrimary)
+                Text(model.sizeLabel)
+                    .font(.system(size: 10))
+                    .foregroundColor(Theme.textTertiary)
+                Spacer()
+                if isActive {
+                    Label("Active", systemImage: "checkmark.circle.fill")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(Theme.accent)
+                } else if isDownloaded {
+                    Text("Downloaded")
+                        .font(.system(size: 10))
+                        .foregroundColor(Theme.textTertiary)
+                }
+            }
+
+            if let progress {
+                HStack(spacing: 8) {
+                    ProgressView(value: progress)
+                        .tint(Theme.accent)
+                    Text("\(Int(progress * 100))%")
+                        .font(.system(size: 10))
+                        .foregroundColor(Theme.textTertiary)
+                }
+            }
+
+            HStack(spacing: 8) {
+                if isDownloaded && !isActive {
+                    Button {
+                        localAIModelID = model.id
+                        QuillSettings.localAIModelID = model.id
+                        QuillSettings.autoCleanupLevel = .localAI
+                        autoCleanupLevel = .localAI
+                    } label: {
+                        Label("Use for Auto Cleanup", systemImage: "checkmark.circle")
+                            .font(.system(size: 10.5, weight: .medium))
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                }
+
+                Spacer()
+
+                if isDownloaded {
+                    Button("Delete", role: .destructive) {
+                        confirmingLocalAIDelete = model
+                    }
+                    .controlSize(.small)
+                } else if progress == nil {
+                    Button("Download") {
+                        confirmingLocalAIDownload = model
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(Theme.accent)
+                    .controlSize(.small)
+                }
+            }
+        }
+        .padding(10)
+        .background(isSelected ? Theme.accent.opacity(0.06) : Theme.textQuaternary)
+        .cornerRadius(8)
     }
 
     private var localAIIcon: some View {
@@ -246,44 +305,49 @@ struct EnhancementEngineView: View {
         }
     }
 
-    private func beginLocalAIDownload() {
-        localAIDownloadProgress = 0
+    private func beginLocalAIDownload(_ model: LocalLLMModel) {
+        localAIDownloadProgress[model.id] = 0
         localAIDownloadError = nil
         // Also mirrored into the global DownloadActivity bar (Phase 5a):
         // this view's own @State resets if the sidebar switches away from
         // Enhancement Engine and back mid-download, even though
         // LocalEnhancer's actual download — an actor-owned Task, not tied
         // to this view — keeps running the whole time regardless.
-        DownloadActivity.shared.begin(label: "Downloading Local AI model")
+        DownloadActivity.shared.begin(label: "Downloading \(model.displayName)")
         Task {
             do {
-                try await LocalEnhancer.shared.download { fraction in
+                try await LocalEnhancer.shared.download(modelID: model.id) { fraction in
                     Task { @MainActor in
-                        localAIDownloadProgress = fraction
+                        localAIDownloadProgress[model.id] = fraction
                         DownloadActivity.shared.update(progress: fraction)
                     }
                 }
-                localAIDownloaded = true
-                localAIDownloadProgress = nil
+                localAIDownloaded[model.id] = true
+                localAIDownloadProgress[model.id] = nil
+                localAIModelID = model.id
+                QuillSettings.localAIModelID = model.id
                 autoCleanupLevel = .localAI
                 QuillSettings.autoCleanupLevel = .localAI
                 DownloadActivity.shared.finish()
             } catch {
                 localAIDownloadError = "\(error)"
-                localAIDownloadProgress = nil
+                localAIDownloadProgress[model.id] = nil
                 DownloadActivity.shared.finish()
             }
         }
     }
 
-    private func deleteLocalAI() {
+    private func deleteLocalAI(_ model: LocalLLMModel) {
         do {
-            try LocalEnhancer.deleteFiles()
-            localAIDownloaded = false
+            try LocalEnhancer.deleteFiles(modelID: model.id)
+            Task { await LocalEnhancer.shared.unload(modelID: model.id) }
+            localAIDownloaded[model.id] = false
             // Leaving the level selected would silently fall back to
-            // Light on every dictation with no indication why — reset to
-            // None instead, same as picking a fresh default.
-            if autoCleanupLevel == .localAI {
+            // basic filler cleanup on every dictation with no indication
+            // why — reset to None instead, same as picking a fresh
+            // default, but only if the model just deleted was actually
+            // the active one.
+            if autoCleanupLevel == .localAI && localAIModelID == model.id {
                 autoCleanupLevel = .none
                 QuillSettings.autoCleanupLevel = .none
             }

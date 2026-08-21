@@ -51,6 +51,22 @@ enum Theme {
     static let cardStroke = dynamic(dark: NSColor.white.withAlphaComponent(0.06), light: NSColor.black.withAlphaComponent(0.06))
     static let pagePadding: CGFloat = 24
 
+    // Floating tooltip chip (ActivityChartView/StreakCalendarView hover
+    // tooltips) — deliberately NOT theme-dynamic like everything else on
+    // this page, and NOT built from the translucent card tokens above.
+    // Every other token here is tuned to sit on `background`, the one
+    // known surface behind it; a tooltip floats over arbitrary chart bars
+    // or calendar cells instead, so a translucent fill lets whatever's
+    // underneath bleed through and wash the text out — confirmed low
+    // legibility in both themes from a real screenshot. A solid, opaque
+    // chip with a fixed dark tone in both light and dark mode sidesteps
+    // that entirely (the same "always-dark hover chip regardless of app
+    // theme" convention several polished apps use for the same reason).
+    static let tooltipBackground = Color(NSColor(red: 0.13, green: 0.13, blue: 0.15, alpha: 0.97))
+    static let tooltipBorder = Color.white.opacity(0.14)
+    static let tooltipTextPrimary = Color.white
+    static let tooltipTextSecondary = Color.white.opacity(0.65)
+
     /// Resolves to `dark` or `light` per the current effective NSAppearance
     /// at draw time — the standard AppKit dynamic-color pattern, bridged
     /// into SwiftUI. Every `Theme.*` token built on this needs zero

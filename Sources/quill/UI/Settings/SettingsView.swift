@@ -214,6 +214,9 @@ private struct PrivacySettingsView: View {
     @State private var confirmingClear = false
     @State private var historyCount = DictationHistory.loadAll().count
     @State private var autoCleanupLevel = QuillSettings.autoCleanupLevel
+    @State private var debugLoggingEnabled = QuillSettings.debugLoggingEnabled
+    @State private var debugLogByteCount = 0
+    @State private var confirmingClearLog = false
     private var apiKeyConnected: Bool {
         StyleProvider.allCases.contains { APIKeyStore.hasKey(for: $0) }
     }
@@ -238,8 +241,8 @@ private struct PrivacySettingsView: View {
             Anthropic key. That happens either when you press Rewrite in Style, \
             or automatically on every dictation if Auto Cleanup is set to \
             Medium. In that case, every dictation is sent to your chosen \
-            provider before it's typed. Auto Cleanup's Light level, and Style's \
-            "Clean Up" tone, never touch the network at all.
+            provider before it's typed. Auto Cleanup's None and Local AI levels, \
+            and Style's "Clean Up" tone, never touch the network at all.
             """)
             .font(.system(size: 12))
             .foregroundColor(Theme.textSecondary)
@@ -293,10 +296,85 @@ private struct PrivacySettingsView: View {
                 Button("Cancel", role: .cancel) {}
             }
 
+            Divider().opacity(0.15)
+
+            debugLoggingSection
+
             Spacer()
         }
         .onReceive(NotificationCenter.default.publisher(for: .quillHistoryUpdated)) { _ in
             historyCount = DictationHistory.loadAll().count
         }
+        .task {
+            debugLogByteCount = await QuillLog.shared.approximateByteCount()
+        }
+    }
+
+    // MARK: - Debug logging
+
+    /// On by default (`QuillSettings.debugLoggingEnabled`) so a real log
+    /// already exists the moment a bug is worth reporting. Captures app
+    /// errors and status messages only — model loads, hotkey failures,
+    /// Auto Cleanup fallbacks — via `QuillLog`'s stderr redirect, never
+    /// dictated text. Stays purely local either way: the toggle here
+    /// controls whether anything is *retained* at all, not whether
+    /// anything is sent anywhere — that only ever happens if the user
+    /// attaches it themselves in Send Feedback.
+    private var debugLoggingSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Debug logging")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(Theme.textPrimary)
+                    Text("App errors and status only, never dictated text. Attach it yourself in Send Feedback if you want to.")
+                        .font(.system(size: 11))
+                        .foregroundColor(Theme.textSecondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer()
+                Toggle("", isOn: $debugLoggingEnabled)
+                    .toggleStyle(.switch)
+                    .tint(Theme.accent)
+                    .labelsHidden()
+                    .onChange(of: debugLoggingEnabled) { _, wantsOn in
+                        QuillSettings.debugLoggingEnabled = wantsOn
+                        if !wantsOn { debugLogByteCount = 0 }
+                    }
+            }
+
+            if debugLoggingEnabled {
+                HStack {
+                    Text(debugLogByteCount > 0 ? "\(formattedByteCount(debugLogByteCount)) captured" : "Nothing captured yet")
+                        .font(.system(size: 11))
+                        .foregroundColor(Theme.textTertiary)
+                    Spacer()
+                    Button(role: .destructive) {
+                        confirmingClearLog = true
+                    } label: {
+                        Text("Clear log")
+                    }
+                    .disabled(debugLogByteCount == 0)
+                }
+            }
+        }
+        .confirmationDialog(
+            "Clear the captured debug log?",
+            isPresented: $confirmingClearLog,
+            titleVisibility: .visible
+        ) {
+            Button("Clear Log", role: .destructive) {
+                Task {
+                    await QuillLog.shared.clear()
+                    debugLogByteCount = 0
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        }
+    }
+
+    private func formattedByteCount(_ bytes: Int) -> String {
+        if bytes < 1024 { return "\(bytes) B" }
+        return String(format: "%.0f KB", Double(bytes) / 1024)
     }
 }

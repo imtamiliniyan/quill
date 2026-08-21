@@ -31,6 +31,8 @@ enum QuillSettings {
         static let removeFillerWords = "removeFillerWords"
         static let fillerWords = "fillerWords"
         static let openRouterModel = "openRouterModel"
+        static let localAIModelID = "localAIModelID"
+        static let debugLoggingEnabled = "debugLoggingEnabled"
     }
 
     /// The single-word interjections `TranscriptSanitizer.cleanUpFillers`
@@ -85,6 +87,16 @@ enum QuillSettings {
             return stored
         }
         set { defaults.set(newValue.rawValue, forKey: Key.autoCleanupTone) }
+    }
+
+    /// Which on-device model `LocalEnhancer` loads for Local AI — defaults
+    /// to `LocalLLMModel.llama32_3B` (Quill's original, still the only
+    /// model anyone had before this setting existed), so adding a second
+    /// choice here changes nothing for a user who's never opened
+    /// Enhancement Engine's Local AI card.
+    static var localAIModelID: String {
+        get { defaults.string(forKey: Key.localAIModelID) ?? LocalLLMModel.llama32_3B.id }
+        set { defaults.set(newValue, forKey: Key.localAIModelID) }
     }
 
     /// Manual override, not "follow system": Theme.swift's dynamic colors
@@ -146,9 +158,10 @@ enum QuillSettings {
 
     /// Master on/off for `TranscriptSanitizer.cleanUpFillers` — defaults
     /// true, matching the behavior every existing user already has today
-    /// (that pass has always run unconditionally as part of Auto
-    /// Cleanup's Light tier and as the Local AI/Medium fallback; this
-    /// just makes it switchable rather than always-on).
+    /// (that pass has always run unconditionally as the Local AI/Medium
+    /// fallback, and formerly also Auto Cleanup's selectable "Light" tier
+    /// before that was retired for never doing real formatting; this
+    /// setting just makes the pass switchable rather than always-on).
     static var removeFillerWords: Bool {
         get { defaults.object(forKey: Key.removeFillerWords) as? Bool ?? true }
         set { defaults.set(newValue, forKey: Key.removeFillerWords) }
@@ -172,6 +185,24 @@ enum QuillSettings {
     static var openRouterModel: String {
         get { defaults.string(forKey: Key.openRouterModel) ?? "openai/gpt-4o-mini" }
         set { defaults.set(newValue, forKey: Key.openRouterModel) }
+    }
+
+    /// Local-only debug log capture (`QuillLog`) — on by default so a
+    /// real log actually exists the moment someone hits a bug worth
+    /// reporting, rather than only after they've dug through Settings
+    /// first. Never includes dictated text, never sent anywhere on its
+    /// own — the only way any of it leaves this Mac is a user explicitly
+    /// attaching it via Send Feedback. Turning this off also wipes
+    /// whatever's already captured, so "off" means there is no log, not
+    /// that an old one just lingers.
+    static var debugLoggingEnabled: Bool {
+        get { defaults.object(forKey: Key.debugLoggingEnabled) as? Bool ?? true }
+        set {
+            defaults.set(newValue, forKey: Key.debugLoggingEnabled)
+            if !newValue {
+                Task { await QuillLog.shared.clear() }
+            }
+        }
     }
 
     /// Pushes `darkModeEnabled` onto NSApp — call once at each app-launch

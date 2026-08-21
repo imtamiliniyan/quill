@@ -372,7 +372,7 @@ struct InsightsView: View {
             Spacer(minLength: 0)
             Text(
                 hasAIEnhancement
-                    ? "Dictations cleaned up by Auto Cleanup so far, across Light, Local AI, and Medium."
+                    ? "Dictations cleaned up by Enhancement Engine."
                     : "Turn on Local AI (no key needed) or connect an OpenAI/Anthropic key in Style to enable AI fixes."
             )
             .font(.system(size: 11))

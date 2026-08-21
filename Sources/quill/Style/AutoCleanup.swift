@@ -2,7 +2,6 @@ import Foundation
 
 enum AutoCleanupLevel: String, CaseIterable, Identifiable {
     case none = "None"
-    case light = "Light"
     case localAI = "Local AI"
     case medium = "Medium"
 
@@ -12,8 +11,6 @@ enum AutoCleanupLevel: String, CaseIterable, Identifiable {
         switch self {
         case .none:
             return "Types exactly what you said, including filler words."
-        case .light:
-            return "Removes filler words and fixes basic punctuation: local, instant, no key needed."
         case .localAI:
             return "Full tone rewrite using a small on-device AI model: no key, no cloud, nothing leaves your Mac. First use downloads the model (~1.8 GB)."
         case .medium:
@@ -32,9 +29,6 @@ enum AutoCleanup {
         case .none:
             return text
 
-        case .light:
-            return localCleanup(text)
-
         case .localAI:
             guard LocalEnhancer.isDownloaded() else {
                 // Not downloaded yet and this is the hot dictation path —
@@ -43,7 +37,11 @@ enum AutoCleanup {
                 return TranscriptSanitizer.cleanUpFillers(text)
             }
             do {
-                return try await LocalEnhancer.shared.rewrite(text, tone: QuillSettings.autoCleanupTone)
+                return try await LocalEnhancer.shared.rewrite(
+                    text,
+                    tone: QuillSettings.autoCleanupTone,
+                    modelID: QuillSettings.localAIModelID
+                )
             } catch {
                 FileHandle.standardError.write(Data(
                     "auto cleanup (local AI) failed, falling back to local cleanup: \(error)\n".utf8
@@ -70,9 +68,15 @@ enum AutoCleanup {
     }
 
     /// The local-only pass: filler-word/punctuation cleanup, nothing more.
-    /// Used by Light here, and by Style's manual "Clean Up" tone — same
-    /// function, so the two never drift into different behavior for what
-    /// the UI presents as the same thing.
+    /// No longer a selectable Auto Cleanup tier on its own (that was
+    /// "Light" — retired: it never did real formatting like "five thirty
+    /// pm" → "5:30 PM" or spoken listicles → a numbered list, which needs
+    /// an actual model, so as a top-level choice it was a dead end next to
+    /// None). Still very much alive as what Local AI/Medium silently fall
+    /// back to when their backend isn't ready yet, and as Style's manual
+    /// "Clean Up" tone — same function both places, so those two never
+    /// drift into different behavior for what the UI presents as the same
+    /// thing.
     ///
     /// Deliberately NOT running real grammar correction here. Tried
     /// NSSpellChecker's local grammar engine (the one behind Mail/Notes'

@@ -16,6 +16,13 @@ struct FeedbackView: View {
     @State private var emailField: String = ""
     @State private var feedbackText: String = ""
     @State private var includeDebugInfo = false
+    // What "Include debug info" actually attaches now — QuillLog's real
+    // captured output (model loads, hotkey failures, Auto Cleanup
+    // fallbacks), not just the static macOS/model line this toggle used
+    // to add. Loaded lazily (only once the toggle is actually turned on)
+    // so opening this tab never pays for it unasked.
+    @State private var debugLogPreview: String = ""
+    @State private var debugLoggingEnabled = QuillSettings.debugLoggingEnabled
 
     private static let contactEmail = "tamil@iniyan.pro"
     // Sponsors enrollment is approved and live — points here now instead
@@ -121,12 +128,42 @@ struct FeedbackView: View {
                     Text("Include debug info")
                         .font(.system(size: 12, weight: .medium))
                         .foregroundColor(Theme.textPrimary)
-                    Text("macOS version and current model/provider, no dictation content.")
-                        .font(.system(size: 10.5))
-                        .foregroundColor(Theme.textTertiary)
+                    Text(
+                        debugLoggingEnabled
+                            ? "macOS version, current model/provider, and recent app log — never dictation content."
+                            : "Debug logging is off in Settings, so only macOS version and current model/provider are included."
+                    )
+                    .font(.system(size: 10.5))
+                    .foregroundColor(Theme.textTertiary)
                 }
             }
             .toggleStyle(.switch)
+            .onChange(of: includeDebugInfo) { _, isOn in
+                guard isOn, debugLoggingEnabled else { return }
+                Task { debugLogPreview = await QuillLog.shared.recentText() }
+            }
+
+            // Shows exactly what would get attached, before it's ever
+            // sent — same "never blind trust" reasoning as everywhere
+            // else in Quill that touches an outside destination.
+            if includeDebugInfo && debugLoggingEnabled && !debugLogPreview.isEmpty {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Attached log preview")
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundColor(Theme.textSecondary)
+                    ScrollView {
+                        Text(debugLogPreview)
+                            .font(.system(size: 10, design: .monospaced))
+                            .foregroundColor(Theme.textSecondary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .textSelection(.enabled)
+                    }
+                    .frame(height: 90)
+                    .padding(8)
+                    .background(Theme.textQuaternary)
+                    .cornerRadius(8)
+                }
+            }
 
             HStack {
                 Spacer()
@@ -156,6 +193,9 @@ struct FeedbackView: View {
         }
         if includeDebugInfo {
             body += "\n\n---\nQuill debug info\nmacOS: \(ProcessInfo.processInfo.operatingSystemVersionString)\nModel: \(QuillSettings.selectedModelID ?? "none")\nStyle provider: \(QuillSettings.styleProvider.rawValue)"
+            if debugLoggingEnabled && !debugLogPreview.isEmpty {
+                body += "\n\nRecent log:\n\(debugLogPreview)"
+            }
         }
 
         var components = URLComponents()

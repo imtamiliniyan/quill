@@ -169,9 +169,10 @@ struct StyleView: View {
 
     /// Selecting Local AI here never blocks on a download — same as
     /// Medium, which is always selectable even with no key connected
-    /// (`AutoCleanup.apply` falls back to Light for either level until
-    /// its backend is actually ready). Downloading/deleting the model
-    /// itself is Enhancement Engine's job now, not this row's.
+    /// (`AutoCleanup.apply` silently falls back to basic filler cleanup
+    /// for either level until its backend is actually ready). Downloading/
+    /// deleting the model itself is Enhancement Engine's job now, not this
+    /// row's.
     private func autoCleanupRow(_ level: AutoCleanupLevel) -> some View {
         let selected = autoCleanupLevel == level
         return Button {
@@ -187,12 +188,12 @@ struct StyleView: View {
                             .font(.system(size: 13, weight: .medium))
                             .foregroundColor(Theme.textPrimary)
                         if level == .medium {
-                            Text(hasKey ? "USES YOUR KEY" : "NO KEY YET · USES LIGHT")
+                            Text(hasKey ? "USES YOUR KEY" : "NO KEY YET · BASIC CLEANUP ONLY")
                                 .font(.system(size: 9, weight: .bold))
                                 .foregroundColor(hasKey ? Theme.accent : Theme.textTertiary)
                         }
                         if level == .localAI {
-                            Text(localAIDownloaded ? "READY" : "NOT DOWNLOADED · USES LIGHT")
+                            Text(localAIDownloaded ? "READY" : "NOT DOWNLOADED · BASIC CLEANUP ONLY")
                                 .font(.system(size: 9, weight: .bold))
                                 .foregroundColor(localAIDownloaded ? Theme.accent : Theme.textTertiary)
                         }
