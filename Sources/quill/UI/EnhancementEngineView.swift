@@ -359,7 +359,18 @@ struct EnhancementEngineView: View {
     private func providerCard(_ provider: StyleProvider) -> some View {
         let isExpanded = expanded == provider
         let isConnected = connected[provider] ?? false
+        // "Selected for Rewrite/Medium" — true independent of Auto
+        // Cleanup's level, since this provider still drives the manual
+        // Style "Rewrite" action either way.
         let isActive = isConnected && provider == activeProvider
+        // Whether that selection is *also* what Auto Cleanup runs through
+        // right now. When Auto Cleanup is set to Local AI instead, this is
+        // false even while `isActive` is true — the badge used to just
+        // say "Active" either way, which is exactly what looked like "both
+        // active at once" (real user report). Not a functional bug —
+        // `AutoCleanupLevel` is a single value, only one ever actually
+        // drives Auto Cleanup — just the same word doing two jobs.
+        let drivesAutoCleanup = isActive && autoCleanupLevel == .medium
 
         return VStack(alignment: .leading, spacing: 0) {
             Button {
@@ -377,10 +388,14 @@ struct EnhancementEngineView: View {
                     Text(provider.rawValue)
                         .font(.system(size: 13, weight: .medium))
                         .foregroundColor(Theme.textPrimary)
-                    if isActive {
+                    if drivesAutoCleanup {
                         Label("Active", systemImage: "checkmark.circle.fill")
                             .font(.system(size: 10, weight: .bold))
                             .foregroundColor(Theme.accent)
+                    } else if isActive {
+                        Label("Used for Rewrite", systemImage: "checkmark.circle")
+                            .font(.system(size: 10, weight: .medium))
+                            .foregroundColor(Theme.textSecondary)
                     } else if isConnected {
                         Text("Key saved")
                             .font(.system(size: 10))
@@ -432,10 +447,14 @@ struct EnhancementEngineView: View {
                                 .font(.system(size: 11, weight: .medium))
                         }
                         .buttonStyle(.bordered)
-                    } else if isActive {
+                    } else if drivesAutoCleanup {
                         Label("Currently used for Rewrite and Auto Cleanup Medium.", systemImage: "checkmark.circle.fill")
                             .font(.system(size: 10.5, weight: .medium))
                             .foregroundColor(Theme.accent)
+                    } else if isActive {
+                        Label("Used for Rewrite. Auto Cleanup is set to Local AI instead — change that in Style to use \(provider.rawValue) there too.", systemImage: "checkmark.circle")
+                            .font(.system(size: 10.5, weight: .medium))
+                            .foregroundColor(Theme.textSecondary)
                     }
 
                     HStack(spacing: 8) {

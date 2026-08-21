@@ -33,6 +33,54 @@ APP="${DIST}/${APP_NAME}.app"
 echo "→ building release binary..."
 swift build -c release
 
+# mlx-swift's Metal GPU shaders (mlx.metallib) — `swift build` alone can't
+# produce this. mlx-swift's own README says as much ("SwiftPM (command
+# line) cannot build the Metal shaders"): the 39 .metal kernels need
+# `xcrun metal`/`metallib`, which only ships as part of Xcode's separately
+# -downloaded Metal Toolchain component, not the base SwiftPM toolchain.
+# Without it, Local AI's on-device rewrite throws "Failed to load the
+# default metallib" the moment a model tries to run — confirmed via a real
+# crash-free-but-still-broken run on this M5 Mac before this step existed.
+#
+# Built once via mlx-swift's own CMake+Ninja path (the officially
+# documented non-Xcode-project route — reuses its real `mlx_build_metallib`
+# macro rather than hand-rolling per-file `xcrun metal` calls, which would
+# have to reimplement the JIT kernel-source preprocessing step it also
+# does), then cached outside .build/ (a fresh checkout wipes that) keyed by
+# the exact mlx-swift commit so a dependency bump rebuilds it automatically
+# instead of silently shipping stale shaders.
+MLX_SWIFT_DIR=".build/checkouts/mlx-swift"
+MLX_CMAKE_DIR="${MLX_SWIFT_DIR}/Source/Cmlx/mlx"
+MLX_COMMIT=$(git -C "$MLX_CMAKE_DIR" rev-parse HEAD 2>/dev/null || echo "unknown")
+METALLIB_CACHE=".metallib-cache/${MLX_COMMIT}/mlx.metallib"
+# CMake's own build dir must NOT live inside Source/Cmlx/mlx: that whole
+# tree is `Cmlx`'s SwiftPM source path, and CMake vendors doctest (with
+# its own example main.cpp files) into whatever build dir it's given —
+# SwiftPM's target-type auto-detection sees those and misidentifies Cmlx
+# as an executable target, breaking every other target's `import Cmlx`.
+# Confirmed the hard way: built once with the build dir nested inside, and
+# `swift build -c release` broke on the very next run. /tmp is well
+# outside anything SwiftPM scans.
+MLX_CMAKE_BUILD_DIR="/tmp/quill-mlx-metallib-build"
+
+if [ ! -f "$METALLIB_CACHE" ]; then
+    echo "→ building mlx.metallib (mlx-swift @ ${MLX_COMMIT:0:12}, not cached)..."
+    if ! xcrun -sdk macosx -f metal >/dev/null 2>&1; then
+        echo "Metal compiler not found — run: xcodebuild -downloadComponent MetalToolchain" >&2
+        exit 1
+    fi
+    if ! command -v cmake >/dev/null 2>&1 || ! command -v ninja >/dev/null 2>&1; then
+        echo "cmake/ninja not found — run: brew install cmake ninja" >&2
+        exit 1
+    fi
+    cmake -S "$MLX_CMAKE_DIR" -B "$MLX_CMAKE_BUILD_DIR" -G Ninja -DCMAKE_BUILD_TYPE=Release
+    ninja -C "$MLX_CMAKE_BUILD_DIR" mlx-metallib
+    mkdir -p "$(dirname "$METALLIB_CACHE")"
+    cp "${MLX_CMAKE_BUILD_DIR}/mlx/backend/metal/kernels/mlx.metallib" "$METALLIB_CACHE"
+else
+    echo "→ reusing cached mlx.metallib (mlx-swift @ ${MLX_COMMIT:0:12})..."
+fi
+
 # Sparkle ships as a framework (SPM binary target), not a plain dylib —
 # the executable needs a real rpath to find it inside the app bundle.
 # SPM's own default rpaths (`@loader_path`, the Swift toolchain dirs — see
@@ -51,6 +99,10 @@ echo "→ assembling ${APP}..."
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources" "$APP/Contents/Frameworks"
 cp .build/release/quill "$APP/Contents/MacOS/quill"
+# MLX looks for "mlx.metallib" colocated with the running binary first
+# (confirmed via mlx-swift's own device.cpp) — Contents/MacOS is exactly
+# that directory for the packaged app.
+cp "$METALLIB_CACHE" "$APP/Contents/MacOS/mlx.metallib"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
 cp Resources/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
 

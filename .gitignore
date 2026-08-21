@@ -1,5 +1,10 @@
 .build/
 .swiftpm/
+# Compiled MLX Metal shader library (mlx.metallib) — real build artifact,
+# not source; see scripts/build-app.sh's "building mlx.metallib" step for
+# why it can't be produced by `swift build` alone and has to be cached
+# here instead of inside .build/ (which a fresh checkout wipes).
+.metallib-cache/
 *.xcodeproj
 *.xcworkspace
 .DS_Store

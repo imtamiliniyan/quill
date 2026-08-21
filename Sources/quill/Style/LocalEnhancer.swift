@@ -1,6 +1,13 @@
 import Foundation
+import HuggingFace
+import MLXHuggingFace
 import MLXLLM
 import MLXLMCommon
+// The `#huggingFaceTokenizerLoader()`/`#huggingFaceLoadModelContainer(...)`
+// macros expand to code that references `Tokenizers.AutoTokenizer` by name —
+// needs to be in scope at this call site even though nothing in this file
+// spells `Tokenizers` directly.
+import Tokenizers
 
 /// A no-key, no-cloud tone/grammar rewrite path — the direct answer to what
 /// FluidVoice calls "Fluid Intelligence": a small on-device language model
@@ -10,11 +17,22 @@ import MLXLMCommon
 /// option for real tone/grammar rewrites, versus `AutoCleanupLevel.none`'s
 /// verbatim typing on the other end.
 ///
-/// Backed by Apple's MLX (https://github.com/ml-explore/mlx-swift-examples) —
-/// the same on-device inference approach Apple's own tooling uses, distinct
+/// Backed by Apple's MLX (https://github.com/ml-explore/mlx-swift-lm) — the
+/// same on-device inference approach Apple's own tooling uses, distinct
 /// from FluidVoice's private "Fluid Intelligence" runtime. This is Quill's
 /// own integration against models Hugging Face already hosts publicly, not
 /// borrowed code.
+///
+/// On mlx-swift-lm, not the older mlx-swift-examples — switched after a
+/// real crash report (SIGABRT inside MLX's own Metal scheduler init) traced
+/// to mlx-swift-examples' pinned MLX version predating Apple's M5 GPU
+/// entirely. mlx-swift-lm's `loadContainer` no longer bundles a default
+/// downloader (that's how it dropped the swift-transformers dependency that
+/// forced the old pin), so model loads go through `MLXHuggingFace`'s
+/// `#huggingFaceLoadModelContainer` macro instead of
+/// `LLMModelFactory.shared.loadContainer` directly, and on-disk presence
+/// checks go through `HuggingFace.HubCache` instead of the old (now
+/// package-private) `ModelConfiguration.modelDirectory`.
 ///
 /// Supports more than one model (`LocalLLMModel.all`) rather than a single
 /// hardcoded one — every entry point below takes a `modelID`, defaulting to
@@ -63,24 +81,35 @@ actor LocalEnhancer {
         return result.output.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
+    /// `HubCache`'s own repo-directory naming convention
+    /// (`models--<namespace>--<name>`) for `modelID` — the top-level folder
+    /// holding that repo's `blobs/`, `refs/`, and `snapshots/` (not the
+    /// resolved snapshot itself, which needs an actual commit hash to find;
+    /// existence/non-emptiness of the top-level folder is a sufficient
+    /// "has this ever been downloaded" signal without needing one). `nil`
+    /// only if `modelID` isn't in "namespace/name" form, which none of
+    /// `LocalLLMModel.all`'s hardcoded ids ever are.
+    private static func repoDirectory(modelID: String) -> URL? {
+        guard let repo = Repo.ID(rawValue: modelID) else { return nil }
+        return HubCache.default.repoDirectory(repo: repo, kind: .model)
+    }
+
     /// True once `modelID`'s files are on disk, without triggering a load —
     /// lets Settings/onboarding show download state per model without
     /// paying the (slow) model-load cost just to check.
     static func isDownloaded(modelID: String = QuillSettings.localAIModelID) -> Bool {
-        let configuration = ModelConfiguration(id: modelID)
-        let dir = configuration.modelDirectory()
+        guard let dir = repoDirectory(modelID: modelID) else { return false }
         guard let contents = try? FileManager.default.contentsOfDirectory(atPath: dir.path) else {
             return false
         }
-        // Hub downloads land as .safetensors + config/tokenizer json — a
-        // non-empty directory is as good a signal as WhisperKit/Parakeet's
-        // own "is this downloaded" checks elsewhere in the app.
+        // Non-empty means at least blobs/refs/snapshots exist under it — as
+        // good a signal as WhisperKit/Parakeet's own "is this downloaded"
+        // checks elsewhere in the app.
         return !contents.isEmpty
     }
 
     static func deleteFiles(modelID: String = QuillSettings.localAIModelID) throws {
-        let configuration = ModelConfiguration(id: modelID)
-        let dir = configuration.modelDirectory()
+        guard let dir = repoDirectory(modelID: modelID) else { return }
         if FileManager.default.fileExists(atPath: dir.path) {
             try FileManager.default.removeItem(at: dir)
         }
@@ -114,7 +143,10 @@ actor LocalEnhancer {
         }
         let task = Task<ModelContainer, Error> {
             let configuration = ModelConfiguration(id: modelID)
-            return try await LLMModelFactory.shared.loadContainer(configuration: configuration) { progress in
+            // The macro-generated default hub client/tokenizer loader —
+            // see this file's header doc for why loading goes through this
+            // instead of `LLMModelFactory.shared.loadContainer` directly.
+            return try await #huggingFaceLoadModelContainer(configuration: configuration) { progress in
                 onProgress(progress.fractionCompleted)
             }
         }

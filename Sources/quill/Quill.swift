@@ -8,7 +8,7 @@ struct Quill: ParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "quill",
         abstract: "Minimal macOS dictation daemon. Hold Fn, speak, release.",
-        subcommands: [Run.self, Setup.self, Doctor.self, Models.self, Install.self],
+        subcommands: [Run.self, Setup.self, Doctor.self, Models.self, LocalAI.self, Install.self],
         defaultSubcommand: Run.self
     )
 }
@@ -521,6 +521,62 @@ struct Models: ParsableCommand {
             }
             sem.wait()
             if let e = capturedError { throw e }
+        }
+    }
+}
+
+/// CLI-only verification path for `LocalEnhancer` — no UI, no Accessibility
+/// permission needed (unlike the Fn-key path `Run` drives), just a direct
+/// download+load+rewrite against a real model. Exists to actually exercise
+/// the mlx-swift-lm migration end to end from the command line rather than
+/// only confirming it compiles.
+struct LocalAI: ParsableCommand {
+    static let configuration = CommandConfiguration(
+        abstract: "Exercise the on-device Local AI rewrite path directly.",
+        subcommands: [Test.self]
+    )
+
+    struct Test: ParsableCommand {
+        @Argument(help: "Model id to test (defaults to the current Local AI setting).")
+        var id: String?
+
+        func run() throws {
+            let modelID = id ?? QuillSettings.localAIModelID
+            print("testing local AI model: \(modelID)")
+            fflush(stdout)
+
+            // Not the DispatchSemaphore.wait() pattern `Models.Download`
+            // uses above: the download macro hops its progress callback
+            // onto `@MainActor`, and a synchronous semaphore wait fully
+            // blocks the main thread with no way to service that hop —
+            // a real deadlock, seen firsthand while testing this. Parking
+            // the main thread in `dispatchMain()` instead keeps the main
+            // dispatch queue (== the MainActor executor) alive so those
+            // hops can actually land, then `exit(_:)` ends the process
+            // once the detached task finishes.
+            Task.detached {
+                do {
+                    try await LocalEnhancer.shared.download(modelID: modelID) { progress in
+                        print(String(format: "download: %.0f%%", progress * 100))
+                        fflush(stdout)
+                    }
+                    print("model loaded, running a real rewrite…")
+                    fflush(stdout)
+                    let out = try await LocalEnhancer.shared.rewrite(
+                        "so i think we should meet at five thirty pm tomorrow and go over the numbers",
+                        tone: .cleanUp,
+                        modelID: modelID
+                    )
+                    print("rewrite output: \(out)")
+                    fflush(stdout)
+                    Darwin.exit(0)
+                } catch {
+                    print("ERROR: \(error)")
+                    fflush(stdout)
+                    Darwin.exit(1)
+                }
+            }
+            dispatchMain()
         }
     }
 }

@@ -9,21 +9,56 @@ let package = Package(
         .package(url: "https://github.com/argmaxinc/WhisperKit.git", from: "0.9.0"),
         .package(url: "https://github.com/FluidInference/FluidAudio.git", from: "0.12.4"),
         // Local (no-key, no-cloud) Auto Cleanup tone rewriting — a small on-device
-        // LLM via Apple's MLX, sitting between Light (rules-only) and Medium (BYOK).
+        // LLM via Apple's MLX, an alternative to Medium (BYOK) for anyone who'd
+        // rather not touch the network at all.
         //
-        // Pinned to 2.21.2, not latest: mlx-swift-examples 2.25+ bumped its
-        // swift-transformers requirement to 1.x, which WhisperKit's own
-        // swift-transformers 0.1.x pin can't satisfy — a genuine conflict
-        // between the two, not fixable by version juggling alone. 2.21.2
-        // still wants swift-transformers 0.1.x, compatible with WhisperKit.
+        // mlx-swift-lm, not the older mlx-swift-examples: MLXLLM/MLXLMCommon
+        // (same product names, same import sites) moved into this separate,
+        // actively-maintained package as of the mlx-swift-examples 2.29.x era —
+        // confirmed via its Package.swift, it drops the swift-transformers
+        // dependency entirely, which is what forced the old mlx-swift-examples
+        // pin to 2.21.2 in the first place (2.25+ wanted swift-transformers 1.x,
+        // WhisperKit's own pin at the time only went to 0.1.x — a real conflict,
+        // not fixable by version juggling alone). That conflict doesn't apply
+        // here since this package doesn't touch swift-transformers at all.
         //
-        // mlx-swift is pinned explicitly too: mlx-swift-examples 2.21.2's own
-        // manifest only loosely bounds it (< next major), and without this
-        // tighter pin SPM's whole-graph resolution silently grabbed a newer
-        // mlx-swift that broke source compatibility with 2.21.2 (hit this:
-        // resolved 0.31.6 against code built for 0.21.x, wouldn't compile).
-        .package(url: "https://github.com/ml-explore/mlx-swift-examples", exact: "2.21.2"),
-        .package(url: "https://github.com/ml-explore/mlx-swift", .upToNextMinor(from: "0.21.2")),
+        // The actual reason for this switch: mlx-swift 0.21.x's bundled Metal
+        // shader library predates the Apple M5 GPU entirely, and the very first
+        // MLX model load on M5 hardware reliably crashes the whole app —
+        // confirmed via a real crash report (SIGABRT, std::terminate inside
+        // mlx::core::scheduler::StreamThread's constructor, triggered from
+        // Device._defaultStream's lazy init). mlx-swift 0.31.4+ is from well
+        // after M5 shipped (Apple's own MLX research confirms M5 GPU support
+        // needs macOS >= 26.2 — this Mac qualifies) and mlx-swift-lm requires
+        // exactly that range.
+        .package(url: "https://github.com/ml-explore/mlx-swift-lm", exact: "3.31.4"),
+        .package(url: "https://github.com/ml-explore/mlx-swift", .upToNextMinor(from: "0.31.4")),
+        // mlx-swift-lm's own `loadContainer` no longer bundles a default
+        // Hugging Face downloader/tokenizer-loader (that's the whole reason
+        // it could drop swift-transformers) — it expects the app to supply
+        // one via MLXHuggingFace's `#huggingFaceLoadModelContainer` macro,
+        // which itself expects this specific package (`import HuggingFace`,
+        // literally referenced by name in the macro's generated code).
+        // No swift-transformers dependency here either, confirmed via its
+        // own Package.swift — doesn't reopen the WhisperKit conflict.
+        .package(url: "https://github.com/huggingface/swift-huggingface", from: "0.9.0"),
+        // MLXHuggingFace's own macro-generated code references `Tokenizers`
+        // by name at the call site (confirmed via its Macros.swift doc
+        // examples) — target dependencies aren't transitive for `import`
+        // visibility, so this target needs its own explicit dependency to
+        // import the `Tokenizers` module itself.
+        //
+        // Pinned at 1.1.6+, not WhisperKit 0.14.1's old 0.1.x range: the
+        // macro's generated code calls `Tokenizer.applyChatTemplate(...)`
+        // with the `[String: any Sendable]` signature and throws
+        // `Tokenizers.TokenizerError.missingChatTemplate` — both added in
+        // swift-transformers 1.1.6 (confirmed via its own git history), not
+        // present in 0.1.15. WhisperKit itself moved to swift-transformers
+        // 1.1.6+ as of its own 0.18.0 release (confirmed via WhisperKit's
+        // Package.swift) — this target's `from: "0.9.0"` WhisperKit pin has
+        // no upper bound, so the resolver is free to pick a WhisperKit
+        // version compatible with this, not stuck at 0.14.1.
+        .package(url: "https://github.com/huggingface/swift-transformers.git", .upToNextMinor(from: "1.1.6")),
         // Auto-update: background checks, native "update available" alert,
         // download + install, EdDSA signature verification against
         // SUPublicEDKey in Info.plist. The de facto standard for
@@ -38,8 +73,11 @@ let package = Package(
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
                 .product(name: "WhisperKit", package: "WhisperKit"),
                 .product(name: "FluidAudio", package: "FluidAudio"),
-                .product(name: "MLXLLM", package: "mlx-swift-examples"),
-                .product(name: "MLXLMCommon", package: "mlx-swift-examples"),
+                .product(name: "MLXLLM", package: "mlx-swift-lm"),
+                .product(name: "MLXLMCommon", package: "mlx-swift-lm"),
+                .product(name: "MLXHuggingFace", package: "mlx-swift-lm"),
+                .product(name: "HuggingFace", package: "swift-huggingface"),
+                .product(name: "Transformers", package: "swift-transformers"),
                 .product(name: "Sparkle", package: "Sparkle"),
             ],
             // Official provider logos (Enhancement Engine) — SPM resources
