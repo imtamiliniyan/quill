@@ -66,6 +66,17 @@ final class MainWindow: NSObject, NSWindowDelegate {
             win.minSize = NSSize(width: 600, height: 400)
             win.center()
             win.delegate = self
+
+            // Real title-bar pill, not a SwiftUI header row — sits in the
+            // actual titlebar strip next to the traffic lights so it stays
+            // visible above every sidebar tab. See TitleBarStatsView.swift.
+            let statsHosting = NSHostingView(rootView: TitleBarStatsView(state: appState))
+            statsHosting.frame = NSRect(x: 0, y: 0, width: 76, height: 28)
+            let statsAccessory = NSTitlebarAccessoryViewController()
+            statsAccessory.view = statsHosting
+            statsAccessory.layoutAttribute = .right
+            win.addTitlebarAccessoryViewController(statsAccessory)
+
             mainAppWindow = win
         }
         // Show a dock icon only while this window is around — clicking it

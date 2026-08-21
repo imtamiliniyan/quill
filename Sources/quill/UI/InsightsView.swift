@@ -17,22 +17,11 @@ struct InsightsView: View {
     private var todaySessions: Int { todayEntries.count }
 
     private var todaySavedMinutes: Double {
-        timeSavedMinutes(words: todayWords, dictationSeconds: todayEntries.reduce(0.0) { $0 + $1.durationSeconds })
-    }
-
-    /// Shared by Today's compact number and the all-time Time Saved card
-    /// below — one formula, not two copies. Clamped at 0: someone who
-    /// dictates slower than they'd type shouldn't see a negative "saved"
-    /// number, same "don't overclaim" posture as the WPM gauge.
-    private func timeSavedMinutes(words: Int, dictationSeconds: Double) -> Double {
-        let typingMinutes = Double(words) / Double(max(assumedWPM, 1))
-        return max(typingMinutes - dictationSeconds / 60.0, 0)
-    }
-
-    private func formatMinutes(_ minutes: Double) -> String {
-        let m = Int(minutes.rounded())
-        if m < 60 { return "\(m)m" }
-        return "\(m / 60)h \(m % 60)m"
+        DictationStats.timeSavedMinutes(
+            words: todayWords,
+            dictationSeconds: todayEntries.reduce(0.0) { $0 + $1.durationSeconds },
+            assumedWPM: assumedWPM
+        )
     }
 
     // MARK: - Quick insights grid
@@ -173,7 +162,7 @@ struct InsightsView: View {
             HStack(spacing: 0) {
                 todayStat(icon: "text.alignleft", value: "\(todayWords)", label: "words")
                 Divider().frame(height: 28).padding(.horizontal, 14)
-                todayStat(icon: "clock.fill", value: formatMinutes(todaySavedMinutes), label: "saved")
+                todayStat(icon: "clock.fill", value: DictationStats.formatMinutes(todaySavedMinutes), label: "saved")
                 Divider().frame(height: 28).padding(.horizontal, 14)
                 todayStat(icon: "waveform", value: "\(todaySessions)", label: "sessions")
                 Spacer()
@@ -205,7 +194,13 @@ struct InsightsView: View {
                 Text("TIME SAVED")
                     .font(.system(size: 10, weight: .semibold))
                     .foregroundColor(Theme.textTertiary)
-                Text(formatMinutes(timeSavedMinutes(words: stats.totalWords, dictationSeconds: stats.totalDictationSeconds)))
+                Text(
+                    DictationStats.formatMinutes(
+                        DictationStats.timeSavedMinutes(
+                            words: stats.totalWords, dictationSeconds: stats.totalDictationSeconds, assumedWPM: assumedWPM
+                        )
+                    )
+                )
                     .font(.system(size: 26, weight: .bold))
                     .foregroundColor(Theme.textPrimary)
                 Text("All time, vs. typing it out yourself.")

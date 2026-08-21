@@ -96,3 +96,25 @@ struct DictationStats {
         }
     }
 }
+
+extension DictationStats {
+    /// Estimated minutes saved by dictating instead of typing, given a
+    /// typing-speed assumption. A bare static func (not an instance method)
+    /// so callers who only have a subset of entries — "today" on Insights,
+    /// the compact stats pill in the sidebar — can use the same formula as
+    /// the all-time figure without building a full `DictationStats` over
+    /// entries they don't need. Clamped at 0: someone who dictates slower
+    /// than they'd type shouldn't see a negative "saved" number.
+    static func timeSavedMinutes(words: Int, dictationSeconds: Double, assumedWPM: Int) -> Double {
+        let typingMinutes = Double(words) / Double(max(assumedWPM, 1))
+        return max(typingMinutes - dictationSeconds / 60.0, 0)
+    }
+
+    /// "42m" under an hour, "1h 30m" at or above — shared by every surface
+    /// that shows a saved-time duration.
+    static func formatMinutes(_ minutes: Double) -> String {
+        let m = Int(minutes.rounded())
+        if m < 60 { return "\(m)m" }
+        return "\(m / 60)h \(m % 60)m"
+    }
+}
