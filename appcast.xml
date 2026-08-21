@@ -20,6 +20,26 @@
         <language>en</language>
 
         <item>
+            <title>Quill 0.10.0</title>
+            <pubDate>Fri, 21 Aug 2026 12:25:43 +0000</pubDate>
+            <sparkle:version>7</sparkle:version>
+            <sparkle:shortVersionString>0.10.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <link>https://github.com/imtamiliniyan/quill/releases/tag/v0.10.0</link>
+            <description><![CDATA[
+                <ul>
+                    <li>Fixed a real crash: Local AI (on-device rewriting) could crash Quill on Apple M5 Macs the moment a model tried to load. Verified fixed on real M5 hardware, not just in code.</li>
+                    <li>Enhancement Engine no longer shows a cloud provider and Local AI as both "Active" at once — only whichever one Auto Cleanup is actually set to says "Active" now; the other says what it's really doing instead.</li>
+                </ul>
+            ]]></description>
+            <enclosure
+                url="https://github.com/imtamiliniyan/quill/releases/download/v0.10.0/Quill-0.10.0.zip"
+                type="application/octet-stream"
+                sparkle:edSignature="jA6C1SKte2+GHHWsEdSWnvsqGmPZuwmqkS+xS3jd2/Vk6hLJerXZoCKkKdI4QLs2ZZ35pfhCyKf8vw00Q45xAw=="
+                length="57206377"
+            />
+        </item>
+        <item>
             <title>Quill 0.9.0</title>
             <pubDate>Fri, 21 Aug 2026 10:35:20 +0000</pubDate>
             <sparkle:version>6</sparkle:version>
