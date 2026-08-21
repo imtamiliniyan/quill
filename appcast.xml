@@ -1,10 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   Sparkle's update feed for Quill. SUFeedURL (Resources/Info.plist) points
-  here via raw.githubusercontent.com on the `master` branch, so pushing a
-  change to this file to master is what actually makes a new version
-  visible to the app's automatic background check and "Check for
-  Updates…" menu item — nothing else needs to change or redeploy.
+  here via jsDelivr's GitHub CDN mirror (cdn.jsdelivr.net/gh/...@master),
+  not raw.githubusercontent.com directly — confirmed via a real release
+  that raw.githubusercontent.com's Fastly edge cache can serve a stale
+  appcast for several minutes after a push, inconsistently across edge
+  locations (one geographic edge refreshed almost immediately, another
+  hadn't after a full app quit-and-relaunch), which defeats the whole
+  point of "push and it's live." jsDelivr has the same problem in
+  principle (also CDN-cached, ~7 day default TTL) but supports an
+  explicit purge: after pushing this file, hit
+  https://purge.jsdelivr.net/gh/imtamiliniyan/quill@master/appcast.xml
+  (a plain GET) to force that edge cache to drop the old copy — that GET
+  is the step that actually makes a new version visible to the app's
+  automatic background check and "Check for Updates…" menu item, same
+  as the plain git push used to be with raw.githubusercontent.com.
 
   Newest <item> goes first. Generate one via scripts/release-appcast.sh
   after scripts/build-app.sh, then paste it in here by hand — reviewed

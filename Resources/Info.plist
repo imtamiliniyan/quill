@@ -33,7 +33,7 @@
 	<key>NSAppleEventsUsageDescription</key>
 	<string>Quill needs this permission to type dictated text into whatever app you're focused on.</string>
 	<key>SUFeedURL</key>
-	<string>https://raw.githubusercontent.com/imtamiliniyan/quill/master/appcast.xml</string>
+	<string>https://cdn.jsdelivr.net/gh/imtamiliniyan/quill@master/appcast.xml</string>
 	<key>SUPublicEDKey</key>
 	<string>+DMZsFEOjM5ffE2DNr3vk37rOmPfKKZ7QsbwOyIDA1g=</string>
 	<key>SUEnableAutomaticChecks</key>

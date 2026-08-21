@@ -86,6 +86,10 @@ cat <<XML
     </item>
 XML
 echo ""
-echo "  3. Commit + push appcast.xml — that's what actually makes this"
-echo "     version visible to Sparkle's automatic check and to anyone"
-echo "     who clicks Check for Updates."
+echo "  3. Commit + push appcast.xml, then hit the jsDelivr purge URL —"
+echo "     that GET is what actually makes this version visible to"
+echo "     Sparkle's automatic check and to anyone who clicks Check for"
+echo "     Updates (jsDelivr caches for up to 7 days otherwise; a plain"
+echo "     push alone does NOT invalidate that on its own):"
+echo ""
+echo "     curl -s https://purge.jsdelivr.net/gh/imtamiliniyan/quill@master/appcast.xml"
