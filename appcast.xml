@@ -20,6 +20,29 @@
         <language>en</language>
 
         <item>
+            <title>Quill 0.11.0</title>
+            <pubDate>Fri, 21 Aug 2026 14:56:40 +0000</pubDate>
+            <sparkle:version>8</sparkle:version>
+            <sparkle:shortVersionString>0.11.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <link>https://github.com/imtamiliniyan/quill/releases/tag/v0.11.0</link>
+            <description><![CDATA[
+                <ul>
+                    <li>Fixed Local AI (on-device) dictation cleanup being unreliable: it could drop items from a list, respond to your dictation as if it were a chat question instead of cleaning it, or occasionally invent content that was never said.</li>
+                    <li>Spoken enumerations ("number one... number two...", or "first... second...") now format into a real numbered list.</li>
+                    <li>Spoken digit sequences ("five five five one two three four") now convert to actual numerals instead of staying spelled out as words.</li>
+                    <li>Renamed the "Medium" Auto Cleanup tier to "Cloud Model" in Style settings for clarity.</li>
+                </ul>
+            ]]></description>
+            <enclosure
+                url="https://github.com/imtamiliniyan/quill/releases/download/v0.11.0/Quill-0.11.0.zip"
+                type="application/octet-stream"
+                sparkle:edSignature="wmtS5tTWXaSJM1RY6sxSq2Sv8UKB97kWN1tJvyBM+vGWIHtjbq4ATUxzPZuIiL/+1hpXsQy1dq203KJ1ooGiDw=="
+                length="57219769"
+            />
+        </item>
+
+        <item>
             <title>Quill 0.10.0</title>
             <pubDate>Fri, 21 Aug 2026 12:25:43 +0000</pubDate>
             <sparkle:version>7</sparkle:version>
