@@ -30,6 +30,29 @@
         <language>en</language>
 
         <item>
+            <title>Quill 0.11.2</title>
+            <pubDate>Fri, 21 Aug 2026 19:33:25 +0000</pubDate>
+            <sparkle:version>10</sparkle:version>
+            <sparkle:shortVersionString>0.11.2</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <link>https://github.com/imtamiliniyan/quill/releases/tag/v0.11.2</link>
+            <description><![CDATA[
+                <ul>
+                    <li>Fixed spoken digit lists like "number one, number two, number three" not converting to "1 2 3" when there's no other content between them.</li>
+                    <li>Added a quick light/dark toggle and a bug-report shortcut in the title bar, always reachable regardless of which tab is open.</li>
+                    <li>Feedback now offers a "Copy Instead" fallback if your Mac doesn't open a mail app for the Send Feedback button.</li>
+                    <li>Fixed ⌘C/⌘V not working in text fields throughout the app.</li>
+                </ul>
+            ]]></description>
+            <enclosure
+                url="https://github.com/imtamiliniyan/quill/releases/download/v0.11.2/Quill-0.11.2.zip"
+                type="application/octet-stream"
+                sparkle:edSignature="ij4fKstwK8eVFra1eDBQUTed9quIUkE1fE85QyDy5WYbHKok+tVwh+VLLdi4nAncXYjG7fMFKRy2c8vw5EG+Dg=="
+                length="57232065"
+            />
+        </item>
+
+        <item>
             <title>Quill 0.11.1</title>
             <pubDate>Fri, 21 Aug 2026 15:21:09 +0000</pubDate>
             <sparkle:version>9</sparkle:version>
