@@ -23,6 +23,15 @@ struct FeedbackView: View {
     // so opening this tab never pays for it unasked.
     @State private var debugLogPreview: String = ""
     @State private var debugLoggingEnabled = QuillSettings.debugLoggingEnabled
+    // "Send Feedback" is fire-and-forget — `NSWorkspace.shared.open` on a
+    // mailto: URL can hand off to whatever's registered for that scheme
+    // and report success even when nothing usable happens next (e.g. the
+    // scheme is registered to a browser with no mailto handler, a real
+    // case hit during testing — LSHandlers had mailto: pointed at Chrome).
+    // Rather than trying to detect that unreliably, always offer this as
+    // a working fallback: copy the same message as plain text so it can
+    // be pasted into an email by hand.
+    @State private var copiedFallback = false
 
     private static let contactEmail = "tamil@iniyan.pro"
     // Sponsors enrollment is approved and live — points here now instead
@@ -168,6 +177,16 @@ struct FeedbackView: View {
             HStack {
                 Spacer()
                 Button {
+                    copyFeedback()
+                } label: {
+                    Label(copiedFallback ? "Copied" : "Copy Instead", systemImage: copiedFallback ? "checkmark" : "doc.on.doc")
+                        .font(.system(size: 12, weight: .medium))
+                }
+                .buttonStyle(.bordered)
+                .disabled(feedbackText.isEmpty)
+                .help("Copy this as plain text — useful if Send Feedback doesn't open a mail app.")
+
+                Button {
                     sendFeedback()
                 } label: {
                     Label("Send Feedback", systemImage: "paperplane.fill")
@@ -178,15 +197,22 @@ struct FeedbackView: View {
                 .disabled(feedbackText.isEmpty)
             }
 
-            Text("Opens a pre-filled email to \(Self.contactEmail) in your Mac's default mail app. Quill has no server of its own to send this to.")
-                .font(.system(size: 10.5))
-                .foregroundColor(Theme.textTertiary)
+            Text(
+                "Opens a pre-filled email to \(Self.contactEmail) in your Mac's default mail app. "
+                    + "Quill has no server of its own to send this to. If nothing opens, use \"Copy Instead\" "
+                    + "and paste it into an email yourself."
+            )
+            .font(.system(size: 10.5))
+            .foregroundColor(Theme.textTertiary)
         }
         .padding(18)
         .quillCard()
     }
 
-    private func sendFeedback() {
+    /// The message body, shared by the real `mailto:` send and the plain-text
+    /// copy fallback — one place building it instead of two copies drifting
+    /// apart.
+    private func feedbackBody() -> String {
         var body = feedbackText
         if !emailField.isEmpty {
             body += "\n\nReply to: \(emailField)"
@@ -197,16 +223,28 @@ struct FeedbackView: View {
                 body += "\n\nRecent log:\n\(debugLogPreview)"
             }
         }
+        return body
+    }
 
+    private func sendFeedback() {
         var components = URLComponents()
         components.scheme = "mailto"
         components.path = Self.contactEmail
         components.queryItems = [
             URLQueryItem(name: "subject", value: "Quill Feedback"),
-            URLQueryItem(name: "body", value: body),
+            URLQueryItem(name: "body", value: feedbackBody()),
         ]
         if let url = components.url {
             NSWorkspace.shared.open(url)
         }
+    }
+
+    private func copyFeedback() {
+        let text = "To: \(Self.contactEmail)\nSubject: Quill Feedback\n\n\(feedbackBody())"
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.setString(text, forType: .string)
+        copiedFallback = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { copiedFallback = false }
     }
 }
