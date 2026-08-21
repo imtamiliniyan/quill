@@ -25,9 +25,29 @@
 <rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
     <channel>
         <title>Quill</title>
-        <link>https://raw.githubusercontent.com/imtamiliniyan/quill/master/appcast.xml</link>
+        <link>https://cdn.jsdelivr.net/gh/imtamiliniyan/quill@master/appcast.xml</link>
         <description>Update feed for Quill, a macOS dictation app.</description>
         <language>en</language>
+
+        <item>
+            <title>Quill 0.11.1</title>
+            <pubDate>Fri, 21 Aug 2026 15:21:09 +0000</pubDate>
+            <sparkle:version>9</sparkle:version>
+            <sparkle:shortVersionString>0.11.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <link>https://github.com/imtamiliniyan/quill/releases/tag/v0.11.1</link>
+            <description><![CDATA[
+                <ul>
+                    <li>Fixed the update feed itself: switched SUFeedURL from raw.githubusercontent.com to jsDelivr's GitHub CDN mirror, which supports an explicit cache purge — a pushed appcast update now goes live within seconds instead of being stuck behind an inconsistent multi-minute edge cache.</li>
+                </ul>
+            ]]></description>
+            <enclosure
+                url="https://github.com/imtamiliniyan/quill/releases/download/v0.11.1/Quill-0.11.1.zip"
+                type="application/octet-stream"
+                sparkle:edSignature="NMdcSf3AmjrSjpMsIJd8vFYYChf265igOtb/3ae50zEngTWlAKZgCmi4aX9kmCe5rdL18zxTU298Qytd5PM+Dw=="
+                length="57219763"
+            />
+        </item>
 
         <item>
             <title>Quill 0.11.0</title>
