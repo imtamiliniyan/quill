@@ -320,18 +320,43 @@ enum DictationCleanupPrompt {
     /// applies to bare ordinal words above.
     static func convertSpokenDigitRuns(_ text: String) -> String {
         let digitWordAlternation = digitWords.keys.joined(separator: "|")
-        let pattern = "(?i)\\b(?:\(digitWordAlternation))\\b(?:[ ,]+\\b(?:\(digitWordAlternation))\\b)+"
+        // Each digit word after the first may be introduced by plain
+        // whitespace/commas, or by the word "number" itself (with
+        // optional surrounding whitespace/commas). Confirmed via a real
+        // run: "number one number two number three" (bare counting, no
+        // per-item content) didn't match without the "number" branch,
+        // since that word sitting between each digit word broke a
+        // whitespace-only adjacency requirement — and it separately
+        // doesn't qualify for `promoteSpokenEnumeration`'s list-building
+        // either, since there's no real content between markers for it
+        // to list. Real per-item content ("number one apple number two
+        // banana") still safely falls through untouched: the mandatory
+        // `[ ,]+` immediately before each "number"/digit-word requires
+        // *only* whitespace/commas there, so a real word breaks the run
+        // just like it always did.
+        let pattern = "(?i)\\b(?:number\\s+)?(?:\(digitWordAlternation))\\b" +
+            "(?:[ ,]+(?:number\\s+)?\\b(?:\(digitWordAlternation))\\b)+"
         guard let regex = try? NSRegularExpression(pattern: pattern) else { return text }
 
         let nsText = text as NSString
         let matches = regex.matches(in: text, range: NSRange(location: 0, length: nsText.length))
         guard !matches.isEmpty else { return text }
 
+        // Re-finds just the bare digit words within a matched span,
+        // dropping any "number" prefixes and punctuation, and re-joins
+        // their digit forms — same reconstruction whether or not
+        // "number" appeared in the original.
+        guard let wordRegex = try? NSRegularExpression(pattern: "(?i)\\b(?:\(digitWordAlternation))\\b") else { return text }
+
         var result = nsText
         for match in matches.reversed() {
             let matched = result.substring(with: match.range)
-            let words = matched.components(separatedBy: CharacterSet(charactersIn: " ,")).filter { !$0.isEmpty }
-            let digits = words.map { digitWords[$0.lowercased()] ?? $0 }.joined(separator: " ")
+            let matchedNS = matched as NSString
+            let wordMatches = wordRegex.matches(in: matched, range: NSRange(location: 0, length: matchedNS.length))
+            let digits = wordMatches
+                .map { matchedNS.substring(with: $0.range).lowercased() }
+                .map { digitWords[$0] ?? $0 }
+                .joined(separator: " ")
             result = result.replacingCharacters(in: match.range, with: digits) as NSString
         }
         return result as String
