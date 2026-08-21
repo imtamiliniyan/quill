@@ -20,6 +20,28 @@
         <language>en</language>
 
         <item>
+            <title>Quill 0.9.0</title>
+            <pubDate>Fri, 21 Aug 2026 10:35:20 +0000</pubDate>
+            <sparkle:version>6</sparkle:version>
+            <sparkle:shortVersionString>0.9.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <link>https://github.com/imtamiliniyan/quill/releases/tag/v0.9.0</link>
+            <description><![CDATA[
+                <ul>
+                    <li>Local AI now offers a second on-device model, Qwen2.5 3B, alongside the original Llama 3.2 3B — pick either in Enhancement Engine, no key or cloud needed for either.</li>
+                    <li>Removed Auto Cleanup's "Light" tier — it never did real formatting (spoken times, spoken lists), so it was a dead end next to None. Local AI and Medium still fall back to the same basic filler cleanup when their backend isn't ready.</li>
+                    <li>Insights: hovering the Activity chart or the streak calendar now shows the exact word count for that day.</li>
+                    <li>Send Feedback can now attach a real local debug log to help diagnose bugs faster — never your dictated text, on by default, one toggle in Settings > Data & Privacy to turn off.</li>
+                </ul>
+            ]]></description>
+            <enclosure
+                url="https://github.com/imtamiliniyan/quill/releases/download/v0.9.0/Quill-0.9.0.zip"
+                type="application/octet-stream"
+                sparkle:edSignature="HPlPDXdq50cpA1DCru7FPqNSE1+9Tc+oqor/2C0Lxc5W07Fzjz08AfikR+OLoQL9+mlr8ASK/HjNUAots9UwAA=="
+                length="10082181"
+            />
+        </item>
+        <item>
             <title>Quill 0.8.0</title>
             <pubDate>Thu, 20 Aug 2026 20:32:56 +0000</pubDate>
             <sparkle:version>5</sparkle:version>
