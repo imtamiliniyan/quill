@@ -95,6 +95,8 @@ enum StyleRewriter {
     }
 
     static func rewrite(_ text: String, tone: StyleTone, provider: StyleProvider) async throws -> String {
+        if let lineBreak = DictationCleanupPrompt.standaloneLineBreak(text) { return lineBreak }
+
         guard let key = APIKeyStore.key(for: provider), !key.isEmpty else {
             throw StyleRewriteError.noAPIKey
         }

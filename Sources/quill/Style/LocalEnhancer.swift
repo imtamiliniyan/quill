@@ -55,6 +55,8 @@ actor LocalEnhancer {
         tone: StyleTone,
         modelID: String = QuillSettings.localAIModelID
     ) async throws -> String {
+        if let lineBreak = DictationCleanupPrompt.standaloneLineBreak(text) { return lineBreak }
+
         let container = try await loadedContainer(modelID: modelID)
 
         let messages: [[String: String]] = [

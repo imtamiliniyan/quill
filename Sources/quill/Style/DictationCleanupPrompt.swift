@@ -108,6 +108,36 @@ enum DictationCleanupPrompt {
         "<transcript>\n\(text)\n</transcript>\n\nClean and format the transcript above per your instructions. Output only the cleaned transcript, nothing else."
     }
 
+    /// Recognizes a dictation that is ENTIRELY a spoken line-break command
+    /// with no other content ("new line"/"next line"/"new paragraph",
+    /// alone, with only trivial surrounding punctuation) — checked by
+    /// both `LocalEnhancer` and `StyleRewriter` *before* calling a model
+    /// at all, not as a post-processing backstop.
+    ///
+    /// A degenerate "no visible content, only a break" input gives an LLM
+    /// nothing real to work from, and it showed: confirmed by repeated
+    /// real runs against the local model, a standalone "new line"
+    /// produced a different wrong thing almost every time — a blank
+    /// blockquote marker, a stray `###` header, or (rule 4's own command
+    /// echoed back as content) the literal words "New line" typed out —
+    /// never reliably just a break. Answering directly, without a model
+    /// call, is both cheaper and the only way to make this actually
+    /// consistent.
+    static func standaloneLineBreak(_ text: String) -> String? {
+        let normalized = text
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .trimmingCharacters(in: CharacterSet(charactersIn: ".!?,"))
+            .lowercased()
+        switch normalized {
+        case "new line", "next line":
+            return "\n"
+        case "new paragraph":
+            return "\n\n"
+        default:
+            return nil
+        }
+    }
+
     /// Deterministic backstop behind the "no stray markdown structure"
     /// prompt rules — prompting alone can't hit 100% at a nonzero
     /// temperature. Confirmed by repeated real runs against the local
