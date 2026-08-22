@@ -30,6 +30,27 @@
         <language>en</language>
 
         <item>
+            <title>Quill 0.11.3</title>
+            <pubDate>Sat, 22 Aug 2026 17:12:17 +0000</pubDate>
+            <sparkle:version>11</sparkle:version>
+            <sparkle:shortVersionString>0.11.3</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <link>https://github.com/imtamiliniyan/quill/releases/tag/v0.11.3</link>
+            <description><![CDATA[
+                <ul>
+                    <li>Fixed dictating "new line" completely on its own (nothing else said) sometimes typing the literal words "New line" instead of inserting a break.</li>
+                    <li>Added a "literal" trigger word: say "literal new line", "literal period", "literal comma", "literal question mark", or "literal exclamation mark/point" to force that exact result, guaranteed, regardless of how long or complex the dictation is.</li>
+                </ul>
+            ]]></description>
+            <enclosure
+                url="https://github.com/imtamiliniyan/quill/releases/download/v0.11.3/Quill-0.11.3.zip"
+                type="application/octet-stream"
+                sparkle:edSignature="SPpOxNBOWH9+TnXXEs7Mq47ljTgnYnVk9XQt5DOTQqyL3ypSLBRtVCh7dJRi2WAIe+6Ltbp6GHo5DfSVlOyYBA=="
+                length="57233243"
+            />
+        </item>
+
+        <item>
             <title>Quill 0.11.2</title>
             <pubDate>Fri, 21 Aug 2026 19:33:25 +0000</pubDate>
             <sparkle:version>10</sparkle:version>
