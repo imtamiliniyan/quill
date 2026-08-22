@@ -38,6 +38,8 @@ enum DictationCleanupPrompt {
        - "new paragraph" → paragraph break
        - "period" → .
        - "comma" → ,
+       - "question mark" → ?
+       - "exclamation mark" or "exclamation point" → !
        - "bold [text]" → **text**
        - "italic [text]" → *text*
        - "header [text]" or "heading [text]" → ## text
