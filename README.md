@@ -1,8 +1,10 @@
 # Quill
 
 [![GitHub Stars](https://img.shields.io/github/stars/imtamiliniyan/quill?style=flat&label=Stars)](https://github.com/imtamiliniyan/quill/stargazers)
+[![Downloads](https://img.shields.io/github/downloads/imtamiliniyan/quill/total?style=flat&label=Downloads&color=brightgreen)](https://github.com/imtamiliniyan/quill/releases)
 [![Sponsor](https://img.shields.io/badge/%E2%99%A1-Sponsor-ff69b4)](https://github.com/sponsors/imtamiliniyan)
 [![Latest release](https://img.shields.io/github/v/release/imtamiliniyan/quill?label=latest)](https://github.com/imtamiliniyan/quill/releases/latest)
+[![Platform](https://img.shields.io/badge/platform-macOS%2014%2B-lightgrey?logo=apple)](https://github.com/imtamiliniyan/quill/releases/latest)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-iniyanai-0A66C2?logo=linkedin&logoColor=white)](https://linkedin.com/in/iniyanai)
 
