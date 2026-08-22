@@ -1589,6 +1589,29 @@ body {
   padding-top: 12px;
 }
 
+/* Ask AI Section — a last decision-helper between the FAQ and the
+   final download CTA. Reuses .btn-pill-outline as-is (the site's own
+   existing neutral-ink outline style, already used in the hero) rather
+   than introducing a new accent color for this one section. */
+.ask-ai-section {
+  padding-top: 0;
+  text-align: center;
+}
+
+.ask-ai-text {
+  font-size: 16px;
+  color: var(--ink-dim);
+  margin-bottom: 20px;
+}
+
+.ask-ai-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 /* Final CTA Card */
 .final-cta-container {
   padding-bottom: 120px;
