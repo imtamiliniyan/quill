@@ -35,10 +35,10 @@ The binary is a single Swift Package executable target (`swift build -c release`
 ## High-level shape
 
 ```
-                                    ┌───────────────────────┐
+                                    ┌──────────────────────────┐
                                     │   Quill (ArgumentParser) │
                                     │   Quill.swift            │
-                                    └───────────┬───────────┘
+                                    └───────────┬──────────────┘
                                                 │ wires modules, NSApp.run()
                                                 ▼
 ┌──────────────────┐  hotkey down   ┌──────────────────┐
@@ -55,10 +55,10 @@ The binary is a single Swift Package executable target (`swift build -c release`
                                     └────────┬─────────┘
                                              │ String
                                              ▼
-                                    ┌──────────────────┐
+                                    ┌─────────────────────┐
                                     │ TranscriptSanitizer │  bracket-noise strip +
-                                    │  (always runs)    │  "literal <command>" trigger
-                                    └────────┬─────────┘
+                                    │  (always runs)      │  "literal <command>" trigger
+                                    └────────┬────────────┘
                                              │
                                              ▼
                                     ┌──────────────────┐
@@ -67,10 +67,10 @@ The binary is a single Swift Package executable target (`swift build -c release`
                                     └────────┬─────────┘  Google/OpenRouter, BYOK)
                                              │
                                              ▼
-                                    ┌──────────────────┐
-                                    │  TextFormatting   │  lowercase-first / space-
+                                    ┌────────────────────┐
+                                    │  TextFormatting    │  lowercase-first / space-
                                     │  (+ CursorContext) │  between / smart-capitalize
-                                    └────────┬─────────┘
+                                    └────────┬───────────┘
                                              │
                                              ▼
                                     ┌──────────────────┐
