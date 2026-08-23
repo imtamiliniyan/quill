@@ -14,8 +14,8 @@ dist/
 .tasks/
 
 # Environment variables — NEVER commit real credentials
-# .env.example is safe to commit (it contains no real values)
 .env
+.env.example
 .env.local
 .env.development.local
 .env.test.local
