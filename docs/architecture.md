@@ -61,10 +61,10 @@ The binary is a single Swift Package executable target (`swift build -c release`
                                     └────────┬────────────┘
                                              │
                                              ▼
-                                    ┌──────────────────┐
+                                    ┌───────────────────┐
                                     │   AutoCleanup     │  None / Local AI (MLX) /
                                     │  (per-tier)       │  Medium (OpenAI/Anthropic/
-                                    └────────┬─────────┘  Google/OpenRouter, BYOK)
+                                    └────────┬──────────┘  Google/OpenRouter, BYOK)
                                              │
                                              ▼
                                     ┌────────────────────┐
