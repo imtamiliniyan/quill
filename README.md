@@ -10,7 +10,7 @@
 
 [![Models](https://img.shields.io/badge/Models-Whisper%20%7C%20Parakeet%20v3%20%26%20v2%20%7C%20Parakeet%20110M-informational)](#supported-models)
 
-A free, on-device replacement for paid dictation tools like Wispr Flow and Gladia. Hold a hotkey, speak, release. Quill transcribes locally on the Apple Neural Engine and types the result directly into whatever's focused. No subscription, no account required, and no audio or dictation history ever leaves your Mac unless you explicitly connect your own cloud API key.
+A free, on-device replacement for paid dictation tools like Wispr Flow and Gladio. Hold a hotkey, speak, release. Quill transcribes locally on the Apple Neural Engine and types the result directly into whatever's focused. No subscription, no account required, and no audio or dictation history ever leaves your Mac unless you explicitly connect your own cloud API key.
 
 **[Download the latest release](https://github.com/imtamiliniyan/quill/releases/latest)** · macOS 14+ on Apple Silicon (M1 or newer)
 
