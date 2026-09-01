@@ -562,10 +562,21 @@ struct LocalAI: ParsableCommand {
         @Option(name: .long, help: "Text to rewrite (defaults to a canned sample).")
         var text: String?
 
+        @Option(name: .long, help: "Tone to rewrite with (Formal/Casual/Concise/Very Casual/Clean Up). Defaults to the current Auto Cleanup tone setting.")
+        var tone: String?
+
         func run() throws {
             let modelID = id ?? QuillSettings.localAIModelID
             let inputText = text ?? "so i think we should meet at five thirty pm tomorrow and go over the numbers"
-            print("testing local AI model: \(modelID)")
+            // Real bug, found via real use: this used to hardcode `.cleanUp`
+            // regardless of what was passed or set, silently ignoring the
+            // whole point of a tone-comparison test. `AutoCleanup.apply`'s
+            // actual `.localAI` case always reads
+            // `QuillSettings.autoCleanupTone` — matching that here is what
+            // makes this harness test the real pipeline instead of a
+            // hardcoded stand-in for it.
+            let resolvedTone = tone.flatMap(StyleTone.init(rawValue:)) ?? QuillSettings.autoCleanupTone
+            print("testing local AI model: \(modelID) · tone: \(resolvedTone.rawValue)")
             fflush(stdout)
 
             // Not the DispatchSemaphore.wait() pattern `Models.Download`
@@ -587,7 +598,7 @@ struct LocalAI: ParsableCommand {
                     fflush(stdout)
                     let out = try await LocalEnhancer.shared.rewrite(
                         inputText,
-                        tone: .cleanUp,
+                        tone: resolvedTone,
                         modelID: modelID
                     )
                     print("rewrite output: \(out)")

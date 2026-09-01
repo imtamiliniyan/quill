@@ -191,7 +191,7 @@ private struct DiffReviewView: View {
                 Image(systemName: hasChanges ? "sparkles" : "checkmark.circle")
                     .font(.system(size: 10))
                     .foregroundColor(Theme.accent)
-                Text(hasChanges ? "Auto Cleanup rewrote this" : "No changes — looks good")
+                Text(hasChanges ? "Auto Cleanup rewrote this" : "No changes, looks good")
                     .font(.system(size: 10.5, weight: .semibold))
                     .foregroundColor(Theme.accent)
                 Spacer()

@@ -7,14 +7,16 @@ enum OnboardingStep {
     case permissions
     case modelPicker
     case downloading
-    /// Local AI (Phase 5e): offered once, right after the transcription
-    /// model finishes downloading — mirrors FluidVoice's "one more thing"
-    /// placement, but for Quill's own MLX-backed AutoCleanupLevel.localAI
-    /// rather than their Fluid Intelligence. First-run only for now; a
-    /// returning user who already completed onboarding before this step
-    /// existed won't see it here — that's what Phase 5c's "Run Onboarding
-    /// Again" is for, not yet built.
-    case localAI
+    /// A quick, lightweight pick — Casual or Formal — for whichever tone
+    /// Local AI/Cloud Model rewrite into if the user ever switches to
+    /// one of those later (Harper, Auto Cleanup's zero-setup default,
+    /// doesn't use tone at all). Not Concise: confirmed via real testing
+    /// against the actual model, Concise doesn't reliably do its one job
+    /// (cutting words) on the 3B on-device model, so it stays out of
+    /// this quick first-run pick — still available in full in Style's
+    /// own Tone section for anyone on Cloud Model, where a larger model
+    /// follows it far more reliably.
+    case tone
     case done
 }
 
@@ -29,8 +31,6 @@ final class OnboardingState: ObservableObject {
     @Published var selectedModel: TranscriptionModel?
     @Published var downloadProgress: Double?
     @Published var downloadError: String?
-    @Published var localAIDownloadProgress: Double?
-    @Published var localAIDownloadError: String?
 
     /// Set once `beginDownload` finishes — Run.run() reuses this instead of
     /// constructing (and re-warming) a second transcriber for the same model.
@@ -131,44 +131,26 @@ final class OnboardingState: ObservableObject {
                 warmedTranscriber = transcriber
                 downloadProgress = 1
                 QuillSettings.onboardingCompleted = true
-                step = .localAI
+                // No separate "pick Local AI or paste in a key" step
+                // anymore — Auto Cleanup already defaults to Harper
+                // (`QuillSettings.autoCleanupLevel`), which needs neither
+                // a download nor a key, so there's nothing left to make a
+                // new user decide before they've even dictated once. The
+                // one thing still worth a quick pick up front is tone,
+                // for whenever Local AI/Cloud Model get switched on later.
+                step = .tone
             } catch {
                 downloadError = "\(error)"
             }
         }
     }
 
-    /// Downloads the Local AI model (~1.8 GB) and turns Auto Cleanup on
-    /// at the `.localAI` level once it lands — the "Download & Enable"
-    /// path on the Local AI onboarding step.
-    func beginLocalAIDownload() {
-        localAIDownloadProgress = 0
-        localAIDownloadError = nil
-        Task {
-            do {
-                try await LocalEnhancer.shared.download { [weak self] fraction in
-                    Task { @MainActor in self?.localAIDownloadProgress = fraction }
-                }
-                QuillSettings.autoCleanupLevel = .localAI
-                step = .done
-            } catch {
-                localAIDownloadError = "\(error)"
-            }
-        }
-    }
-
-    /// "I'll use my own AI key instead" — sets Auto Cleanup to the BYOK
-    /// tier without downloading anything here; the actual key still gets
-    /// entered later in Settings > Style, same as anyone who turns Medium
-    /// on manually. No local model download triggered.
-    func useOwnAIKeyInstead() {
-        QuillSettings.autoCleanupLevel = .medium
-        step = .done
-    }
-
-    /// Neither now — Auto Cleanup stays at its `.none` default. Nothing
-    /// downloaded, nothing enabled; can be turned on later from Settings.
-    func skipLocalAI() {
+    /// Onboarding's quick tone pick — Casual or Formal only, see
+    /// `OnboardingStep.tone`'s doc comment for why Concise isn't offered
+    /// here. Always completes onboarding regardless of which is picked;
+    /// this is a preference, not a requirement to satisfy.
+    func chooseTone(_ tone: StyleTone) {
+        QuillSettings.autoCleanupTone = tone
         step = .done
     }
 }

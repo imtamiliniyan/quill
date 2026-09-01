@@ -16,8 +16,8 @@ struct OnboardingView: View {
                 ModelPickerStep(state: state)
             case .downloading:
                 DownloadingStep(state: state)
-            case .localAI:
-                LocalAIStep(state: state)
+            case .tone:
+                ToneStep(state: state)
             case .done:
                 DoneStep(onFinished: onFinished)
             }
@@ -46,7 +46,7 @@ struct OnboardingView: View {
         case .permissions: return "A couple of permissions, then you're set."
         case .modelPicker: return "Pick a transcription model."
         case .downloading: return "Downloading your model…"
-        case .localAI: return "One more thing (optional)."
+        case .tone: return "How should rewrites sound?"
         case .done: return "All set."
         }
     }
@@ -263,72 +263,51 @@ private struct DownloadingStep: View {
     }
 }
 
-// MARK: - Local AI
+// MARK: - Tone
 
-/// Offered once, right after the transcription model finishes — Quill's
-/// own answer to FluidVoice's "one more thing" Fluid Intelligence screen,
-/// but downloading Quill's own MLX/Llama model and routing into Quill's
-/// own AutoCleanupLevel, not their runtime. Three ways out, all equally
-/// visible: download it, use your own cloud key instead, or skip for now.
-private struct LocalAIStep: View {
+/// Casual or Formal only — see `OnboardingStep.tone`'s doc comment for
+/// why Concise isn't offered here. Doesn't block or require Local AI/
+/// Cloud Model to actually be on; it just pre-sets the tone those two
+/// tiers will use whenever they are switched on later, from Style.
+private struct ToneStep: View {
     @ObservedObject var state: OnboardingState
+
+    private let options: [StyleTone] = [.casual, .formal]
 
     var body: some View {
         VStack(spacing: 16) {
-            VStack(alignment: .leading, spacing: 10) {
-                Text("Clean up dictation automatically?")
-                    .font(.system(size: 15, weight: .medium))
-                Text(AutoCleanupLevel.localAI.summary)
-                    .font(.system(size: 12))
-                    .foregroundColor(Theme.textSecondary)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(16)
-            .background(Theme.textQuaternary)
-            .cornerRadius(10)
+            Text("Applies whenever Local AI or Cloud Model rewrites a dictation. Pick one now, change it anytime in Style.")
+                .font(.system(size: 12))
+                .foregroundColor(Theme.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
 
-            if let progress = state.localAIDownloadProgress, state.localAIDownloadError == nil {
-                VStack(spacing: 10) {
-                    ProgressView(value: progress)
-                        .tint(Theme.accent)
-                    Text("\(Int(progress * 100))%")
-                        .font(.system(size: 12))
-                        .foregroundColor(Theme.textSecondary)
-                }
-                .padding(20)
-                .frame(maxWidth: .infinity)
-                .background(Theme.textQuaternary)
-                .cornerRadius(10)
-            } else if let error = state.localAIDownloadError {
-                VStack(spacing: 10) {
-                    Text(error)
-                        .font(.system(size: 12))
-                        .foregroundColor(.red)
-                    Button("Try Again") { state.beginLocalAIDownload() }
-                        .buttonStyle(.bordered)
-                    Button("Skip for now") { state.skipLocalAI() }
-                        .buttonStyle(.plain)
-                        .font(.system(size: 12))
-                        .foregroundColor(Theme.textSecondary)
-                }
-                .padding(20)
-                .frame(maxWidth: .infinity)
-                .background(Theme.textQuaternary)
-                .cornerRadius(10)
-            } else {
-                VStack(spacing: 10) {
-                    Button("Download & Enable (~1.8 GB)") { state.beginLocalAIDownload() }
-                        .buttonStyle(.borderedProminent)
-                        .tint(Theme.accent)
-                        .frame(maxWidth: .infinity)
-                    Button("I'll use my own AI key instead") { state.useOwnAIKeyInstead() }
-                        .buttonStyle(.bordered)
-                        .frame(maxWidth: .infinity)
-                    Button("Skip for now") { state.skipLocalAI() }
-                        .buttonStyle(.plain)
-                        .font(.system(size: 12))
-                        .foregroundColor(Theme.textSecondary)
+            HStack(spacing: 10) {
+                ForEach(options) { tone in
+                    Button {
+                        state.chooseTone(tone)
+                    } label: {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(tone.rawValue)
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundColor(Theme.textPrimary)
+                            Text(tone.styleHint)
+                                .font(.system(size: 10.5))
+                                .foregroundColor(Theme.textTertiary)
+                            Text(tone.example)
+                                .font(.system(size: 11))
+                                .foregroundColor(Theme.textPrimary)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(10)
+                                .background(Theme.textQuaternary)
+                                .cornerRadius(8)
+                        }
+                        .padding(14)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Theme.fillHover)
+                        .cornerRadius(10)
+                    }
+                    .buttonStyle(.plain)
                 }
             }
         }

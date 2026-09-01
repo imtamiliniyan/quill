@@ -9,6 +9,7 @@ enum SidebarItem: String, CaseIterable, Identifiable {
     case gettingStarted = "Getting Started"
     case changeLog = "Change Log"
     case feedback = "Feedback"
+    case support = "Support"
 
     var id: String { rawValue }
 
@@ -22,6 +23,7 @@ enum SidebarItem: String, CaseIterable, Identifiable {
         case .gettingStarted: return "checkmark.circle"
         case .changeLog: return "doc.text.magnifyingglass"
         case .feedback: return "envelope"
+        case .support: return "heart"
         }
     }
 }
@@ -167,6 +169,7 @@ struct MainView: View {
         case .gettingStarted: GettingStartedView(onRunOnboardingAgain: onRunOnboardingAgain)
         case .changeLog: ChangeLogView()
         case .feedback: FeedbackView()
+        case .support: SupportView()
         case nil: EmptyView()
         }
     }

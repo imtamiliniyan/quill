@@ -213,7 +213,7 @@ private struct CustomVocabularySettingsView: View {
             Text("Custom Vocabulary")
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundColor(Theme.textPrimary)
-            Text("Names and terms that get mis-transcribed — list what Quill actually hears, and what it should type instead.")
+            Text("Names and terms that get mis-transcribed: list what Quill actually hears, and what it should type instead.")
                 .font(.system(size: 11))
                 .foregroundColor(Theme.textSecondary)
 

@@ -72,6 +72,13 @@ struct GettingStartedView: View {
                                 ready: localAIReady,
                                 optional: true
                             )
+                            checklistRow(
+                                title: "Tone",
+                                detail: "Applies whenever Local AI or Cloud Model rewrites a dictation. Change it in Style.",
+                                ready: true,
+                                optional: true,
+                                trailingLabel: QuillSettings.autoCleanupTone.rawValue
+                            )
                         }
                     }
                     .padding(18)
@@ -96,7 +103,13 @@ struct GettingStartedView: View {
         localAIReady = QuillSettings.autoCleanupLevel == .localAI && LocalEnhancer.isDownloaded()
     }
 
-    private func checklistRow(title: String, detail: String, ready: Bool, optional: Bool = false) -> some View {
+    /// `trailingLabel` overrides the default "Ready"/"Not set up"/"Needed"
+    /// badge text — for a row like Tone that's never actually "not set
+    /// up" (it always has a value, defaulting to Casual) and reads better
+    /// showing the live current value instead of a generic status word.
+    private func checklistRow(
+        title: String, detail: String, ready: Bool, optional: Bool = false, trailingLabel: String? = nil
+    ) -> some View {
         HStack(spacing: 10) {
             Image(systemName: ready ? "checkmark.circle.fill" : (optional ? "circle" : "exclamationmark.circle"))
                 .font(.system(size: 14))
@@ -110,7 +123,7 @@ struct GettingStartedView: View {
                     .foregroundColor(Theme.textTertiary)
             }
             Spacer()
-            Text(ready ? "Ready" : (optional ? "Not set up" : "Needed"))
+            Text(trailingLabel ?? (ready ? "Ready" : (optional ? "Not set up" : "Needed")))
                 .font(.system(size: 9.5, weight: .bold))
                 .foregroundColor(ready ? Theme.accent : (optional ? Theme.textTertiary : .orange))
         }

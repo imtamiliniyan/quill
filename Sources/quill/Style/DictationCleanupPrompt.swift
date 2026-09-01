@@ -84,7 +84,21 @@ enum DictationCleanupPrompt {
     /// appended rather than substituted so Style's existing tone picker
     /// keeps meaning what it already means.
     static func full(tone: StyleTone) -> String {
-        "\(base)\n\nADDITIONAL STYLE DIRECTIVE\n\(tone.instruction)"
+        var directive = tone.instruction
+        if tone == .concise {
+            // Confirmed via real testing: without this, Concise silently
+            // produced byte-identical output to Casual — the base
+            // prompt's own "never drop a word, that's the one thing this
+            // app must never do" language (rule 1, repeated elsewhere) is
+            // stated forcefully enough that a 3B model treats it as
+            // overriding a single later tone line asking it to cut
+            // words, rather than reading the two as compatible. Concise
+            // is the one tone whose entire job is cutting redundant
+            // wording, so it needs an explicit, scoped carve-out instead
+            // of relying on the model to resolve that tension on its own.
+            directive += " This is the one exception to this prompt's usual \"never drop a word\" rule: cutting genuinely redundant filler phrasing (\"basically\", \"what I'm trying to say is\", \"in my opinion\", restating the same point twice) is expected and required here, not a violation of it. Still never drop a distinct fact, item, name, or number — only redundant wording, never content."
+        }
+        return "\(base)\n\nADDITIONAL STYLE DIRECTIVE\n\(directive)"
     }
 
     /// Wraps raw dictated `text` for the "user" message role, in place of

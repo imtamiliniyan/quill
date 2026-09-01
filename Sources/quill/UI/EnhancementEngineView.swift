@@ -159,7 +159,7 @@ struct EnhancementEngineView: View {
                         Image(systemName: "cpu")
                             .font(.system(size: 10))
                             .foregroundColor(Theme.textTertiary)
-                        Text("Small on-device models for full tone rewrites: no key, no cloud, nothing leaves this Mac. Pick one below — one-time download per model, then it runs offline.")
+                        Text("Small on-device models for full tone rewrites: no key, no cloud, nothing leaves this Mac. Pick one below: one-time download per model, then it runs offline.")
                             .font(.system(size: 10.5))
                             .foregroundColor(Theme.textSecondary)
                             .fixedSize(horizontal: false, vertical: true)
@@ -462,7 +462,7 @@ struct EnhancementEngineView: View {
                         // Auto Cleanup is set to Local AI — Rewrite follows
                         // that choice now too, so this key sits unused
                         // until Auto Cleanup switches off Local AI.
-                        Label("Saved as the Cloud Model provider — unused while Auto Cleanup is set to Local AI in Style.", systemImage: "checkmark.circle")
+                        Label("Saved as the Cloud Model provider, unused while Auto Cleanup is set to Local AI in Style.", systemImage: "checkmark.circle")
                             .font(.system(size: 10.5, weight: .medium))
                             .foregroundColor(Theme.textSecondary)
                     }

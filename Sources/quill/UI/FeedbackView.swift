@@ -2,16 +2,20 @@ import AppKit
 import SwiftUI
 
 /// A real sidebar tab (peer to Dictation/Insights/Style/Voice Engine/
-/// Enhancement Engine/Change Log/Getting Started). FluidVoice's own
-/// Feedback tab is the layout reference (structure only, no code/branding
-/// borrowed, same standing rule as elsewhere) — but scoped down on
-/// explicit instruction: one "Support Quill" button instead of their two
-/// (Star on GitHub + Support), and no fake "Send" button pretending to
-/// hit a backend Quill doesn't have. The form below is genuinely
-/// functional with zero new infrastructure: it opens a pre-filled
-/// `mailto:` draft in the user's own mail client, addressed to Quill's
-/// real, already-public contact address (same one already used on the
-/// landing site's privacy/terms pages).
+/// Enhancement Engine/Change Log/Getting Started/Support). FluidVoice's
+/// own Feedback tab is the layout reference (structure only, no code/
+/// branding borrowed, same standing rule as elsewhere) — but scoped down
+/// on explicit instruction: no fake "Send" button pretending to hit a
+/// backend Quill doesn't have. The form below is genuinely functional
+/// with zero new infrastructure: it opens a pre-filled `mailto:` draft in
+/// the user's own mail client, addressed to Quill's real, already-public
+/// contact address (same one already used on the landing site's privacy/
+/// terms pages).
+///
+/// `lovingQuillCard` is deliberately just the star-the-repo nudge, not a
+/// financial ask — that lives in its own place now, `SupportView`'s
+/// GitHub Sponsors button, so this one button isn't doing two different
+/// jobs at once.
 struct FeedbackView: View {
     @State private var emailField: String = ""
     @State private var feedbackText: String = ""
@@ -34,9 +38,12 @@ struct FeedbackView: View {
     @State private var copiedFallback = false
 
     private static let contactEmail = "tamil@iniyan.pro"
-    // Sponsors enrollment is approved and live — points here now instead
-    // of the bare repo URL.
-    private static let githubURL = URL(string: "https://github.com/sponsors/imtamiliniyan")!
+    // The repo itself, not GitHub Sponsors — this card is the quick,
+    // zero-cost "star it" nudge now that Support (SupportView.swift) is
+    // where the actual financial-support ask lives, with its own GitHub
+    // Sponsors button. Two different asks belong in two different
+    // places, not the same button doing both jobs.
+    private static let repoURL = URL(string: "https://github.com/imtamiliniyan/quill")!
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -78,16 +85,16 @@ struct FeedbackView: View {
                 .foregroundColor(.yellow)
                 .padding(.top, 2)
             VStack(alignment: .leading, spacing: 4) {
-                Text("Loving Quill?")
+                Text("Enjoying Quill?")
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundColor(Theme.textPrimary)
-                Text("Support continued development to help make local dictation even better.")
+                Text("A star on GitHub helps more people discover it, and takes two seconds.")
                     .font(.system(size: 11))
                     .foregroundColor(Theme.textSecondary)
             }
             Spacer()
-            Button("Support Quill") {
-                NSWorkspace.shared.open(Self.githubURL)
+            Button("Add star on GitHub") {
+                NSWorkspace.shared.open(Self.repoURL)
             }
             .buttonStyle(.borderedProminent)
             .tint(Theme.accent)
@@ -139,7 +146,7 @@ struct FeedbackView: View {
                         .foregroundColor(Theme.textPrimary)
                     Text(
                         debugLoggingEnabled
-                            ? "macOS version, current model/provider, and recent app log — never dictation content."
+                            ? "macOS version, current model/provider, and recent app log, never dictation content."
                             : "Debug logging is off in Settings, so only macOS version and current model/provider are included."
                     )
                     .font(.system(size: 10.5))
@@ -184,7 +191,7 @@ struct FeedbackView: View {
                 }
                 .buttonStyle(.bordered)
                 .disabled(feedbackText.isEmpty)
-                .help("Copy this as plain text — useful if Send Feedback doesn't open a mail app.")
+                .help("Copy this as plain text, useful if Send Feedback doesn't open a mail app.")
 
                 Button {
                     sendFeedback()

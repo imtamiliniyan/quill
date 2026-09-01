@@ -63,19 +63,47 @@ struct DictationStats {
         mostTranscriptionsInADay = byDay.values.map(\.count).max() ?? 0
 
         let days = Set(byDay.keys)
+        let excludeWeekends = QuillSettings.excludeWeekendsFromStreak
+        func isWeekend(_ date: Date) -> Bool {
+            let weekday = cal.component(.weekday, from: date) // 1 = Sunday, 7 = Saturday
+            return weekday == 1 || weekday == 7
+        }
+
         if days.isEmpty {
             streak = 0
         } else {
             var count = 0
             var day = cal.startOfDay(for: Date())
-            if !days.contains(day) {
+            // A weekend "today" with no entry isn't a broken streak when
+            // weekends are excluded — it just never needed one. Only
+            // shift back to yesterday for the ordinary "haven't dictated
+            // yet today, but the day isn't over" case.
+            let todaySkippable = excludeWeekends && isWeekend(day)
+            if !todaySkippable, !days.contains(day) {
                 day = cal.date(byAdding: .day, value: -1, to: day) ?? day
             }
-            while days.contains(day) {
+            while true {
+                if excludeWeekends, isWeekend(day) {
+                    day = cal.date(byAdding: .day, value: -1, to: day) ?? day
+                    continue
+                }
+                guard days.contains(day) else { break }
                 count += 1
                 day = cal.date(byAdding: .day, value: -1, to: day) ?? day
             }
             streak = count
+        }
+
+        // Two active days count as consecutive if `next` is literally the
+        // day after `date` — or, with weekends excluded, the next
+        // non-weekend day after it (Friday → Monday counts, same as the
+        // backward walk above treats it).
+        func isConsecutive(_ date: Date, _ next: Date) -> Bool {
+            var day = cal.date(byAdding: .day, value: 1, to: date) ?? date
+            while excludeWeekends, isWeekend(day) {
+                day = cal.date(byAdding: .day, value: 1, to: day) ?? day
+            }
+            return cal.isDate(day, inSameDayAs: next)
         }
 
         let sortedDays = days.sorted()
@@ -85,7 +113,7 @@ struct DictationStats {
             var longest = 1
             var current = 1
             for i in 1..<sortedDays.count {
-                if cal.dateComponents([.day], from: sortedDays[i - 1], to: sortedDays[i]).day == 1 {
+                if isConsecutive(sortedDays[i - 1], sortedDays[i]) {
                     current += 1
                     longest = max(longest, current)
                 } else {

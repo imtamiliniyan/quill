@@ -33,6 +33,7 @@ enum QuillSettings {
         static let openRouterModel = "openRouterModel"
         static let localAIModelID = "localAIModelID"
         static let debugLoggingEnabled = "debugLoggingEnabled"
+        static let excludeWeekendsFromStreak = "excludeWeekendsFromStreak"
         static let reviewBeforeTyping = "reviewBeforeTyping"
         static let customVocabulary = "customVocabulary"
     }
@@ -66,24 +67,35 @@ enum QuillSettings {
         set { defaults.set(newValue.rawValue, forKey: Key.styleProvider) }
     }
 
-    /// Off (.none) by default — same "opt in, not silently on" posture as
-    /// everything else in Quill. Once set, though, it applies to every
-    /// dictation automatically with no further interaction, which is the
-    /// whole point: a one-time setting, not a per-dictation decision.
+    /// Defaults to `.harper`, not `.none` — real grammar/spelling
+    /// correction out of the box, with no download and no key to
+    /// connect, unlike the `.localAI`/`.medium` tiers. This is what
+    /// replaced onboarding's old dedicated "Local AI or your own key?"
+    /// step (`OnboardingState`'s retired `.localAI` step): a genuinely
+    /// free, zero-setup default beats making a new user choose between
+    /// a 1.8GB download and pasting in an API key before they've even
+    /// tried dictating once. Once set, applies to every dictation
+    /// automatically with no further interaction — a one-time setting,
+    /// not a per-dictation decision, same as before.
     static var autoCleanupLevel: AutoCleanupLevel {
-        get { AutoCleanupLevel(rawValue: defaults.string(forKey: Key.autoCleanupLevel) ?? "") ?? .none }
+        get { AutoCleanupLevel(rawValue: defaults.string(forKey: Key.autoCleanupLevel) ?? "") ?? .harper }
         set { defaults.set(newValue.rawValue, forKey: Key.autoCleanupLevel) }
     }
 
-    /// Which tone Medium rewrites into, chosen once here rather than
-    /// per-dictation — set it and forget it, same posture as
-    /// `autoCleanupLevel` itself. Auto Cleanup only ever offers
-    /// Formal/Casual/Very Casual (Clean Up and Concise are Rewrite-on-
-    /// demand-only); anything else stored — including a stale `.concise`
-    /// from before this option set changed — falls back to `.casual`.
+    /// Which tone Local AI/Cloud Model rewrite into, chosen once here
+    /// rather than per-dictation — set it and forget it, same posture as
+    /// `autoCleanupLevel` itself. Style's standalone Tone section offers
+    /// Formal/Casual/Concise (`.veryCasual` was dropped from that UI, not
+    /// from this allow-list — a real bug, found via real use: this list
+    /// was never updated when the Tone section replaced Very Casual with
+    /// Concise, so picking Concise there was being silently downgraded
+    /// to Casual by this getter before it ever reached the model,
+    /// independent of whether the model itself would have followed it).
+    /// Anything else stored, including a genuinely stale `.veryCasual`
+    /// from before that change, falls back to `.casual`.
     static var autoCleanupTone: StyleTone {
         get {
-            let allowed: [StyleTone] = [.formal, .casual, .veryCasual]
+            let allowed: [StyleTone] = [.formal, .casual, .concise]
             let stored = StyleTone(rawValue: defaults.string(forKey: Key.autoCleanupTone) ?? "")
             guard let stored, allowed.contains(stored) else { return .casual }
             return stored
@@ -256,6 +268,17 @@ enum QuillSettings {
                 Task { await QuillLog.shared.clear() }
             }
         }
+    }
+
+    /// Off by default — preserves the streak calculation everyone already
+    /// has today (a missed Saturday/Sunday breaks it, same as any other
+    /// day) rather than silently changing what an existing streak means.
+    /// When on, `DictationStats` treats weekends as transparent: a
+    /// weekend with no dictation neither counts toward the streak nor
+    /// breaks it, and Friday → Monday counts as consecutive.
+    static var excludeWeekendsFromStreak: Bool {
+        get { defaults.object(forKey: Key.excludeWeekendsFromStreak) as? Bool ?? false }
+        set { defaults.set(newValue, forKey: Key.excludeWeekendsFromStreak) }
     }
 
     /// Pushes `darkModeEnabled` onto NSApp — call once at each app-launch

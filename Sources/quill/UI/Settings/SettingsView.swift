@@ -181,8 +181,10 @@ private struct GeneralSettingsView: View {
 private struct SystemSettingsView: View {
     @State private var launchAtLogin = LaunchAtLoginManager.isEnabled
     @State private var darkModeEnabled = QuillSettings.darkModeEnabled
+    @State private var excludeWeekendsFromStreak = QuillSettings.excludeWeekendsFromStreak
 
     var body: some View {
+        ScrollView {
         VStack(alignment: .leading, spacing: 14) {
             Toggle("Launch Quill at login", isOn: $launchAtLogin)
                 .toggleStyle(.switch)
@@ -206,6 +208,19 @@ private struct SystemSettingsView: View {
             Text("Overrides System Settings > Appearance for Quill specifically. Takes effect immediately.")
                 .font(.system(size: 11))
                 .foregroundColor(Theme.textSecondary)
+
+            Divider().opacity(0.15)
+
+            Toggle("Exclude weekends from streak", isOn: $excludeWeekendsFromStreak)
+                .toggleStyle(.switch)
+                .tint(Theme.accent)
+                .onChange(of: excludeWeekendsFromStreak) { _, wantsOn in
+                    QuillSettings.excludeWeekendsFromStreak = wantsOn
+                }
+            Text("A Saturday or Sunday with no dictation won't break your streak, and Friday to Monday counts as consecutive. Off by default so an existing streak's meaning doesn't change under you.")
+                .font(.system(size: 11))
+                .foregroundColor(Theme.textSecondary)
+        }
         }
     }
 }
@@ -222,6 +237,18 @@ private struct PrivacySettingsView: View {
     }
 
     var body: some View {
+        // Missing this ScrollView was the actual bug behind "the Data &
+        // Privacy tab clutters and hides the close button" — this tab
+        // has more content than General/System (two paragraphs, two
+        // status lines, history + debug log rows) and the sheet's own
+        // frame is a fixed 380pt (see SettingsView.body); without a
+        // ScrollView to absorb the overflow, the whole VStack rendered
+        // taller than that fixed height, and the outer window let the
+        // excess push the header/tab-picker/X button (all siblings
+        // above this in SettingsView.body, not part of this view) out
+        // of the visible area instead of just clipping this tab's
+        // content. General already wraps itself the same way.
+        ScrollView {
         VStack(alignment: .leading, spacing: 16) {
             Label("Everything stays on this Mac", systemImage: "lock.shield.fill")
                 .font(.system(size: 13, weight: .semibold))
@@ -307,6 +334,7 @@ private struct PrivacySettingsView: View {
         }
         .task {
             debugLogByteCount = await QuillLog.shared.approximateByteCount()
+        }
         }
     }
 
