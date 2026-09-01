@@ -81,6 +81,29 @@ else
     echo "→ reusing cached mlx.metallib (mlx-swift @ ${MLX_COMMIT:0:12})..."
 fi
 
+# harper-cli (github.com/Automattic/harper) — Auto Cleanup's "Harper"
+# level. Prebuilt release binary, not a Rust build from source: this repo
+# has no other Rust code and no reason to require the Rust toolchain just
+# to get one ~55MB CLI binary. Cached by version outside .build/, same
+# reasoning as mlx.metallib above — a fresh checkout shouldn't re-download
+# it every time. Bump HARPER_VERSION to pick up a new release.
+HARPER_VERSION="2.8.0"
+HARPER_CACHE=".harper-cache/${HARPER_VERSION}/harper-cli"
+if [ ! -f "$HARPER_CACHE" ]; then
+    echo "→ downloading harper-cli ${HARPER_VERSION} (not cached)..."
+    mkdir -p "$(dirname "$HARPER_CACHE")"
+    HARPER_TMP=$(mktemp -d)
+    trap 'rm -rf "$HARPER_TMP"' EXIT
+    curl -fsSL \
+        "https://github.com/Automattic/harper/releases/download/v${HARPER_VERSION}/harper-cli-aarch64-apple-darwin.tar.gz" \
+        -o "${HARPER_TMP}/harper-cli.tar.gz"
+    tar -xzf "${HARPER_TMP}/harper-cli.tar.gz" -C "$HARPER_TMP"
+    mv "${HARPER_TMP}/harper-cli" "$HARPER_CACHE"
+    chmod +x "$HARPER_CACHE"
+else
+    echo "→ reusing cached harper-cli ${HARPER_VERSION}..."
+fi
+
 # Sparkle ships as a framework (SPM binary target), not a plain dylib —
 # the executable needs a real rpath to find it inside the app bundle.
 # SPM's own default rpaths (`@loader_path`, the Swift toolchain dirs — see
@@ -128,6 +151,15 @@ cp -R .build/release/Sparkle.framework "$APP/Contents/Frameworks/Sparkle.framewo
 # declaration stays only for a bare `swift run`, a path this script
 # doesn't use.
 cp -R Sources/quill/Resources/ProviderLogos "$APP/Contents/Resources/ProviderLogos"
+
+# harper-cli — Contents/Resources/ alongside everything else Bundle.main
+# already reads from (AppIcon.icns, ProviderLogos). Signed explicitly
+# here since it's a separate Mach-O executable, not just data; codesign
+# --deep below re-signs the whole bundle afterward anyway, but a bare
+# downloaded binary needs at least an ad-hoc signature to run at all
+# under Gatekeeper even before that.
+cp "$HARPER_CACHE" "$APP/Contents/Resources/harper-cli"
+codesign --force -s "$SIGN_IDENTITY" "$APP/Contents/Resources/harper-cli"
 
 echo "→ signing ${APP}..."
 codesign --force --deep -s "$SIGN_IDENTITY" "$APP"

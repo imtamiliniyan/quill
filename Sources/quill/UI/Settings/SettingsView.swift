@@ -240,7 +240,7 @@ private struct PrivacySettingsView: View {
             The one exception: Style's cloud rewriting, using your own OpenAI or \
             Anthropic key. That happens either when you press Rewrite in Style, \
             or automatically on every dictation if Auto Cleanup is set to \
-            Medium. In that case, every dictation is sent to your chosen \
+            Cloud Model. In that case, every dictation is sent to your chosen \
             provider before it's typed. Auto Cleanup's None and Local AI levels, \
             and Style's "Clean Up" tone, never touch the network at all.
             """)

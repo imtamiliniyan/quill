@@ -33,6 +33,8 @@ enum QuillSettings {
         static let openRouterModel = "openRouterModel"
         static let localAIModelID = "localAIModelID"
         static let debugLoggingEnabled = "debugLoggingEnabled"
+        static let reviewBeforeTyping = "reviewBeforeTyping"
+        static let customVocabulary = "customVocabulary"
     }
 
     /// The single-word interjections `TranscriptSanitizer.cleanUpFillers`
@@ -167,6 +169,18 @@ enum QuillSettings {
         set { defaults.set(newValue, forKey: Key.removeFillerWords) }
     }
 
+    /// Whether Auto Cleanup's rewrite gets a review popup (raw vs cleaned
+    /// diff, Accept/Reject) before it's typed, instead of typing
+    /// immediately. Only ever consulted when Auto Cleanup actually
+    /// changed something — off entirely for `.none` or a no-op cleanup,
+    /// same check `DictationHistory.append` already uses for whether to
+    /// keep `rawText` at all. Defaults on: this is the feature being
+    /// added, not an opt-in extra.
+    static var reviewBeforeTyping: Bool {
+        get { defaults.object(forKey: Key.reviewBeforeTyping) as? Bool ?? true }
+        set { defaults.set(newValue, forKey: Key.reviewBeforeTyping) }
+    }
+
     /// User-editable filler word list (Voice Engine). `UserDefaults`
     /// returns nil, not an empty array, for a key that was never set —
     /// that's what tells "never customized, use the default list" apart
@@ -175,6 +189,45 @@ enum QuillSettings {
     static var fillerWords: [String] {
         get { defaults.array(forKey: Key.fillerWords) as? [String] ?? defaultFillerWords }
         set { defaults.set(newValue, forKey: Key.fillerWords) }
+    }
+
+    /// One explicit "when Quill hears any of `heard`, type `replacement`
+    /// instead" rule — Voice Engine's Custom Vocabulary editor, one entry
+    /// per proper noun/technical term the user has actually seen
+    /// mis-transcribed. Explicit pairs rather than a fuzzy auto-detected
+    /// match (an earlier version of this feature): neither ASR engine
+    /// exposes real vocabulary boosting (confirmed: Parakeet is a
+    /// transducer model, that trick only works for prompt-conditioned
+    /// ones like Whisper), and edit-distance guessing at what counts as
+    /// "close enough" to a vocabulary word has a real false-positive
+    /// cost — confirmed via real testing, a bound wide enough to catch
+    /// genuine mishearings ("cloud" → "Claude") also risks ordinary
+    /// unrelated words. An explicit list has no such ambiguity, and
+    /// handles a mishearing no distance metric ever could (e.g. "fluid
+    /// boys" for "FluidVoice" — nothing alike in spelling, just in
+    /// sound), at the cost of the user needing to have actually seen the
+    /// mistake once first.
+    struct VocabularyReplacement: Codable, Identifiable, Equatable {
+        let id: UUID
+        var heard: [String]
+        var replacement: String
+    }
+
+    /// Stored as JSON `Data`, not `UserDefaults.array`, since each entry
+    /// is a small struct rather than a single string — same reasoning as
+    /// every other `Codable`-via-JSON setting would use, just none of
+    /// the others so far have needed it.
+    static var vocabularyReplacements: [VocabularyReplacement] {
+        get {
+            guard let data = defaults.data(forKey: Key.customVocabulary),
+                  let decoded = try? JSONDecoder().decode([VocabularyReplacement].self, from: data)
+            else { return [] }
+            return decoded
+        }
+        set {
+            guard let data = try? JSONEncoder().encode(newValue) else { return }
+            defaults.set(data, forKey: Key.customVocabulary)
+        }
     }
 
     /// OpenRouter's chosen model (Enhancement Engine) — the one provider

@@ -24,6 +24,7 @@ struct VoiceEngineView: View {
                     ModelsSettingsView(menuBar: menuBar)
                         .padding(18)
                         .quillCard()
+                    CustomVocabularySettingsView()
                 }
                 .padding(.horizontal, Theme.pagePadding)
                 .padding(.bottom, 20)
@@ -176,5 +177,176 @@ private struct DotRating: View {
                 }
             }
         }
+    }
+}
+
+/// Proper nouns/technical terms the selected ASR model tends to mis-hear
+/// ("Llama" → "Lama", "Qwen" → "when") — corrected after transcription by
+/// `TranscriptSanitizer.correctVocabulary`, since neither Parakeet nor
+/// WhisperKit exposes real vocabulary boosting (Parakeet's a transducer
+/// model; that trick only works for prompt-conditioned ones like
+/// Whisper). Same chip-list editor pattern as Style's Remove Filler
+/// Words — list itself writes straight through to `QuillSettings`, no
+/// separate "apply" step, and no master toggle: an empty list already is
+/// "off."
+private struct CustomVocabularySettingsView: View {
+    @State private var replacements = QuillSettings.vocabularyReplacements
+    @State private var heardText = ""
+    @State private var replacementText = ""
+    /// Non-nil while editing an existing rule instead of creating a new
+    /// one — the form doubles as both, same field pair either way, only
+    /// the submit button's action and label change. Without this, every
+    /// newly-seen mis-hearing had to become its own separate rule (real
+    /// user report: three different rows all mapping to "Claude") since
+    /// there was no way to add one more variant to an existing rule.
+    @State private var editingID: UUID?
+
+    private var isEditing: Bool { editingID != nil }
+
+    private var canSubmit: Bool {
+        !heardText.trimmingCharacters(in: .whitespaces).isEmpty
+            && !replacementText.trimmingCharacters(in: .whitespaces).isEmpty
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("Custom Vocabulary")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(Theme.textPrimary)
+            Text("Names and terms that get mis-transcribed — list what Quill actually hears, and what it should type instead.")
+                .font(.system(size: 11))
+                .foregroundColor(Theme.textSecondary)
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text("When Quill hears")
+                    .font(.system(size: 10.5, weight: .semibold))
+                    .foregroundColor(Theme.textSecondary)
+                TextField("e.g. cloud, clod, clown", text: $heardText)
+                    .textFieldStyle(.roundedBorder)
+                Text("Separate multiple mis-hearings with commas.")
+                    .font(.system(size: 10))
+                    .foregroundColor(Theme.textTertiary)
+            }
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Change it to")
+                    .font(.system(size: 10.5, weight: .semibold))
+                    .foregroundColor(Theme.textSecondary)
+                TextField("e.g. Claude", text: $replacementText)
+                    .textFieldStyle(.roundedBorder)
+                    .onSubmit(submit)
+            }
+
+            HStack(spacing: 8) {
+                Button(isEditing ? "Save Changes" : "Add Replacement", action: submit)
+                    .buttonStyle(.borderedProminent)
+                    .tint(Theme.accent)
+                    .disabled(!canSubmit)
+                if isEditing {
+                    Button("Cancel", action: cancelEditing)
+                        .buttonStyle(.bordered)
+                }
+            }
+
+            if !replacements.isEmpty {
+                Divider().opacity(0.1)
+                HStack(spacing: 4) {
+                    Text("Your Dictionary")
+                        .font(.system(size: 11.5, weight: .semibold))
+                        .foregroundColor(Theme.textPrimary)
+                    Text("(\(replacements.count))")
+                        .font(.system(size: 11))
+                        .foregroundColor(Theme.textTertiary)
+                }
+                Text("Quill corrects these automatically, every dictation.")
+                    .font(.system(size: 10))
+                    .foregroundColor(Theme.textTertiary)
+                VStack(spacing: 8) {
+                    ForEach(replacements) { rule in
+                        replacementRow(rule)
+                    }
+                }
+            }
+        }
+        .padding(18)
+        .quillCard()
+    }
+
+    private func replacementRow(_ rule: QuillSettings.VocabularyReplacement) -> some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(rule.heard.joined(separator: ", "))
+                    .font(.system(size: 10.5))
+                    .strikethrough()
+                    .foregroundColor(Theme.textTertiary)
+                Text(rule.replacement)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(Theme.textPrimary)
+            }
+            Spacer()
+            Button {
+                startEditing(rule)
+            } label: {
+                Label("Modify", systemImage: "slider.horizontal.3")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(Theme.textPrimary)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(Theme.fillHover)
+                    .cornerRadius(6)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 6)
+                            .stroke(Theme.textTertiary.opacity(0.3), lineWidth: 1)
+                    )
+            }
+            .buttonStyle(.plain)
+            Button {
+                delete(rule)
+            } label: {
+                Image(systemName: "trash")
+                    .font(.system(size: 11))
+                    .foregroundColor(Theme.textTertiary)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(10)
+        .background(editingID == rule.id ? Theme.accent.opacity(0.1) : Theme.textQuaternary)
+        .cornerRadius(8)
+    }
+
+    private func startEditing(_ rule: QuillSettings.VocabularyReplacement) {
+        editingID = rule.id
+        heardText = rule.heard.joined(separator: ", ")
+        replacementText = rule.replacement
+    }
+
+    private func cancelEditing() {
+        editingID = nil
+        heardText = ""
+        replacementText = ""
+    }
+
+    private func delete(_ rule: QuillSettings.VocabularyReplacement) {
+        replacements.removeAll { $0.id == rule.id }
+        QuillSettings.vocabularyReplacements = replacements
+        if editingID == rule.id { cancelEditing() }
+    }
+
+    private func submit() {
+        let heard = heardText
+            .split(separator: ",")
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+        let replacement = replacementText.trimmingCharacters(in: .whitespaces)
+        guard !heard.isEmpty, !replacement.isEmpty else { return }
+
+        if let id = editingID, let idx = replacements.firstIndex(where: { $0.id == id }) {
+            replacements[idx].heard = heard
+            replacements[idx].replacement = replacement
+        } else {
+            replacements.append(QuillSettings.VocabularyReplacement(id: UUID(), heard: heard, replacement: replacement))
+        }
+        QuillSettings.vocabularyReplacements = replacements
+        cancelEditing()
     }
 }

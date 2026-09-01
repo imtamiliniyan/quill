@@ -2,6 +2,7 @@ import Foundation
 
 enum AutoCleanupLevel: String, CaseIterable, Identifiable {
     case none = "None"
+    case harper = "Harper"
     case localAI = "Local AI"
     case medium = "Medium"
 
@@ -20,7 +21,7 @@ enum AutoCleanupLevel: String, CaseIterable, Identifiable {
     /// reason it has a delay and needs a key.
     var displayName: String {
         switch self {
-        case .none, .localAI:
+        case .none, .localAI, .harper:
             return rawValue
         case .medium:
             return "Cloud Model"
@@ -31,6 +32,8 @@ enum AutoCleanupLevel: String, CaseIterable, Identifiable {
         switch self {
         case .none:
             return "Types exactly what you said, including filler words."
+        case .harper:
+            return "Fixes real grammar, spelling, and capitalization errors — no AI model, nothing downloaded, no tone rewrite. Bundled, always ready."
         case .localAI:
             return "Full tone rewrite using a small on-device AI model: no key, no cloud, nothing leaves your Mac. First use downloads the model (~1.8 GB)."
         case .medium:
@@ -49,16 +52,39 @@ enum AutoCleanup {
         case .none:
             return text
 
+        case .harper:
+            // Deliberately its own case, not folded into the localAI/
+            // medium fallback chain — explicit ask: Harper stays fully
+            // independent of the LLM-backed tiers, never silently
+            // combined with either.
+            let preCleaned = TranscriptSanitizer.cleanUpFillers(text)
+            do {
+                return try HarperGrammarChecker.check(preCleaned)
+            } catch {
+                FileHandle.standardError.write(Data(
+                    "auto cleanup (harper) failed, falling back to local cleanup: \(error)\n".utf8
+                ))
+                return preCleaned
+            }
+
         case .localAI:
+            // Deterministic filler strip runs first, always — the prompt
+            // asks the model to judge "um"/"you know"/etc. as filler vs.
+            // real content itself, and confirmed via real use, a 3B
+            // on-device model doesn't reliably call that either way on
+            // longer dictations. Regex removal of the known list carries
+            // no hallucination risk, so it shouldn't be left to the
+            // model's judgment when it's this cheap to just guarantee.
+            let preCleaned = TranscriptSanitizer.cleanUpFillers(text)
             guard LocalEnhancer.isDownloaded() else {
                 // Not downloaded yet and this is the hot dictation path —
                 // never block typing on a multi-GB fetch. Settings/onboarding
                 // own prompting the user to download it ahead of time.
-                return TranscriptSanitizer.cleanUpFillers(text)
+                return preCleaned
             }
             do {
                 return try await LocalEnhancer.shared.rewrite(
-                    text,
+                    preCleaned,
                     tone: QuillSettings.autoCleanupTone,
                     modelID: QuillSettings.localAIModelID
                 )
@@ -66,23 +92,24 @@ enum AutoCleanup {
                 FileHandle.standardError.write(Data(
                     "auto cleanup (local AI) failed, falling back to local cleanup: \(error)\n".utf8
                 ))
-                return TranscriptSanitizer.cleanUpFillers(text)
+                return preCleaned
             }
 
         case .medium:
+            let preCleaned = TranscriptSanitizer.cleanUpFillers(text)
             let provider = QuillSettings.styleProvider
             guard APIKeyStore.hasKey(for: provider) else {
                 // No key set — fall back to the local tier instead of
                 // silently doing nothing or blocking the dictation.
-                return TranscriptSanitizer.cleanUpFillers(text)
+                return preCleaned
             }
             do {
-                return try await StyleRewriter.rewrite(text, tone: QuillSettings.autoCleanupTone, provider: provider)
+                return try await StyleRewriter.rewrite(preCleaned, tone: QuillSettings.autoCleanupTone, provider: provider)
             } catch {
                 FileHandle.standardError.write(Data(
                     "auto cleanup (medium) failed, falling back to local cleanup: \(error)\n".utf8
                 ))
-                return TranscriptSanitizer.cleanUpFillers(text)
+                return preCleaned
             }
         }
     }
@@ -105,9 +132,11 @@ enum AutoCleanup {
     /// with or without a running NSApplication context. Even if that had
     /// worked, this function sits directly in the dictation path with an
     /// explicit no-added-latency requirement, and an unverified local
-    /// check isn't worth that risk. Real grammar correction stays a
-    /// Medium/BYOK capability, where the latency is already an accepted,
-    /// clearly-surfaced tradeoff — not snuck into the instant default.
+    /// check isn't worth that risk. Real grammar correction now has an
+    /// actual home — `AutoCleanupLevel.harper` — as its own selectable
+    /// tier rather than baked into this instant-default path, since even
+    /// Harper's ~0.25s per-dictation cost is real, measured latency this
+    /// function's contract explicitly can't carry.
     static func localCleanup(_ text: String) -> String {
         TranscriptSanitizer.cleanUpFillers(text)
     }

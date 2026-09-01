@@ -82,7 +82,7 @@ struct EnhancementEngineView: View {
                 .padding(.horizontal, Theme.pagePadding)
                 .padding(.top, Theme.pagePadding)
                 .padding(.bottom, 4)
-            Text("Local AI runs fully on this Mac, no key needed. Or connect your own OpenAI, Anthropic, Google, or OpenRouter key: either powers Style's Medium tier and Auto Cleanup.")
+            Text("Local AI runs fully on this Mac, no key needed. Or connect your own OpenAI, Anthropic, Google, or OpenRouter key: either powers Style's Cloud Model tier and Auto Cleanup.")
                 .font(.system(size: 11))
                 .foregroundColor(Theme.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -363,14 +363,16 @@ struct EnhancementEngineView: View {
         // Cleanup's level, since this provider still drives the manual
         // Style "Rewrite" action either way.
         let isActive = isConnected && provider == activeProvider
-        // Whether that selection is *also* what Auto Cleanup runs through
-        // right now. When Auto Cleanup is set to Local AI instead, this is
-        // false even while `isActive` is true — the badge used to just
-        // say "Active" either way, which is exactly what looked like "both
-        // active at once" (real user report). Not a functional bug —
-        // `AutoCleanupLevel` is a single value, only one ever actually
-        // drives Auto Cleanup — just the same word doing two jobs.
         let drivesAutoCleanup = isActive && autoCleanupLevel == .medium
+        // Rewrite-on-demand (Style) now follows Auto Cleanup's engine
+        // choice too — real user report was that a cloud key still showed
+        // as "Used for Rewrite" while Local AI was selected, which used
+        // to be literally true (Rewrite ignored Auto Cleanup's engine
+        // entirely) but reads as "Local AI isn't really in charge." Now
+        // that Rewrite routes to Local AI whenever Auto Cleanup does, a
+        // cloud provider only ever drives Rewrite when Auto Cleanup isn't
+        // set to Local AI.
+        let drivesRewrite = isActive && autoCleanupLevel != .localAI
 
         return VStack(alignment: .leading, spacing: 0) {
             Button {
@@ -392,7 +394,7 @@ struct EnhancementEngineView: View {
                         Label("Active", systemImage: "checkmark.circle.fill")
                             .font(.system(size: 10, weight: .bold))
                             .foregroundColor(Theme.accent)
-                    } else if isActive {
+                    } else if drivesRewrite {
                         Label("Used for Rewrite", systemImage: "checkmark.circle")
                             .font(.system(size: 10, weight: .medium))
                             .foregroundColor(Theme.textSecondary)
@@ -443,16 +445,24 @@ struct EnhancementEngineView: View {
                             QuillSettings.styleProvider = provider
                             activeProvider = provider
                         } label: {
-                            Label("Use for Rewrite & Medium", systemImage: "checkmark.circle")
+                            Label("Use for Rewrite & Cloud Model", systemImage: "checkmark.circle")
                                 .font(.system(size: 11, weight: .medium))
                         }
                         .buttonStyle(.bordered)
                     } else if drivesAutoCleanup {
-                        Label("Currently used for Rewrite and Auto Cleanup Medium.", systemImage: "checkmark.circle.fill")
+                        Label("Currently used for Rewrite and Auto Cleanup's Cloud Model tier.", systemImage: "checkmark.circle.fill")
                             .font(.system(size: 10.5, weight: .medium))
                             .foregroundColor(Theme.accent)
+                    } else if drivesRewrite {
+                        Label("Used for Rewrite.", systemImage: "checkmark.circle")
+                            .font(.system(size: 10.5, weight: .medium))
+                            .foregroundColor(Theme.textSecondary)
                     } else if isActive {
-                        Label("Used for Rewrite. Auto Cleanup is set to Local AI instead — change that in Style to use \(provider.rawValue) there too.", systemImage: "checkmark.circle")
+                        // isActive but not drivesRewrite only happens when
+                        // Auto Cleanup is set to Local AI — Rewrite follows
+                        // that choice now too, so this key sits unused
+                        // until Auto Cleanup switches off Local AI.
+                        Label("Saved as the Cloud Model provider — unused while Auto Cleanup is set to Local AI in Style.", systemImage: "checkmark.circle")
                             .font(.system(size: 10.5, weight: .medium))
                             .foregroundColor(Theme.textSecondary)
                     }
@@ -493,7 +503,7 @@ struct EnhancementEngineView: View {
                     Stored in the macOS Keychain on this Mac only, never written to disk in plain \
                     text, never committed to a repo, never sent anywhere except directly to \
                     \(provider.rawValue) itself, and only at the moment you press Rewrite or Auto \
-                    Cleanup runs Medium.
+                    Cleanup runs Cloud Model.
                     """)
                     .font(.system(size: 10.5))
                     .foregroundColor(Theme.textTertiary)
@@ -505,7 +515,7 @@ struct EnhancementEngineView: View {
         .quillCard()
         .overlay(
             RoundedRectangle(cornerRadius: 10)
-                .stroke(isActive ? Theme.accent.opacity(0.5) : Color.clear, lineWidth: 1.5)
+                .stroke((drivesAutoCleanup || drivesRewrite) ? Theme.accent.opacity(0.5) : Color.clear, lineWidth: 1.5)
         )
     }
 

@@ -89,7 +89,10 @@ enum StyleRewriter {
         switch provider {
         case .openAI: return "gpt-4o-mini"
         case .anthropic: return "claude-haiku-4-5-20251001"
-        case .google: return "gemini-2.0-flash"
+        // gemini-2.0-flash was retired by Google (confirmed via a real
+        // HTTP 404 in production: "This model models/gemini-2.0-flash is
+        // no longer available... use models/gemini-3.6-flash").
+        case .google: return "gemini-3.6-flash"
         case .openRouter: return QuillSettings.openRouterModel
         }
     }

@@ -31,7 +31,7 @@ enum DictationCleanupPrompt {
     CORE RULES
 
     1. CLEAN: Remove pure filler sounds and verbal tics that carry zero meaning on their own: um, uh, er, and repeated/stuttered words the speaker corrected themselves out of mid-sentence (also see rule 5). "Like", "you know", and "I mean" only count when they're a verbal tic with nothing else around them, not when they're doing real grammatical work in the sentence. This is the only category of word you ever remove. Every other word the speaker said, including "so", "well", "actually", "basically", "right", ordinary connectors, and every single distinct item, name, number, or thing the speaker lists, is content, not filler, and must appear in your output even if you're not sure it was necessary. When genuinely unsure whether a word is a filler tic or real content, keep it: an unremoved filler word is a minor annoyance, but a dropped word is data the speaker actually said that never reaches whatever they were dictating into, which is the one thing this app must never do.
-    2. FORMAT: Apply correct punctuation, capitalization, and paragraph structure.
+    2. FORMAT: Apply correct punctuation, capitalization, and paragraph structure. A long dictation (roughly 40+ words) that clearly moves from one topic or point to a distinct new one may get a paragraph break at that existing sentence boundary — this is about adding whitespace at a boundary the speaker's own words already created, never about reordering, merging, or dropping any of those sentences (rule 6 and the "do not restructure" rule below still apply in full). A short dictation, or one that stays on a single point throughout, gets none.
     3. CONVERT NUMBERS: Transcribe spoken numbers as digits. Examples: two → 2, five thirty → 5:30, twelve fifty → $12.50.
     4. EXECUTE FORMATTING COMMANDS: Handle spoken formatting instructions inline:
        - "new line" or "next line" → line break
@@ -224,12 +224,18 @@ enum DictationCleanupPrompt {
         // down can't see this, because the real items are still present
         // and keep the *whole-output* overlap ratio high; this instead
         // checks the first line in isolation, since a genuine fabricated
-        // title shares zero of the transcript's own words while real
+        // title shares little of the transcript's own words while real
         // content practically always does. Scoped tight to avoid
         // false-triggering on ordinary multi-line output: only fires when
-        // there's a short (<=8 word) first line, it shares literally no
-        // significant word with what was said, and real content follows
-        // it.
+        // there's a short (<=8 word) first line, most of its words aren't
+        // traceable to what was said, and real content follows it.
+        //
+        // Ratio, not a bare zero-overlap check — confirmed via a real run
+        // this needed loosening: "Gemini 3.6 Flash Cloud Bottle Test"
+        // mixed two real words ("Gemini", "flash" — legitimately said)
+        // with three fabricated ones ("Cloud", "Bottle", "Test" — never
+        // said), which cleared the old `== 0` bar entirely despite being
+        // exactly the fabricated-label failure this check exists for.
         let inputSignificantWords: Set<String> = Set(
             originalInput.lowercased()
                 .split(whereSeparator: { !$0.isLetter && !$0.isNumber })
@@ -249,10 +255,41 @@ enum DictationCleanupPrompt {
                         firstLine.lowercased()
                             .split(whereSeparator: { !$0.isLetter && !$0.isNumber })
                             .map(String.init)
+                            .filter { $0.count >= 3 }
                             .map(canonicalWord)
                     )
                     let firstLineOverlap = inputSignificantWords.filter { firstLineWords.contains($0) }.count
-                    if firstLineOverlap == 0 {
+                    // Ratio against the first line's own word count, not
+                    // the input's — a short fabricated label made mostly
+                    // of invented words should fail this even with one or
+                    // two real words mixed in.
+                    let firstLineOverlapRatio = firstLineWords.isEmpty
+                        ? 0 : Double(firstLineOverlap) / Double(firstLineWords.count)
+
+                    // Second, independent signal: does the first line just
+                    // repeat words the very next content already says?
+                    // Confirmed via a real run this catches what the
+                    // vocabulary-overlap check above can't: "Gemini 3.6
+                    // Flash Cloud Bottle Test" reused "Gemini"/"flash" from
+                    // the real dictation (so the check above alone reads
+                    // it as ~57% legitimate, above its 50% floor), but
+                    // real dictated content never opens by re-announcing
+                    // words the next sentence is about to say again — only
+                    // a fabricated label/title does that. Doesn't matter
+                    // whether the repeated words were also actually said;
+                    // the redundancy itself is the tell.
+                    let restWords: Set<String> = Set(
+                        lines[(firstNonEmptyIdx + 1)...].joined(separator: "\n").lowercased()
+                            .split(whereSeparator: { !$0.isLetter && !$0.isNumber })
+                            .map(String.init)
+                            .filter { $0.count >= 3 }
+                            .map(canonicalWord)
+                    )
+                    let repeatsRestCount = firstLineWords.filter { restWords.contains($0) }.count
+                    let repeatsRestRatio = firstLineWords.isEmpty
+                        ? 0 : Double(repeatsRestCount) / Double(firstLineWords.count)
+
+                    if firstLineOverlapRatio < 0.5 || repeatsRestRatio >= 0.6 {
                         var remaining = Array(lines[(firstNonEmptyIdx + 1)...])
                         while let next = remaining.first, next.trimmingCharacters(in: .whitespaces).isEmpty {
                             remaining.removeFirst()

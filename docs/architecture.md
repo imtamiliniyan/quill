@@ -7,7 +7,7 @@ This describes Quill as it actually is today - a full native macOS dictation app
 1. **Native macOS app, menu bar first.** Runs as a menu bar (`NSStatusItem`) presence with no dock icon by default (`.accessory` activation policy); a full app window is one click away and only claims a dock icon while it's open.
 2. **Push-to-talk.** Hold Fn (default), speak, release - transcript appears at the cursor. Toggle and "automatic" (either gesture) activation modes are also available.
 3. **On-device transcription, always.** No network calls for speech-to-text. Audio never leaves the machine, on any Auto Cleanup tier.
-4. **AI cleanup is optional, and has an on-device option too.** Three tiers: type exactly what you said, clean up on-device with a small local LLM (no key, no cloud), or clean up via your own OpenAI/Anthropic/Google/OpenRouter key. The free, on-device tier is a first-class option, not a downsell toward BYOK.
+4. **AI cleanup is optional, and has non-AI and on-device options too.** Four tiers: type exactly what you said, deterministic rule-based grammar/spelling correction with no AI model at all (Harper), clean up on-device with a small local LLM (no key, no cloud), or clean up via your own OpenAI/Anthropic/Google/OpenRouter key. The free, on-device tiers are first-class options, not a downsell toward BYOK. Harper is deliberately independent of the two LLM-backed tiers - picking it never runs or interferes with either.
 5. **Pluggable transcription engines and models.** WhisperKit and FluidAudio (Parakeet) both ship; the model list is a static Swift registry, not bundled resources - new engines are one new `Transcriber` conformance.
 6. **Real auto-update.** Sparkle-signed releases, checked automatically and via a menu item, no manual "check GitHub and download" step for the user.
 7. **Native and lean.** One Swift Package executable target. No sidecar processes, no HTTP servers, no bundled Node/Electron runtime.
@@ -62,9 +62,9 @@ The binary is a single Swift Package executable target (`swift build -c release`
                                              │
                                              ▼
                                     ┌───────────────────┐
-                                    │   AutoCleanup     │  None / Local AI (MLX) /
-                                    │  (per-tier)       │  Medium (OpenAI/Anthropic/
-                                    └────────┬──────────┘  Google/OpenRouter, BYOK)
+                                    │   AutoCleanup     │  None / Harper (rule-based,
+                                    │  (per-tier)       │  no AI) / Local AI (MLX) /
+                                    └────────┬──────────┘  Medium (BYOK cloud)
                                              │
                                              ▼
                                     ┌────────────────────┐
@@ -131,7 +131,8 @@ Grouped by folder under `Sources/quill/`, matching the actual source layout (see
 
 ### Style / cleanup pipeline (`Style/`)
 
-- **`AutoCleanup`** - the three-tier `AutoCleanupLevel`: `.none` (types exactly what you said), `.localAI` ("Local AI" - on-device MLX rewrite, no key, no network), `.medium` (displayed as **"Cloud Model"** - BYOK cloud rewrite; the internal name is a leftover from a retired Light/Medium/Full ladder and is kept because it's what's persisted to `UserDefaults`). Each tier falls back to the rule-based `cleanUpFillers` pass if its backend isn't ready (model not downloaded, no key set) rather than blocking dictation or typing nothing.
+- **`AutoCleanup`** - the four-tier `AutoCleanupLevel`: `.none` (types exactly what you said), `.harper` ("Harper" - deterministic rule-based grammar/spelling correction via the bundled `harper-cli` binary, no AI model, always ready, deliberately independent of the two tiers below), `.localAI` ("Local AI" - on-device MLX rewrite, no key, no network), `.medium` (displayed as **"Cloud Model"** - BYOK cloud rewrite; the internal name is a leftover from a retired Light/Medium/Full ladder and is kept because it's what's persisted to `UserDefaults`). The three non-`.harper` tiers each fall back to the rule-based `cleanUpFillers` pass if their backend isn't ready (model not downloaded, no key set, or Harper itself errors) rather than blocking dictation or typing nothing.
+- **`HarperGrammarChecker`** - shells out to a bundled prebuilt `harper-cli` binary (Automattic/harper, Apache 2.0; see [README's Third-party section](../README.md#third-party)) via `Process`, passing text on stdin and parsing `--format json` lint results from stdout. Applies every suggested fix back-to-front by character span so earlier edits never invalidate later spans. No Rust toolchain needed to build Quill - the binary is downloaded prebuilt and cached by version in `scripts/build-app.sh`, the same pattern as the MLX Metal shader library below.
 - **`DictationCleanupPrompt`** - the shared system prompt for every LLM-backed rewrite (Local AI and all 4 cloud providers), plus deterministic post-processing backstops layered on top of it: hallucination/content-loss detection (falls back to raw+filler-cleanup if the model dropped too much or clearly went off-script), spoken-digit-run conversion ("five thirty" → "5:30"), spoken-enumeration promotion into real numbered lists, and stray-markdown-marker stripping. Built this way deliberately: prompt-only iteration on a 3B on-device model causes whack-a-mole regressions on well-scoped, unambiguous patterns (numbers, lists, standalone formatting commands) - those get a deterministic string transform instead of another prompt tweak.
 - **`LocalEnhancer`** - MLX model load/generate/download/delete for Local AI (`mlx-swift-lm`, Llama 3.2 3B Instruct 4-bit by default, fetched from Hugging Face on first use, not bundled).
 - **`StyleRewriter`** - the 4 cloud BYOK providers (OpenAI, Anthropic, Google, OpenRouter), one `rewrite` entry point dispatching to per-provider implementations, all funneled through the same `DictationCleanupPrompt` backstops.
@@ -171,7 +172,7 @@ Grouped by folder under `Sources/quill/`, matching the actual source layout (see
 4. Dictation ends (release, second toggle press, or hold-threshold release). Overlay switches to a transcribing state.
 5. The active `Transcriber` (via `TranscriberBox`) runs CoreML inference, returns a string.
 6. `TranscriptSanitizer.sanitize` runs unconditionally: strips non-speech bracket noise, applies any "literal `<command>`" triggers.
-7. `AutoCleanup.apply` runs per the user's tier (None / Local AI / Medium), with the model prompt's own deterministic backstops layered on top; falls back to `cleanUpFillers` on any failure.
+7. `AutoCleanup.apply` runs per the user's tier (None / Harper / Local AI / Medium), with the model prompt's own deterministic backstops layered on top for the two LLM tiers; falls back to `cleanUpFillers` on any failure.
 8. `TextFormatting.apply` runs the user's formatting toggles, reading `CursorContext` if needed.
 9. `TextInjector` posts the final text at the cursor.
 10. `DictationHistory.append` logs the entry (raw text too, if cleanup changed anything).
@@ -234,7 +235,8 @@ quill/
       TranscriptionModel.swift
 
     Style/                         # the cleanup pipeline
-      AutoCleanup.swift            # None / Local AI / Medium tiers
+      AutoCleanup.swift            # None / Harper / Local AI / Medium tiers
+      HarperGrammarChecker.swift   # bundled harper-cli subprocess + JSON parsing
       DictationCleanupPrompt.swift # shared LLM prompt + deterministic backstops
       LocalEnhancer.swift          # MLX on-device rewrite
       StyleRewriter.swift          # 4 cloud BYOK providers
@@ -291,7 +293,7 @@ Build: `swift build -c release`. Resulting binary at `.build/release/quill`. Rea
 
 ## Open questions
 
-- **Custom vocabulary / word-boosting.** Quill's Parakeet engine already runs on FluidAudio, which ships a real CTC-based vocabulary-boosting system (`CustomVocabularyContext`/`CtcKeywordSpotter`/`VocabularyRescorer` - acoustic-evidence-based rescoring, not blind text substitution) - but it's wired into FluidAudio's `SlidingWindowAsrManager`, not the plain batch `AsrManager` `ParakeetTranscriber` currently uses. Building this means either switching to the streaming manager or running the CTC rescorer as a manual post-pass over the batch transcript, plus new UI for managing words. Parakeet-only; no equivalent path exists for WhisperKit.
+- **Real ASR-level vocabulary boosting.** What exists today (`TranscriptSanitizer.applyVocabularyReplacements`/`correctSimpleTypos`, Voice Engine's Custom Vocabulary editor) is post-transcription text substitution: explicit user-authored "when Quill hears X, type Y" pairs, plus a narrow same-first-letter/one-edit-distance auto-fix layered on top - not acoustic. Quill's Parakeet engine already runs on FluidAudio, which separately ships a real CTC-based vocabulary-boosting system (`CustomVocabularyContext`/`CtcKeywordSpotter`/`VocabularyRescorer` - acoustic-evidence-based rescoring, not text substitution) - but it's wired into FluidAudio's `SlidingWindowAsrManager`, not the plain batch `AsrManager` `ParakeetTranscriber` currently uses. Building this means either switching to the streaming manager or running the CTC rescorer as a manual post-pass over the batch transcript. Parakeet-only; no equivalent path exists for WhisperKit.
 - **Live-updating transcript text in the recording overlay.** Blocked on `Transcriber` having no streaming/partial-result API - see "What we are deliberately NOT building."
 - **Trigger-word configurability.** The "literal `<command>`" trigger is currently hardcoded to the word "literal," not yet a `QuillSettings` field a user can customize.
 - **Full signed+notarized CI pipeline.** The GitHub Actions release build produces an unsigned CLI-only tarball; the real signed `.app`/`.dmg` are always built and signed locally, by hand. A cloud-built signed pipeline needs a Developer ID cert and (if notarization is ever revisited) notarization credentials added as GitHub Secrets - a deliberate manual step, not yet automated.

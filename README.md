@@ -31,8 +31,11 @@ That's the whole interface: no record button, no stop button, no "send." First l
 - **Insights** - words-per-minute gauge, streak calendar, personal records, and milestones, all computed locally from your own history.
 - **Voice Engine** - 9 on-device transcription models across two engines (Whisper, Parakeet); switch anytime with real download progress for anything not yet on disk. See the table below.
 - **Enhancement Engine** - clean up and rewrite dictation automatically or on demand:
+  - **Harper**: real grammar/spelling/capitalization correction, deterministic and rule-based - no AI model, nothing downloaded, always ready. Fully independent of the two tiers below; picking it never touches either.
   - **Local AI**: a small on-device model, no key, no cloud, nothing leaves your Mac.
   - **Bring your own key**: OpenAI, Anthropic, Google, or OpenRouter (with a searchable model picker over OpenRouter's full catalog). This is the only path in Quill that ever sends dictation text over the network, and only when you've explicitly connected a key and turned it on.
+- **Review before typing** - an optional popup shows exactly what Auto Cleanup changed (word-level diff) before it's typed; Accept, or type exactly what you said instead.
+- **Custom Vocabulary** - explicit "when Quill hears X, type Y" replacement rules for names/terms that get mis-transcribed, plus automatic correction of simple one-letter typos against your own saved spellings.
 - **Activation modes** - Hold, Toggle, or Automatic (a hybrid of both).
 - **Text Formatting** - lowercase first letter, space between dictations, smart capitalization, and an editable filler-word list.
 - **Change Log** - synced live from this repo's own GitHub Releases, right in the app.
@@ -66,6 +69,8 @@ This builds `dist/Quill.app` and packages `dist/Quill.dmg` (drag-to-Applications
 
 The build is signed with a stable local identity rather than left ad-hoc, so macOS doesn't re-prompt for Accessibility/Keychain access on every rebuild. See the comments at the top of [scripts/build-app.sh](scripts/build-app.sh) for the one-time certificate setup if you're building it yourself.
 
+The script also downloads the prebuilt `harper-cli` binary (Harper's grammar checker) on first build and caches it locally by version - needs network access once, not on every rebuild.
+
 The `.dmg` itself is packaged with [dmgbuild](https://dmgbuild.readthedocs.io/) (`pip3 install dmgbuild`) rather than a live Finder/AppleScript session. Finder's background-picture setting doesn't reliably survive `hdiutil convert`; dmgbuild writes it directly. Layout settings live in [scripts/dmg_settings.py](scripts/dmg_settings.py).
 
 For quick local iteration without packaging a `.dmg`:
@@ -86,6 +91,7 @@ Everything runs locally by default: transcription, history, and Insights never t
 - **Swift + SwiftUI** - single SPM executable target, full app window over an `NSStatusItem` menu bar presence
 - **WhisperKit** and **FluidAudio (Parakeet)** - on-device transcription via CoreML, ANE-accelerated, switchable at runtime
 - **MLX** - Local AI's on-device rewrite model
+- **[Harper](https://github.com/Automattic/harper)** (Apache 2.0) - offline, rule-based grammar/spelling checker; Quill bundles the prebuilt `harper-cli` binary and shells out to it, no Rust toolchain required to build Quill itself
 - **AVAudioEngine** - mic capture
 - **CGEventTap** - global hotkey
 - **CGEvent** - text injection at cursor (falls back to clipboard-paste for apps like Electron that drop synthetic keystrokes)
@@ -97,3 +103,7 @@ See [docs/architecture.md](docs/architecture.md) for design notes.
 ## License
 
 [MIT](LICENSE)
+
+### Third-party
+
+Quill bundles the [Harper](https://github.com/Automattic/harper) `harper-cli` binary unmodified, licensed under [Apache 2.0](https://github.com/Automattic/harper/blob/master/LICENSE) by Automattic. Harper's own license and copyright notice are unaffected; this doesn't change Quill's own MIT license.

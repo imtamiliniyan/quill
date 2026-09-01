@@ -127,6 +127,7 @@ struct Run: ParsableCommand {
         if let overlay {
             capture.onLevel = { level in overlay.pushLevel(level) }
         }
+        let diffReview = MainActor.assumeIsolated { DiffReviewOverlay() }
         let menuBar = MainActor.assumeIsolated { MenuBarController(modelID: chosenModel.id) }
         let box = MainActor.assumeIsolated { TranscriberBox(transcriber: transcriber, modelID: chosenModel.id) }
         let mainWindow = MainActor.assumeIsolated { MainWindow(menuBar: menuBar) }
@@ -147,7 +148,7 @@ struct Run: ParsableCommand {
 
         do {
             try attachDictationHandlers(
-                monitor: monitor, capture: capture, overlay: overlay,
+                monitor: monitor, capture: capture, overlay: overlay, diffReview: diffReview,
                 menuBar: menuBar, box: box, dumpWav: dumpWav
             )
         } catch {
@@ -199,6 +200,7 @@ struct Run: ParsableCommand {
         if let overlay {
             capture.onLevel = { level in overlay.pushLevel(level) }
         }
+        let diffReview = MainActor.assumeIsolated { DiffReviewOverlay() }
         let dumpWav = self.dumpWav
 
         var box: TranscriberBox?
@@ -222,7 +224,7 @@ struct Run: ParsableCommand {
             }
             do {
                 try attachDictationHandlers(
-                    monitor: monitor, capture: capture, overlay: overlay,
+                    monitor: monitor, capture: capture, overlay: overlay, diffReview: diffReview,
                     menuBar: menuBar, box: liveBox, dumpWav: dumpWav
                 )
                 FileHandle.standardError.write(Data("listening on fn hold · model: \(model.id)\n".utf8))
@@ -294,6 +296,7 @@ private func attachDictationHandlers(
     monitor: HotkeyMonitor,
     capture: AudioCapture,
     overlay: RecordingOverlay?,
+    diffReview: DiffReviewOverlay,
     menuBar: MenuBarController,
     box: TranscriberBox,
     dumpWav: Bool
@@ -373,13 +376,27 @@ private func attachDictationHandlers(
                 }
                 let finalText = await AutoCleanup.apply(rawText, level: level)
 
+                // Shows every time Auto Cleanup actually ran (any level
+                // but .none), whether or not it changed anything — a
+                // no-op dictation shows as plain unhighlighted text, which
+                // is itself the confirmation "this was already fine."
+                // Explicit ask: always confirm, never guess.
+                var pendingText = finalText
+                if level != .none, QuillSettings.reviewBeforeTyping {
+                    await MainActor.run { overlay?.hide() }
+                    let accepted = await diffReview.review(raw: rawText, cleaned: finalText)
+                    pendingText = accepted ? finalText : rawText
+                }
+                let textToType = pendingText
+
                 await MainActor.run {
-                    // Text Formatting runs last, after Auto Cleanup, and
-                    // reads the focused app's actual cursor context — has
-                    // to happen right here, immediately before injection,
-                    // not earlier in the pipeline where focus could in
-                    // theory have moved on.
-                    let injectedText = TextFormatting.apply(finalText)
+                    // Text Formatting runs last, after Auto Cleanup (and
+                    // after the review popup, if one was shown), and reads
+                    // the focused app's actual cursor context — has to
+                    // happen right here, immediately before injection, not
+                    // earlier in the pipeline where focus could in theory
+                    // have moved on.
+                    let injectedText = TextFormatting.apply(textToType)
                     TextInjector.inject(injectedText)
                     overlay?.hide()
                     menuBar.setRecording(false)

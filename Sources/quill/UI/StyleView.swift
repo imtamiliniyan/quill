@@ -4,6 +4,7 @@ import SwiftUI
 struct StyleView: View {
     @State private var autoCleanupLevel: AutoCleanupLevel = QuillSettings.autoCleanupLevel
     @State private var autoCleanupTone: StyleTone = QuillSettings.autoCleanupTone
+    @State private var reviewBeforeTyping = QuillSettings.reviewBeforeTyping
 
     // Local AI's download/delete management now lives in Enhancement
     // Engine (top of its provider list) alongside OpenAI/Anthropic/
@@ -54,6 +55,9 @@ struct StyleView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     autoCleanupCard
+                    if autoCleanupLevel != .none {
+                        toneCard
+                    }
                     FillerWordsSettingsView()
                     rewriteCard
                 }
@@ -86,43 +90,60 @@ struct StyleView: View {
                 }
             }
 
-            if autoCleanupLevel == .medium {
-                autoCleanupToneRow
+            if autoCleanupLevel != .none {
+                Divider().opacity(0.1)
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Review before typing")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(Theme.textPrimary)
+                        Text("Shows what changed and waits for Accept before typing it. Off types the rewrite immediately, like before.")
+                            .font(.system(size: 10.5))
+                            .foregroundColor(Theme.textSecondary)
+                    }
+                    Spacer()
+                    Toggle("", isOn: $reviewBeforeTyping)
+                        .toggleStyle(.switch)
+                        .tint(Theme.accent)
+                        .labelsHidden()
+                        .onChange(of: reviewBeforeTyping) { _, new in QuillSettings.reviewBeforeTyping = new }
+                }
             }
         }
         .padding(18)
         .quillCard()
     }
 
-    /// Formal / Casual / Very Casual — Auto Cleanup's own tone set,
-    /// deliberately narrower than Rewrite-on-demand's four options (no
-    /// Clean Up, no Concise here).
-    private let autoCleanupTones: [StyleTone] = [.formal, .casual, .veryCasual]
+    // MARK: - Tone
 
-    /// Which tone Medium rewrites into — one global choice, applied to
-    /// every dictation the same way regardless of which app it's typed
-    /// into. Deliberately not per-app: no monitoring of the frontmost app,
-    /// same tone everywhere. Set once here, then just hold the dictation
-    /// key like normal. Cards (name + example) instead of a plain
-    /// segmented picker so the difference between tones is legible before
-    /// picking one — same idea as Wispr Flow's preview cards.
-    private var autoCleanupToneRow: some View {
-        VStack(alignment: .leading, spacing: 8) {
+    /// Casual / Formal / Concise — the tone Auto Cleanup rewrites into,
+    /// applied identically no matter which engine above is doing the
+    /// rewrite (Local AI and Cloud Model share the exact same prompt;
+    /// this is just which tone directive gets appended to it). Its own
+    /// section rather than nested under one engine's row, since the
+    /// choice was never actually tied to Cloud Model specifically.
+    private let autoCleanupTones: [StyleTone] = [.casual, .formal, .concise]
+
+    private var toneCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
             Text("Tone")
-                .font(.system(size: 11, weight: .semibold))
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(Theme.textPrimary)
+            Text("How Auto Cleanup rewrites your dictation, whichever engine above is doing it.")
+                .font(.system(size: 11))
                 .foregroundColor(Theme.textSecondary)
-                .padding(.top, 2)
 
             HStack(alignment: .top, spacing: 10) {
                 ForEach(autoCleanupTones) { tone in
-                    toneCard(tone)
+                    tonePill(tone)
                 }
             }
         }
-        .padding(.horizontal, 2)
+        .padding(18)
+        .quillCard()
     }
 
-    private func toneCard(_ tone: StyleTone) -> some View {
+    private func tonePill(_ tone: StyleTone) -> some View {
         let selected = autoCleanupTone == tone
         return Button {
             autoCleanupTone = tone
@@ -188,12 +209,12 @@ struct StyleView: View {
                             .font(.system(size: 13, weight: .medium))
                             .foregroundColor(Theme.textPrimary)
                         if level == .medium {
-                            Text(hasKey ? "USES YOUR KEY" : "NO KEY YET · BASIC CLEANUP ONLY")
+                            Text(hasKey ? "USES YOUR KEY" : "NO KEY YET")
                                 .font(.system(size: 9, weight: .bold))
                                 .foregroundColor(hasKey ? Theme.accent : Theme.textTertiary)
                         }
                         if level == .localAI {
-                            Text(localAIDownloaded ? "READY" : "NOT DOWNLOADED · BASIC CLEANUP ONLY")
+                            Text(localAIDownloaded ? "READY" : "NOT DOWNLOADED")
                                 .font(.system(size: 9, weight: .bold))
                                 .foregroundColor(localAIDownloaded ? Theme.accent : Theme.textTertiary)
                         }
@@ -222,12 +243,21 @@ struct StyleView: View {
     // — no in-place editor here anymore, just the `hasKey`/`provider`
     // reads above, used to gate Medium's badge and the Rewrite card below.
 
+    /// Whether whichever engine Auto Cleanup is currently set to is
+    /// actually ready to rewrite — the on-device model if Local AI,
+    /// otherwise the connected cloud key. Rewrite-on-demand follows Auto
+    /// Cleanup's engine choice (see `runRewrite`), so it needs the same
+    /// readiness check that engine already has, not its own separate one.
+    private var rewriteEngineReady: Bool {
+        autoCleanupLevel == .localAI ? localAIDownloaded : hasKey
+    }
+
     private var rewriteCard: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("Rewrite on demand")
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundColor(Theme.textPrimary)
-            Text("For polishing arbitrary text whenever you want, separate from Auto Cleanup above.")
+            Text("For polishing arbitrary text whenever you want, using whichever engine Auto Cleanup above is set to.")
                 .font(.system(size: 11))
                 .foregroundColor(Theme.textSecondary)
 
@@ -243,7 +273,11 @@ struct StyleView: View {
                 Text("Runs entirely on this Mac: filler words and basic punctuation, no network, no key needed.")
                     .font(.system(size: 11))
                     .foregroundColor(Theme.textTertiary)
-            } else if !hasKey {
+            } else if autoCleanupLevel == .localAI && !rewriteEngineReady {
+                Text("Download the on-device model in Enhancement Engine to use \(tone.rawValue).")
+                    .font(.system(size: 11))
+                    .foregroundColor(Theme.textSecondary)
+            } else if autoCleanupLevel != .localAI && !rewriteEngineReady {
                 Text("Connect an API key in Enhancement Engine to use \(tone.rawValue). Clean Up works offline without one.")
                     .font(.system(size: 11))
                     .foregroundColor(Theme.textSecondary)
@@ -278,7 +312,7 @@ struct StyleView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(Theme.accent)
-                .disabled(inputText.isEmpty || isRewriting || (tone != .cleanUp && !hasKey))
+                .disabled(inputText.isEmpty || isRewriting || (tone != .cleanUp && !rewriteEngineReady))
 
                 Spacer()
             }
@@ -323,9 +357,16 @@ struct StyleView: View {
         let text = inputText
         let currentTone = tone
         let currentProvider = provider
+        let currentLevel = autoCleanupLevel
         Task {
             do {
-                let result = try await StyleRewriter.rewrite(text, tone: currentTone, provider: currentProvider)
+                // Same engine Auto Cleanup uses — picking Local AI there
+                // means Rewrite-on-demand runs on-device too, not whatever
+                // cloud key happens to be connected. Only .medium (Cloud
+                // Model) and .none fall through to the BYOK path.
+                let result = currentLevel == .localAI
+                    ? try await LocalEnhancer.shared.rewrite(text, tone: currentTone)
+                    : try await StyleRewriter.rewrite(text, tone: currentTone, provider: currentProvider)
                 await MainActor.run {
                     outputText = result
                     isRewriting = false

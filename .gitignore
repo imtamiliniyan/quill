@@ -5,6 +5,10 @@
 # why it can't be produced by `swift build` alone and has to be cached
 # here instead of inside .build/ (which a fresh checkout wipes).
 .metallib-cache/
+# Downloaded harper-cli binary (Automattic/harper) — same reasoning as
+# .metallib-cache/ above: a 55MB prebuilt third-party binary belongs in a
+# local cache keyed by version, not committed to the repo.
+.harper-cache/
 *.xcodeproj
 *.xcworkspace
 .DS_Store

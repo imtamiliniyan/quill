@@ -42,8 +42,18 @@ import Tokenizers
 actor LocalEnhancer {
     static let shared = LocalEnhancer()
 
+    /// A loaded container (~1.8GB, MLX/GPU-resident) sits warm this long
+    /// after its last `rewrite` before being dropped. Long enough that
+    /// back-to-back dictations never pay a reload; short enough that
+    /// Quill isn't quietly holding a multi-GB model hours after the last
+    /// time Local AI cleanup actually ran.
+    private static let idleUnloadInterval: Duration = .seconds(300)
+
     private var containers: [String: ModelContainer] = [:]
     private var loadTasks: [String: Task<ModelContainer, Error>] = [:]
+    /// Restarted on every `rewrite` call; fires `idleUnloadInterval` after
+    /// the *last* one, since a new call cancels and replaces it.
+    private var idleWatchdog: Task<Void, Never>?
 
     /// Rewrites `text` per `tone`, entirely on-device, using `modelID`
     /// (default: the user's currently-selected model). First call for a
@@ -58,6 +68,7 @@ actor LocalEnhancer {
         if let lineBreak = DictationCleanupPrompt.standaloneLineBreak(text) { return lineBreak }
 
         let container = try await loadedContainer(modelID: modelID)
+        touchIdleWatchdog()
 
         let messages: [[String: String]] = [
             [
@@ -141,6 +152,28 @@ actor LocalEnhancer {
     func unload(modelID: String) {
         containers[modelID] = nil
         loadTasks[modelID] = nil
+    }
+
+    /// Resets the idle-unload timer — called on every `rewrite`. Cancels
+    /// whatever watchdog is already ticking (from a previous call) and
+    /// starts a fresh one, so it only ever fires `idleUnloadInterval`
+    /// after the most recent dictation, never mid-streak.
+    private func touchIdleWatchdog() {
+        idleWatchdog?.cancel()
+        idleWatchdog = Task { [weak self] in
+            try? await Task.sleep(for: Self.idleUnloadInterval)
+            guard !Task.isCancelled else { return }
+            await self?.unloadIdleContainers()
+        }
+    }
+
+    /// Drops every loaded container — simplest correct behavior given
+    /// `rewrite` only ever touches one model at a time in practice
+    /// (Local AI has exactly one selected model); no need to track
+    /// per-model last-use just to spare a container someone isn't
+    /// actively switching between.
+    private func unloadIdleContainers() {
+        containers.removeAll()
     }
 
     private func loadedContainer(
