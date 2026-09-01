@@ -137,6 +137,29 @@ cp Resources/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
 # Sparkle.framework" step).
 cp -R .build/release/Sparkle.framework "$APP/Contents/Frameworks/Sparkle.framework"
 
+# Sparkle's own bundled "is now available" update-dialog copy uses an
+# em dash — not text this project ever wrote, but the update dialog is
+# user-facing all the same, so it gets the same no-em-dash treatment as
+# everything else in the app. Sparkle.strings is a binary plist keyed by
+# the exact source-literal string (SULocalizedStringFromTableInBundle
+# looks it up in Sparkle.framework's own bundle, not the host app's, so
+# there's no supported override — this rewrites its shipped resource
+# directly), only the values need changing since lookup is by key.
+SPARKLE_STRINGS="$APP/Contents/Frameworks/Sparkle.framework/Versions/B/Resources/Base.lproj/Sparkle.strings"
+if [ -f "$SPARKLE_STRINGS" ]; then
+    python3 - "$SPARKLE_STRINGS" <<'PY'
+import plistlib, sys
+path = sys.argv[1]
+with open(path, "rb") as f:
+    strings = plistlib.load(f)
+for key, value in list(strings.items()):
+    if "—" in value:
+        strings[key] = value.replace("is now available—you have", "is now available (you have").replace(". This is an important update", "). This is an important update").replace(". Would you like", "). Would you like")
+with open(path, "wb") as f:
+    plistlib.dump(strings, f, fmt=plistlib.FMT_BINARY)
+PY
+fi
+
 # Enhancement Engine's provider logos, as loose files under
 # Contents/Resources/ — loaded via Bundle.main at runtime
 # (ProviderLogos.swift), not SPM's generated Bundle.module/resource-bundle
