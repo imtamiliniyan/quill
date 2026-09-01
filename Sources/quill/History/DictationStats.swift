@@ -106,7 +106,20 @@ struct DictationStats {
             return cal.isDate(day, inSameDayAs: next)
         }
 
-        let sortedDays = days.sorted()
+        // Weekend days themselves are filtered out here, not just skipped
+        // over while walking — real bug, confirmed by reproducing it
+        // directly: if the user actually dictates on a weekend (allowed;
+        // the toggle only says weekends aren't *required*), that day
+        // still landed in `sortedDays`, and `isConsecutive` expects the
+        // day after Friday to be the next non-weekend day (Monday), not
+        // Saturday itself. A Friday-Saturday-Monday run was breaking into
+        // two separate runs of 1 right at Saturday, understating
+        // `bestStreak` any time a weekend happened to have activity in
+        // the middle of an otherwise unbroken streak. Filtering weekend
+        // days out first makes this consistent with the backward walk
+        // above, which already treats weekends as invisible regardless of
+        // whether they have entries.
+        let sortedDays = excludeWeekends ? days.filter { !isWeekend($0) }.sorted() : days.sorted()
         if sortedDays.isEmpty {
             bestStreak = 0
         } else {
