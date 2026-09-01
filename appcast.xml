@@ -30,6 +30,25 @@
         <language>en</language>
 
         <item>
+            <title>Quill 0.14.1</title>
+            <pubDate>Tue, 01 Sep 2026 16:03:35 +0000</pubDate>
+            <sparkle:version>15</sparkle:version>
+            <sparkle:shortVersionString>0.14.1</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <link>https://github.com/imtamiliniyan/quill/releases/tag/v0.14.1</link>
+            <description><![CDATA[
+                <ul>
+                    <li>Fixed "Exclude weekends from streak" undercounting your longest streak: if a weekend day actually had activity, it broke the streak count right there instead of being correctly skipped, which could show a lower "Longest" streak than your actual current one and leave earned streak milestones unchecked.</li>
+                </ul>
+            ]]></description>
+            <enclosure
+                url="https://github.com/imtamiliniyan/quill/releases/download/v0.14.1/Quill-0.14.1.zip"
+                type="application/octet-stream"
+                sparkle:edSignature="fYDzywV6q+rn/V97mVpb5lLx3n3h5e9kyoKfd2/nZ/jYyuVZWtjgtlaMafKvoTM+HZDmj7agoDGRPQE50n34DA==" length="69625256"
+            />
+        </item>
+
+        <item>
             <title>Quill 0.14.0</title>
             <pubDate>Tue, 01 Sep 2026 12:11:10 +0000</pubDate>
             <sparkle:version>14</sparkle:version>
