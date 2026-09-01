@@ -30,6 +30,35 @@
         <language>en</language>
 
         <item>
+            <title>Quill 0.14.0</title>
+            <pubDate>Tue, 01 Sep 2026 12:11:10 +0000</pubDate>
+            <sparkle:version>14</sparkle:version>
+            <sparkle:shortVersionString>0.14.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <link>https://github.com/imtamiliniyan/quill/releases/tag/v0.14.0</link>
+            <description><![CDATA[
+                <ul>
+                    <li>Added Harper as a new "Harper" Auto Cleanup tier: real offline grammar/spelling/capitalization fixes with no AI model, no download, no cloud — bundled and ready immediately. Onboarding now defaults new users here instead of forcing a Local AI download or a cloud API key.</li>
+                    <li>Auto Cleanup's tone (Casual/Formal/Concise) now actually drives grammar, rewriting, punctuation, and tone consistently on both Local AI and Cloud Model.</li>
+                    <li>Rewrite on demand (Style tab) now correctly uses Local AI when that's the selected engine, instead of always calling the cloud provider.</li>
+                    <li>Added a review popup for AI-cleaned dictation: shows exactly what changed (inserted/removed words highlighted) before it's typed, positioned near wherever you're dictating. Accept or reject — no auto-accept timeout.</li>
+                    <li>Added Custom Vocabulary: define "when I say X, type Y" pairs for names, terms, or phrases Quill mishears.</li>
+                    <li>Onboarding now asks for a tone preference (Casual/Formal) as its own step, and Getting Started reflects it.</li>
+                    <li>Reduced hallucinated/fabricated content from Local AI rewrites.</li>
+                    <li>Added an "Exclude weekends from streak" toggle (Settings → System) so weekend inactivity doesn't break a streak.</li>
+                    <li>Fixed the Data & Privacy settings tab's close button being pushed off-screen by overflowing content.</li>
+                    <li>Added a "Support" section to the sidebar (GitHub star/sponsor asks, About/version info); Feedback's star nudge is now separate from the financial ask.</li>
+                </ul>
+            ]]></description>
+            <enclosure
+                url="https://github.com/imtamiliniyan/quill/releases/download/v0.14.0/Quill-0.14.0.zip"
+                type="application/octet-stream"
+                sparkle:edSignature="84GspGJyMi8BUFYrkFp6k08U6S4dmWGyxN8nSYSnufgT6xco6/aZlPCZP2F8JnWe1GPKdZ4Yc23UobKC8d+fDw=="
+                length="69624603"
+            />
+        </item>
+
+        <item>
             <title>Quill 0.11.3</title>
             <pubDate>Sat, 22 Aug 2026 17:12:17 +0000</pubDate>
             <sparkle:version>11</sparkle:version>
