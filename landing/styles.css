@@ -508,15 +508,6 @@ body {
   }
 }
 
-/* Decorative Divider Accent Strip */
-.accent-strip {
-  height: 2px;
-  width: 100%;
-  background: var(--accent-strip);
-  margin: 0;
-  border: none;
-}
-
 /* High Fidelity macOS App Mockup Window */
 .mockup-window {
   display: flex;
@@ -2195,4 +2186,48 @@ body {
     justify-content: center;
     gap: 16px;
   }
+}
+
+/* Hero promo video (replaces the app mockup) */
+.hero-video {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 16px;
+  background: #0b0b0c;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.28), 0 2px 8px rgba(0, 0, 0, 0.12);
+  object-fit: cover;
+}
+
+.hero-video-sound {
+  position: absolute;
+  right: 16px;
+  bottom: 36px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(20, 20, 22, 0.72);
+  color: #fff;
+  font: 500 13px/1 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: background 0.2s ease;
+}
+
+.hero-video-sound:hover {
+  background: rgba(20, 20, 22, 0.88);
+}
+
+.hero-video-sound:focus-visible {
+  outline: 2px solid var(--quill-accent);
+  outline-offset: 2px;
+}
+
+.hero-video-sound svg {
+  width: 16px;
+  height: 16px;
 }

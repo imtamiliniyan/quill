@@ -151,273 +151,21 @@
         <div class="hero-visual-wrapper">
           <div class="glow-blob" aria-hidden="true"></div>
 
-          <!-- High-fidelity macOS App Mockup Window -->
-          <div class="mockup-window">
-
-            <!-- Sidebar -->
-            <div class="mockup-sidebar">
-              <div class="window-controls">
-                <span class="control close"></span>
-                <span class="control minimize"></span>
-                <span class="control zoom"></span>
-              </div>
-              <div class="sidebar-items">
-                <div class="sidebar-group">
-                  <button class="sidebar-row active" data-tab="dictation">
-                    <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                      stroke-linecap="round" stroke-linejoin="round">
-                      <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
-                      <path d="M19 10v1a7 7 0 0 1-14 0v-1" />
-                      <line x1="12" y1="19" x2="12" y2="22" />
-                    </svg>
-                    <span>Dictation</span>
-                  </button>
-                  <button class="sidebar-row" data-tab="insights">
-                    <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                      stroke-linecap="round" stroke-linejoin="round">
-                      <line x1="18" y1="20" x2="18" y2="10" />
-                      <line x1="12" y1="20" x2="12" y2="4" />
-                      <line x1="6" y1="20" x2="6" y2="14" />
-                    </svg>
-                    <span>Insights</span>
-                  </button>
-                  <button class="sidebar-row" data-tab="style">
-                    <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                      stroke-linecap="round" stroke-linejoin="round">
-                      <path
-                        d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
-                    </svg>
-                    <span>Style</span>
-                  </button>
-                </div>
-              </div>
-              <div class="sidebar-footer">
-                <div class="local-badge">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                    stroke-linejoin="round">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                  </svg>
-                  <span>Stored locally</span>
-                </div>
-                <button class="settings-btn">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                    stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="3" />
-                    <path
-                      d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-                  </svg>
-                  <span>Settings</span>
-                </button>
-              </div>
-            </div>
-
-            <!-- Main Content Area -->
-            <div class="mockup-main">
-
-              <!-- Tab: Dictation -->
-              <div class="tab-content active" id="tab-dictation">
-                <div class="dictation-header">
-                  <h2>Dictation</h2>
-                  <div class="mockup-audio-status">
-                    <span class="pulse-dot"></span>
-                    <span>Offline Engine Ready</span>
-                  </div>
-                </div>
-                <div class="dictation-scroll">
-                  <div class="group-label">TODAY</div>
-                  <div class="dictation-card" id="dictation-card-list">
-
-                    <!-- Row 1 -->
-                    <div class="dictation-row" id="mock-row-1">
-                      <span class="row-time">09:14 AM</span>
-                      <span class="row-text">Alright, let's get the new onboarding steps documented. Hold the fn key,
-                        speak, and release.</span>
-                      <div class="row-actions">
-                        <button class="action-btn copy-btn" title="Copy text"
-                          data-text="Alright, let's get the new onboarding steps documented. Hold the fn key, speak, and release.">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                            stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                          </svg>
-                        </button>
-                        <button class="action-btn delete-btn" title="Delete entry" data-row-id="mock-row-1"
-                          data-words="15">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                            stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="3 6 5 6 21 6" />
-                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                            <line x1="10" y1="11" x2="10" y2="17" />
-                            <line x1="14" y1="11" x2="14" y2="17" />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-
-                    <!-- Row 2 -->
-                    <div class="dictation-row" id="mock-row-2">
-                      <span class="row-time">10:30 AM</span>
-                      <span class="row-text">I need to drop a quick code comment here to explain why we're using a plain
-                        HStack instead of NavigationSplitView.</span>
-                      <div class="row-actions">
-                        <button class="action-btn copy-btn" title="Copy text"
-                          data-text="I need to drop a quick code comment here to explain why we're using a plain HStack instead of NavigationSplitView.">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                            stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                          </svg>
-                        </button>
-                        <button class="action-btn delete-btn" title="Delete entry" data-row-id="mock-row-2"
-                          data-words="17">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                            stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="3 6 5 6 21 6" />
-                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                            <line x1="10" y1="11" x2="10" y2="17" />
-                            <line x1="14" y1="11" x2="14" y2="17" />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-
-                    <!-- Row 3 -->
-                    <div class="dictation-row" id="mock-row-3">
-                      <span class="row-time">11:45 AM</span>
-                      <span class="row-text">Transcribing on-device is so much faster. Under two hundred milliseconds
-                        and it types right into Slack.</span>
-                      <div class="row-actions">
-                        <button class="action-btn copy-btn" title="Copy text"
-                          data-text="Transcribing on-device is so much faster. Under two hundred milliseconds and it types right into Slack.">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                            stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                          </svg>
-                        </button>
-                        <button class="action-btn delete-btn" title="Delete entry" data-row-id="mock-row-3"
-                          data-words="15">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                            stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="3 6 5 6 21 6" />
-                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                            <line x1="10" y1="11" x2="10" y2="17" />
-                            <line x1="14" y1="11" x2="14" y2="17" />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-
-                  </div>
-                </div>
-              </div>
-
-              <!-- Tab: Insights -->
-              <div class="tab-content" id="tab-insights">
-                <div class="dictation-header">
-                  <h2>Insights</h2>
-                </div>
-                <div class="insights-content">
-                  <div class="insights-card">
-                    <span class="insights-card-title">Dictation Frequency</span>
-                    <div class="mock-bar-chart">
-                      <div class="chart-bar-container">
-                        <div class="chart-bar" style="height: 48px;"></div>
-                        <span class="chart-day">M</span>
-                      </div>
-                      <div class="chart-bar-container">
-                        <div class="chart-bar" style="height: 72px;"></div>
-                        <span class="chart-day">T</span>
-                      </div>
-                      <div class="chart-bar-container">
-                        <div class="chart-bar" style="height: 55px;"></div>
-                        <span class="chart-day">W</span>
-                      </div>
-                      <div class="chart-bar-container">
-                        <div class="chart-bar" style="height: 90px;"></div>
-                        <span class="chart-day">T</span>
-                      </div>
-                      <div class="chart-bar-container">
-                        <div class="chart-bar" style="height: 102px;"></div>
-                        <span class="chart-day">F</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="stats-grid">
-                    <div class="mini-stat-card">
-                      <span class="mini-stat-label">Quiet Cleanup Rate</span>
-                      <span class="mini-stat-value">94.2%</span>
-                    </div>
-                    <div class="mini-stat-card">
-                      <span class="mini-stat-label">Top Focused App</span>
-                      <span class="mini-stat-value">VS Code</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Tab: Style -->
-              <div class="tab-content" id="tab-style">
-                <div class="dictation-header">
-                  <h2>Style Profiles</h2>
-                </div>
-                <div class="style-content">
-                  <div class="style-row-option">
-                    <div class="style-row-header">
-                      <h4>Medium Cleanup rewriting</h4>
-                      <span class="style-badge-opt">Opt-in</span>
-                    </div>
-                    <p>Uses API keys locally to adjust speaking tones to match specific context patterns.</p>
-                    <div class="style-radio-group">
-                      <div class="style-radio-btn active">Default (Light)</div>
-                      <div class="style-radio-btn">Professional</div>
-                      <div class="style-radio-btn">Casual</div>
-                    </div>
-                  </div>
-                  <div class="style-row-option">
-                    <div class="style-row-header">
-                      <h4>API Provider Configuration</h4>
-                    </div>
-                    <p>Provide your own key. Quill never uploads this key or your prompt parameters anywhere.</p>
-                  </div>
-                </div>
-              </div>
-
-            </div>
-
-            <!-- Stats Sidebar (Right) -->
-            <div class="mockup-stats-sidebar">
-              <span class="stats-header">At a glance</span>
-              <div class="stat-item">
-                <span class="stat-value" id="stat-words-value">2,840</span>
-                <span class="stat-label">total words</span>
-              </div>
-              <div class="stat-item">
-                <span class="stat-value">145</span>
-                <span class="stat-label">words / min</span>
-              </div>
-              <div class="stat-item">
-                <span class="stat-value">12</span>
-                <span class="stat-label">day streak</span>
-              </div>
-              <div class="stats-footer">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                  stroke-linejoin="round">
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                </svg>
-                <span>Local only</span>
-              </div>
-            </div>
-
-          </div>
+          <!-- The 30s promo: plays muted on a loop, "Sound on" restarts it with audio -->
+          <video class="hero-video" id="hero-video" src="assets/quill-promo.mp4" poster="assets/quill-promo-poster.jpg"
+            autoplay muted loop playsinline preload="metadata"
+            aria-label="Quill promo: hold fn, speak, and your words are typed into any app, on-device."></video>
+          <button type="button" class="hero-video-sound" id="hero-video-sound" aria-pressed="false">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M11 5 6 9H2v6h4l5 4V5z" /><path d="M15.5 8.5a5 5 0 0 1 0 7" /><path d="M19 5a10 10 0 0 1 0 14" />
+            </svg>
+            <span>Sound on</span>
+          </button>
         </div>
 
       </div>
     </section>
 
-    <!-- Accent strip divider -->
-    <hr class="accent-strip" />
 
     <!-- "How it works" Section -->
     <section class="how-it-works section-padding">
@@ -924,6 +672,28 @@
   </footer>
 
   <!-- Page Interactivity and Firebase Firestore Waitlist Script -->
+  <script>
+    (() => {
+      const v = document.getElementById("hero-video"), btn = document.getElementById("hero-video-sound");
+      if (!v || !btn) return;
+      if (matchMedia("(prefers-reduced-motion: reduce)").matches) { v.removeAttribute("autoplay"); v.pause(); v.controls = true; btn.hidden = true; return; }
+      const setSound = (on) => {
+        v.muted = !on;
+        btn.setAttribute("aria-pressed", String(on));
+        btn.querySelector("span").textContent = on ? "Sound off" : "Sound on";
+      };
+      btn.addEventListener("click", () => {
+        const on = v.muted;
+        setSound(on);
+        if (on) { v.currentTime = 0; v.play(); }
+      });
+      // scrolled past it: mute and stop, so it never talks over the rest of the page; back in view, it plays on muted
+      new IntersectionObserver(([e]) => {
+        if (e.isIntersecting) v.play().catch(() => {});
+        else { setSound(false); v.pause(); }
+      }, { threshold: 0.35 }).observe(v);
+    })();
+  </script>
   <script type="module">
     // --- PART 1: APP MOCKUP WINDOW INTERACTIVITY ---
 
