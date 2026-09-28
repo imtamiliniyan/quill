@@ -152,9 +152,13 @@
           <div class="glow-blob" aria-hidden="true"></div>
 
           <!-- The 30s promo: plays muted on a loop, "Sound on" restarts it with audio -->
-          <video class="hero-video" id="hero-video" src="assets/quill-promo.mp4" poster="assets/quill-promo-poster.jpg"
+          <video class="hero-video" id="hero-video" poster="assets/quill-promo-poster.jpg"
             autoplay muted loop playsinline preload="metadata"
-            aria-label="Quill promo: hold fn, speak, and your words are typed into any app, on-device."></video>
+            aria-label="Quill promo: hold fn, speak, and your words are typed into any app, on-device.">
+            <!-- phones get the lighter 720p file so playback doesn't stall on mobile data -->
+            <source src="assets/quill-promo-720.mp4" type="video/mp4" media="(max-width: 820px)" />
+            <source src="assets/quill-promo.mp4" type="video/mp4" />
+          </video>
           <button type="button" class="hero-video-sound" id="hero-video-sound" aria-pressed="false">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M11 5 6 9H2v6h4l5 4V5z" /><path d="M15.5 8.5a5 5 0 0 1 0 7" /><path d="M19 5a10 10 0 0 1 0 14" />
@@ -682,16 +686,19 @@
         btn.setAttribute("aria-pressed", String(on));
         btn.querySelector("span").textContent = on ? "Sound off" : "Sound on";
       };
+      // the first "Sound on" starts it from the top so the voice is heard; after that it just mutes and unmutes
+      let heard = false;
       btn.addEventListener("click", () => {
         const on = v.muted;
         setSound(on);
-        if (on) { v.currentTime = 0; v.play(); }
+        if (on && !heard) { heard = true; v.currentTime = 0; }
+        if (on) v.play().catch(() => {});
       });
       // scrolled past it: mute and stop, so it never talks over the rest of the page; back in view, it plays on muted
       new IntersectionObserver(([e]) => {
         if (e.isIntersecting) v.play().catch(() => {});
         else { setSound(false); v.pause(); }
-      }, { threshold: 0.35 }).observe(v);
+      }, { threshold: 0.15 }).observe(v);
     })();
   </script>
   <script type="module">
