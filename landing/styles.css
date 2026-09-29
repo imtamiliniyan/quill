@@ -1189,6 +1189,13 @@ body {
 }
 
 .footer-content {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 24px;
+}
+
+.footer-center {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1196,6 +1203,7 @@ body {
 }
 
 .footer-brand {
+  justify-self: start;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1254,6 +1262,23 @@ body {
   font-size: 12px;
   color: var(--ink-dimmer);
   margin: 0;
+}
+
+/* PeerPush badge: right column of the footer, centered in the stack on narrow screens */
+.footer-badge {
+  justify-self: end;
+  display: inline-flex;
+}
+
+@media (max-width: 768px) {
+  .footer-content {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+  .footer-brand,
+  .footer-badge {
+    justify-self: center;
+  }
 }
 
 /* Sub-page (Privacy / Terms) Shared Styling */
