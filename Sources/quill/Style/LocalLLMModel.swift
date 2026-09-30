@@ -61,12 +61,16 @@ extension LocalLLMModel {
         isS1Normalizer: true
     )
 
+    /// Suggested in onboarding and badged in Enhancement Engine: purpose-
+    /// built for dictation cleanup, a quarter of Llama's download, and
+    /// about 0.2s per cleanup.
+    static let recommended = s1Mini
+
     /// Every model Enhancement Engine's Local AI card can offer, in
-    /// display order. `LocalEnhancer` and `QuillSettings.localAIModelID`
-    /// both fall back to `.first` (Llama) for anything unrecognized.
-    static let all: [LocalLLMModel] = [.llama32_3B, .qwen25_3B, .s1Mini]
+    /// display order, recommended first.
+    static let all: [LocalLLMModel] = [.s1Mini, .llama32_3B, .qwen25_3B]
 
     static func model(for id: String) -> LocalLLMModel {
-        all.first { $0.id == id } ?? .llama32_3B
+        all.first { $0.id == id } ?? recommended
     }
 }

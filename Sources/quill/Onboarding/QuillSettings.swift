@@ -103,13 +103,17 @@ enum QuillSettings {
         set { defaults.set(newValue.rawValue, forKey: Key.autoCleanupTone) }
     }
 
-    /// Which on-device model `LocalEnhancer` loads for Local AI — defaults
-    /// to `LocalLLMModel.llama32_3B` (Quill's original, still the only
-    /// model anyone had before this setting existed), so adding a second
-    /// choice here changes nothing for a user who's never opened
-    /// Enhancement Engine's Local AI card.
+    /// Which on-device model `LocalEnhancer` loads for Local AI. Defaults
+    /// to the recommended model (S1-mini), except for anyone who already
+    /// has Llama on disk from before this setting existed: they stay on
+    /// Llama, so a working Local AI setup never silently switches to a
+    /// model that isn't downloaded.
     static var localAIModelID: String {
-        get { defaults.string(forKey: Key.localAIModelID) ?? LocalLLMModel.llama32_3B.id }
+        get {
+            defaults.string(forKey: Key.localAIModelID)
+                ?? (LocalEnhancer.isDownloaded(modelID: LocalLLMModel.llama32_3B.id)
+                    ? LocalLLMModel.llama32_3B.id : LocalLLMModel.recommended.id)
+        }
         set { defaults.set(newValue, forKey: Key.localAIModelID) }
     }
 

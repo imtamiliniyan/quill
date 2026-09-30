@@ -16,6 +16,8 @@ struct OnboardingView: View {
                 ModelPickerStep(state: state)
             case .downloading:
                 DownloadingStep(state: state)
+            case .cleanup:
+                CleanupStep(state: state)
             case .tone:
                 ToneStep(state: state)
             case .done:
@@ -46,6 +48,7 @@ struct OnboardingView: View {
         case .permissions: return "A couple of permissions, then you're set."
         case .modelPicker: return "Pick a transcription model."
         case .downloading: return "Downloading your model…"
+        case .cleanup: return "Clean up your dictation?"
         case .tone: return "How should rewrites sound?"
         case .done: return "All set."
         }
@@ -175,7 +178,8 @@ private struct ModelPickerStep: View {
             // future.
             ScrollView {
                 VStack(spacing: 12) {
-                    ForEach(ModelRegistry.shared, id: \.id) { model in
+                    // Recommended first so a new user sees it without scrolling.
+                    ForEach(ModelRegistry.shared.filter(\.recommended) + ModelRegistry.shared.filter { !$0.recommended }, id: \.id) { model in
                         ModelRow(
                             model: model,
                             selected: state.selectedModel?.id == model.id,
@@ -303,13 +307,64 @@ private struct ToneStep: View {
                                 .cornerRadius(8)
                         }
                         .padding(14)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                         .background(Theme.fillHover)
                         .cornerRadius(10)
                     }
                     .buttonStyle(.plain)
                 }
             }
+            // Both cards take the taller one's height instead of each
+            // sizing to its own example text.
+            .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+}
+
+// MARK: - Cleanup
+
+private struct CleanupStep: View {
+    @ObservedObject var state: OnboardingState
+
+    private let model = LocalLLMModel.recommended
+
+    var body: some View {
+        VStack(spacing: 16) {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 6) {
+                    Text(model.displayName)
+                        .font(.system(size: 14, weight: .medium))
+                    Text("RECOMMENDED")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundColor(Theme.accent)
+                }
+                Text("Removes filler words, fixes punctuation, and formats times and numbers as you dictate. Runs entirely on your Mac, no key needed. \(model.sizeLabel), downloads in the background.")
+                    .font(.system(size: 12))
+                    .foregroundColor(Theme.textSecondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                Text("\"so um send the report by uh friday\"  →  \"Send the report by Friday.\"")
+                    .font(.system(size: 11))
+                    .foregroundColor(Theme.textPrimary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(10)
+                    .background(Theme.textQuaternary)
+                    .cornerRadius(8)
+            }
+            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Theme.fillHover)
+            .cornerRadius(10)
+
+            HStack(spacing: 10) {
+                Button("Not now") { state.chooseCleanup(useLocalAI: false) }
+                    .buttonStyle(.bordered)
+                Button("Use S1-mini") { state.chooseCleanup(useLocalAI: true) }
+                    .buttonStyle(.borderedProminent)
+                    .tint(Theme.accent)
+            }
+            Text("Want full tone rewrites instead? Llama and Qwen are in Enhancement Engine → Local AI.")
+                .font(.system(size: 11))
+                .foregroundColor(Theme.textTertiary)
         }
     }
 }

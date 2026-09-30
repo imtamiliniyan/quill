@@ -35,7 +35,7 @@ enum AutoCleanupLevel: String, CaseIterable, Identifiable {
         case .harper:
             return "Fixes real grammar, spelling, and capitalization errors: no AI model, nothing downloaded, no tone rewrite. Bundled, always ready."
         case .localAI:
-            return "Full tone rewrite using a small on-device AI model: no key, no cloud, nothing leaves your Mac. First use downloads the model (~1.8 GB)."
+            return "Full tone rewrite using a small on-device AI model: no key, no cloud, nothing leaves your Mac. First use downloads the selected model."
         case .medium:
             return "Rewrites using your chosen tone and Style API key. Adds a short delay while it processes."
         }

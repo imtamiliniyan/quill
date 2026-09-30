@@ -232,6 +232,11 @@ struct EnhancementEngineView: View {
                 Text(model.displayName)
                     .font(.system(size: 11.5, weight: .medium))
                     .foregroundColor(Theme.textPrimary)
+                if model.id == LocalLLMModel.recommended.id {
+                    Text("RECOMMENDED")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundColor(Theme.accent)
+                }
                 Text(model.sizeLabel)
                     .font(.system(size: 10))
                     .foregroundColor(Theme.textTertiary)

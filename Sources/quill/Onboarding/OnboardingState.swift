@@ -7,6 +7,11 @@ enum OnboardingStep {
     case permissions
     case modelPicker
     case downloading
+    /// Offers the recommended Local AI model (S1-mini) for cleanup. Small
+    /// enough now (~0.5 GB) to suggest up front, unlike the 1.8 GB Llama
+    /// that got the old Local AI step retired. Optional: "Not now" keeps
+    /// Harper.
+    case cleanup
     /// A quick, lightweight pick — Casual or Formal — for whichever tone
     /// Local AI/Cloud Model rewrite into if the user ever switches to
     /// one of those later (Harper, Auto Cleanup's zero-setup default,
@@ -131,18 +136,30 @@ final class OnboardingState: ObservableObject {
                 warmedTranscriber = transcriber
                 downloadProgress = 1
                 QuillSettings.onboardingCompleted = true
-                // No separate "pick Local AI or paste in a key" step
-                // anymore — Auto Cleanup already defaults to Harper
-                // (`QuillSettings.autoCleanupLevel`), which needs neither
-                // a download nor a key, so there's nothing left to make a
-                // new user decide before they've even dictated once. The
-                // one thing still worth a quick pick up front is tone,
-                // for whenever Local AI/Cloud Model get switched on later.
-                step = .tone
+                step = .cleanup
             } catch {
                 downloadError = "\(error)"
             }
         }
+    }
+
+    /// Downloads S1-mini in the background and only switches Auto Cleanup
+    /// to Local AI once it's on disk, so Harper keeps cleaning up in the
+    /// meantime (and stays, if the download fails or Quill quits mid-way).
+    func chooseCleanup(useLocalAI: Bool) {
+        if useLocalAI {
+            let model = LocalLLMModel.recommended
+            QuillSettings.localAIModelID = model.id
+            Task.detached {
+                do {
+                    try await LocalEnhancer.shared.download(modelID: model.id) { _ in }
+                    QuillSettings.autoCleanupLevel = .localAI
+                } catch {
+                    FileHandle.standardError.write(Data("onboarding S1-mini download failed, staying on Harper: \(error)\n".utf8))
+                }
+            }
+        }
+        step = .tone
     }
 
     /// Onboarding's quick tone pick — Casual or Formal only, see
