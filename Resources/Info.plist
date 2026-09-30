@@ -2,42 +2,42 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CFBundleDisplayName</key>
+	<string>Quill</string>
 	<key>CFBundleExecutable</key>
 	<string>quill</string>
 	<key>CFBundleIconFile</key>
 	<string>AppIcon</string>
 	<key>CFBundleIdentifier</key>
 	<string>com.tamiliniyan.quill</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>Quill</string>
-	<key>CFBundleDisplayName</key>
 	<string>Quill</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.14.1</string>
+	<string>0.15.0</string>
 	<key>CFBundleVersion</key>
-	<string>15</string>
-	<key>CFBundleInfoDictionaryVersion</key>
-	<string>6.0</string>
-	<key>LSMinimumSystemVersion</key>
-	<string>14.0</string>
+	<string>16</string>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.productivity</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>14.0</string>
 	<key>LSUIElement</key>
 	<true/>
+	<key>NSAppleEventsUsageDescription</key>
+	<string>Quill needs this permission to type dictated text into whatever app you're focused on.</string>
 	<key>NSHighResolutionCapable</key>
 	<true/>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Quill needs microphone access to transcribe what you dictate while holding the hotkey.</string>
-	<key>NSAppleEventsUsageDescription</key>
-	<string>Quill needs this permission to type dictated text into whatever app you're focused on.</string>
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
 	<key>SUFeedURL</key>
 	<string>https://cdn.jsdelivr.net/gh/imtamiliniyan/quill@master/appcast.xml</string>
 	<key>SUPublicEDKey</key>
 	<string>+DMZsFEOjM5ffE2DNr3vk37rOmPfKKZ7QsbwOyIDA1g=</string>
-	<key>SUEnableAutomaticChecks</key>
-	<true/>
 	<key>SUScheduledCheckInterval</key>
 	<integer>86400</integer>
 </dict>
