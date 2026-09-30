@@ -18,6 +18,12 @@ struct LocalLLMModel: Identifiable, Equatable {
     /// dialog already applies.
     let approxSizeGB: Double
 
+    /// True for Superwhisper's S1-mini: a fixed-prompt speech-to-text
+    /// normalizer, not a general instruction model, so `LocalEnhancer`
+    /// drives it with its own system prompt and control line instead of
+    /// `DictationCleanupPrompt`.
+    var isS1Normalizer = false
+
     var sizeLabel: String { "~\(approxSizeGB.formatted(.number.precision(.fractionLength(1)))) GB" }
 }
 
@@ -44,10 +50,21 @@ extension LocalLLMModel {
         approxSizeGB: 1.75
     )
 
+    /// Superwhisper's S1-mini (Qwen3-0.6B fine-tune, Apache 2.0 plus a
+    /// naming clause: it must be shown as "S1-mini by Superwhisper"), 6-bit
+    /// MLX conversion (`mlx_lm convert -q --q-bits 6`; 4-bit dropped punctuation). Needs fixed prompt
+    /// wording and thinking off (see `LocalEnhancer.s1Messages`).
+    static let s1Mini = LocalLLMModel(
+        id: "iniyanai/s1-mini-6bit-mlx",
+        displayName: "S1-mini by Superwhisper (6-bit)",
+        approxSizeGB: 0.47,
+        isS1Normalizer: true
+    )
+
     /// Every model Enhancement Engine's Local AI card can offer, in
     /// display order. `LocalEnhancer` and `QuillSettings.localAIModelID`
     /// both fall back to `.first` (Llama) for anything unrecognized.
-    static let all: [LocalLLMModel] = [.llama32_3B, .qwen25_3B]
+    static let all: [LocalLLMModel] = [.llama32_3B, .qwen25_3B, .s1Mini]
 
     static func model(for id: String) -> LocalLLMModel {
         all.first { $0.id == id } ?? .llama32_3B

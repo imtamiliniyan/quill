@@ -70,14 +70,25 @@ actor LocalEnhancer {
         let container = try await loadedContainer(modelID: modelID)
         touchIdleWatchdog()
 
-        let messages: [[String: String]] = [
-            [
-                "role": "system",
-                "content": DictationCleanupPrompt.full(tone: tone),
-            ],
-            ["role": "user", "content": DictationCleanupPrompt.userMessage(for: text)],
-        ]
-        let input = UserInput(messages: messages)
+        let isS1 = LocalLLMModel.model(for: modelID).isS1Normalizer
+        let messages = isS1
+            ? Self.s1Messages(text, tone: tone)
+            : [
+                [
+                    "role": "system",
+                    "content": DictationCleanupPrompt.full(tone: tone),
+                ],
+                ["role": "user", "content": DictationCleanupPrompt.userMessage(for: text)],
+            ]
+        // S1-mini was trained with Qwen3 thinking off; leaving it on
+        // yields blank output.
+        let input = UserInput(
+            messages: messages,
+            additionalContext: isS1 ? ["enable_thinking": false] : nil
+        )
+        // S1-mini's card: greedy decoding, max_new_tokens ~ 1.3x input + 32.
+        let temperature: Float = isS1 ? 0 : 0.2
+        let tokenCap = isS1 ? Int(Double(text.count) / 3 * 1.3) + 32 : 512
 
         let result = try await container.perform { context in
             let lmInput = try await context.processor.prepare(input: input)
@@ -87,12 +98,12 @@ actor LocalEnhancer {
             }
             return try generate(
                 input: lmInput,
-                parameters: GenerateParameters(temperature: 0.2),
+                parameters: GenerateParameters(temperature: temperature),
                 context: context
             ) { tokens in
                 // A rewritten dictation is never anywhere near this long —
                 // this is just a hard backstop against a runaway generation.
-                tokens.count >= 512 ? .stop : .more
+                tokens.count >= tokenCap ? .stop : .more
             }
         }
         let cleaned = result.output.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -100,6 +111,27 @@ actor LocalEnhancer {
             FileHandle.standardError.write(Data("=== RAW OUTPUT ===\n\(cleaned)\n=== END RAW ===\n".utf8))
         }
         return DictationCleanupPrompt.sanitizeOutput(cleaned, originalInput: text)
+    }
+
+    /// S1-mini's documented contract: exact system prompt, then a control
+    /// line, then the raw transcript. Those are its only steering.
+    /// `StyleTone` maps onto the Styling axis; S1 can't condense, so
+    /// Concise falls back to semi-formal cleanup.
+    private static func s1Messages(_ text: String, tone: StyleTone) -> [[String: String]] {
+        let styling: String
+        switch tone {
+        case .cleanUp, .concise: styling = "semi-formal"
+        case .formal: styling = "formal"
+        case .casual: styling = "semi-casual"
+        case .veryCasual: styling = "casual"
+        }
+        return [
+            [
+                "role": "system",
+                "content": "You are a text normalizer for speech-to-text transcripts. The input begins with a control line specifying the styling, structure, and context settings; clean the transcript to match those settings and output only the cleaned text.",
+            ],
+            ["role": "user", "content": "[Styling: \(styling)] [Structure: prose] [Context: general]\n\(text)"],
+        ]
     }
 
     /// `HubCache`'s own repo-directory naming convention
