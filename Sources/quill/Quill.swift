@@ -1,5 +1,6 @@
 import AppKit
 import ArgumentParser
+import FluidAudio
 import Foundation
 import WhisperKit
 
@@ -506,7 +507,7 @@ struct Doctor: ParsableCommand {
 struct Models: ParsableCommand {
     static let configuration = CommandConfiguration(
         abstract: "Manage transcription models.",
-        subcommands: [List.self, Download.self]
+        subcommands: [List.self, Download.self, Transcribe.self]
     )
 
     struct List: ParsableCommand {
@@ -536,6 +537,37 @@ struct Models: ParsableCommand {
             var capturedError: Error?
             Task.detached {
                 do { try await t.warmUp() } catch { capturedError = error }
+                sem.signal()
+            }
+            sem.wait()
+            if let e = capturedError { throw e }
+        }
+    }
+}
+
+extension Models {
+    /// CLI-only check for the transcription path, vocabulary boosting
+    /// included: transcribes an audio file exactly like a dictation.
+    /// Make a clip with `say -o t.wav --data-format=LEI16@16000 "..."`.
+    struct Transcribe: ParsableCommand {
+        @Argument(help: "Audio file to transcribe.") var file: String
+        @Option(name: .long, help: "Model id (defaults to the current Voice Engine model).") var model: String?
+
+        func run() throws {
+            guard let m = ModelRegistry.find(model ?? QuillSettings.selectedModelID ?? "") else {
+                print("unknown model")
+                throw ExitCode(1)
+            }
+            let t = TranscriberFactory.make(for: m)
+            let audio = try AudioConverter().resampleAudioFile(path: file)
+
+            let sem = DispatchSemaphore(value: 0)
+            var capturedError: Error?
+            Task.detached {
+                do {
+                    try await t.warmUp(progress: nil)
+                    print(try await t.transcribe(audio))
+                } catch { capturedError = error }
                 sem.signal()
             }
             sem.wait()
