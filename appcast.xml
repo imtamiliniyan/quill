@@ -30,6 +30,20 @@
         <language>en</language>
 
         <item>
+            <title>Quill 0.15.0</title>
+            <pubDate>Wed, 30 Sep 2026 21:18:00 +0000</pubDate>
+            <sparkle:version>16</sparkle:version>
+            <sparkle:shortVersionString>0.15.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <link>https://github.com/imtamiliniyan/quill/releases/tag/v0.15.0</link>
+            <enclosure
+                url="https://github.com/imtamiliniyan/quill/releases/download/v0.15.0/Quill-0.15.0.zip"
+                type="application/octet-stream"
+                sparkle:edSignature="x04zM5ZuLkfO6LUyZJbDAwvjIIBy8W+wHBFvzCxoNgx+g4kGezzYttJxRnlJFBopv5mVcGx3/REhgVu1uKJoCw==" length="69607151"
+            />
+        </item>
+
+        <item>
             <title>Quill 0.14.1</title>
             <pubDate>Tue, 01 Sep 2026 16:03:35 +0000</pubDate>
             <sparkle:version>15</sparkle:version>
