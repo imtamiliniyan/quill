@@ -31,7 +31,12 @@ DIST="dist"
 APP="${DIST}/${APP_NAME}.app"
 
 echo "→ building release binary..."
-swift build -c release
+# ponytail: native build system is deprecated, but the default (swiftbuild,
+# Swift 6.4+) compiles mlx-swift's .metal files itself and so needs Xcode's
+# Metal Toolchain on every build. Native skips them and uses the cached
+# mlx.metallib below. Drop the flag if native is removed; install the Metal
+# Toolchain then.
+swift build -c release --build-system native
 
 # mlx-swift's Metal GPU shaders (mlx.metallib) — `swift build` alone can't
 # produce this. mlx-swift's own README says as much ("SwiftPM (command
