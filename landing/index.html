@@ -85,8 +85,8 @@
         </p>
 
         <!-- Install command (Hero) — the recommended path: brew installs
-             cleanly with zero Gatekeeper warning, unlike the raw .dmg
-             below, since Quill isn't (and won't be) notarized. Layout
+             cleanly with zero Gatekeeper warning. The raw .dmg is notarized
+             too and opens without one as well. Layout
              reference: FluidVoice's own hero command box (UI reference
              only, no code or branding borrowed). -->
         <div class="hero-brew-cmd" id="waitlist-section">
@@ -588,28 +588,8 @@
             </div>
           </div>
 
-          <!-- Q7 -->
-          <div class="faq-item">
-            <button class="faq-trigger">
-              <span>Why does my Mac warn me when I open Quill.app?</span>
-              <svg class="faq-chevron" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"
-                stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-                <polyline points="6 9 12 15 18 9" />
-              </svg>
-            </button>
-            <div class="faq-content">
-              <div class="faq-content-inner">
-                Quill is open source and free, and doesn't go through Apple's paid notarization program (that's
-                $99/year we'd rather not charge you for). Because of that, a directly downloaded .dmg triggers
-                Gatekeeper's "could not verify" warning on first open. Two ways around it: install with
-                <code>brew install --cask imtamiliniyan/quill/quill</code> instead (no warning at all), or after
-                downloading the .dmg, go to System Settings &rarr; Privacy &amp; Security, scroll down, and click
-                "Open Anyway" next to Quill.app.
-              </div>
-            </div>
-          </div>
-
         </div>
+
       </div>
     </section>
 
