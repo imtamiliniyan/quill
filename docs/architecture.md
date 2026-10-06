@@ -20,7 +20,7 @@ This describes Quill as it actually is today - a full native macOS dictation app
 - Voice-driven Mac control, agentic text editing, or slash-command modes ("Command Mode"/"Edit Mode" in competitor products) - Quill cleans up dictation, it doesn't operate your Mac
 - Meeting recording, speaker diarization, semantic search
 - True per-speaker model fine-tuning ("train it on my voice") - not technically realistic on-device; see Open Questions for the ASR-level vocabulary-boosting alternative actually being scoped
-- Notarization - an explicit, stated tradeoff (no Apple Developer Program enrollment); Homebrew's cask install works around Gatekeeper's warning, a direct `.dmg` download does not
+- Notarization - done from 0.15.1 (Developer ID, hardened runtime, `scripts/notarize.sh`); a direct `.dmg` download opens with no Gatekeeper warning
 
 ## Why Swift
 
@@ -191,8 +191,8 @@ Two prompts, surfaced via `quill doctor` and the onboarding flow:
 
 - **Releases**: tagged (`vX.Y.Z`) on GitHub. `.github/workflows/release.yml` builds automatically on every tag push but lands as a **draft** - the real signed `.dmg`/`.zip` are always uploaded by hand afterward, replacing CI's unsigned CLI-only tarball, before publishing.
 - **Sparkle auto-update**: `AppUpdater` checks `appcast.xml` (an RSS+Sparkle-namespace feed at the repo root, served via jsDelivr's GitHub CDN mirror - not `raw.githubusercontent.com`, whose cache proved to serve stale content inconsistently across edge locations for several minutes after a push; jsDelivr supports an explicit purge, which is the actual "go live" step after pushing an appcast update). Every release is EdDSA-signed (`scripts/release-appcast.sh`) and Sparkle verifies the signature before installing. Automatic background checks plus a manual "Check for Updates…" menu item; Sparkle's own alert requires an explicit click to actually install, never installs silently.
-- **Homebrew**: `imtamiliniyan/homebrew-quill` (a separate repo/tap). Not just a convenience - since Quill isn't notarized, a direct `.dmg` download gets Gatekeeper's hard "cannot verify" block with no override option, while `brew install --cask` includes a `postflight` that strips `com.apple.quarantine`, so it opens cleanly.
-- **Notarization - explicitly declined**, not an oversight: Quill is free and open source, and $99/year for a solo Developer ID enrollment wasn't judged worth it. Stated openly on the landing page and in `SECURITY.md`'s scope section, with Homebrew as the real mitigation for the common install path.
+- **Homebrew**: `imtamiliniyan/homebrew-quill` (a separate repo/tap). Its cask includes a `postflight` that strips `com.apple.quarantine`, so it opens cleanly.
+- **Notarization** - from 0.15.1 (6 Oct 2026) Quill is signed with a Developer ID and notarized: `scripts/build-app.sh` signs inside out with the hardened runtime and `Resources/Quill.entitlements` (microphone, Apple Events), `scripts/notarize.sh` submits and staples the app and the DMG. Homebrew's quarantine strip is now a convenience, not a requirement.
 
 ## What we are deliberately NOT building
 
@@ -200,7 +200,6 @@ Two prompts, surfaced via `quill doctor` and the onboarding flow:
 - True model fine-tuning on the user's own voice/phonetics - not realistic on-device, and not actually what similar competitor products do either despite marketing language implying it. The realistic, scoped alternative (ASR-level vocabulary boosting/correction via FluidAudio's own `CustomVocabularyContext`/CTC rescoring, already used by Quill's Parakeet engine) is scoped but not built - see Open Questions.
 - Voice-driven Mac control or agentic editing ("Command Mode"/"Edit Mode" in some competitors) - different product entirely from "clean up my dictation."
 - Meeting recording, speaker diarization, semantic search over transcripts.
-- Notarization (see Distribution above - a stated business tradeoff, not a gap).
 
 ## Project layout
 

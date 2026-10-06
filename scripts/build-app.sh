@@ -26,7 +26,15 @@ cd "$(dirname "$0")/.."
 
 APP_NAME="Quill"
 BUNDLE_ID="com.tamiliniyan.quill"
-SIGN_IDENTITY="${QUILL_SIGN_IDENTITY:-Quill Local Dev}"
+# A Developer ID Application identity wins when it is in the keychain: it is what
+# notarization needs and what stops Gatekeeper warning on other Macs. Otherwise
+# the local self-signed cert, as before. Notarize with scripts/notarize.sh.
+DEVID=$(security find-identity -v -p codesigning 2>/dev/null \
+        | grep -oE '"Developer ID Application[^"]+"' | head -1 | tr -d '"' || true)
+SIGN_IDENTITY="${QUILL_SIGN_IDENTITY:-${DEVID:-Quill Local Dev}}"
+# Hardened runtime and a secure timestamp on every binary, which Apple requires.
+case "$SIGN_IDENTITY" in "Developer ID Application"*) HARDENED=(--options runtime --timestamp) ;; *) HARDENED=() ;; esac
+ENTITLEMENTS="Resources/Quill.entitlements"
 DIST="dist"
 APP="${DIST}/${APP_NAME}.app"
 
@@ -187,10 +195,25 @@ cp -R Sources/quill/Resources/ProviderLogos "$APP/Contents/Resources/ProviderLog
 # downloaded binary needs at least an ad-hoc signature to run at all
 # under Gatekeeper even before that.
 cp "$HARPER_CACHE" "$APP/Contents/Resources/harper-cli"
-codesign --force -s "$SIGN_IDENTITY" "$APP/Contents/Resources/harper-cli"
+codesign --force "${HARDENED[@]}" -s "$SIGN_IDENTITY" "$APP/Contents/Resources/harper-cli"
 
 echo "→ signing ${APP}..."
-codesign --force --deep -s "$SIGN_IDENTITY" "$APP"
+if [ ${#HARDENED[@]} -gt 0 ]; then
+    # Inside out, no --deep: it would re-sign nested code without the runtime
+    # flag and timestamp, and notarization would reject the lot.
+    SPK="$APP/Contents/Frameworks/Sparkle.framework"
+    for inner in "$SPK/Versions/B/XPCServices/Downloader.xpc" "$SPK/Versions/B/XPCServices/Installer.xpc" \
+                 "$SPK/Versions/B/Autoupdate" "$SPK/Versions/B/Updater.app" "$SPK"; do
+        [ -e "$inner" ] && codesign --force "${HARDENED[@]}" -s "$SIGN_IDENTITY" "$inner"
+    done
+    # Sits beside the executable, so codesign counts it as nested code that must
+    # carry its own signature before the main binary is sealed.
+    codesign --force "${HARDENED[@]}" -s "$SIGN_IDENTITY" "$APP/Contents/MacOS/mlx.metallib"
+    codesign --force "${HARDENED[@]}" --entitlements "$ENTITLEMENTS" -s "$SIGN_IDENTITY" "$APP/Contents/MacOS/quill"
+    codesign --force "${HARDENED[@]}" --entitlements "$ENTITLEMENTS" -s "$SIGN_IDENTITY" "$APP"
+else
+    codesign --force --deep -s "$SIGN_IDENTITY" "$APP"
+fi
 
 echo "→ verifying..."
 # `|| true` on the whole pipeline: codesign can still be writing when `head`
