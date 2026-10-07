@@ -28,7 +28,7 @@ Quill is a local-first macOS app. Realistic areas of concern:
 
 ## What's Out of Scope
 
-- Quill is **not notarized** (no Apple Developer Program enrollment). Gatekeeper's warning on a direct `.dmg` download is expected, documented behavior, not a vulnerability to report.
+- Quill is **now notarized** (Apple Developer Program enrollment). Gatekeeper will not warn on a direct `.dmg` downloads.
 - Denial-of-service reports against a local, single-user desktop app (e.g. "the app uses a lot of memory if you feed it a huge file") are generally not actionable the way they would be for a server.
 
 Thank you for helping keep Quill and its users safe.
